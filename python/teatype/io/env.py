@@ -18,7 +18,7 @@ import os
 # From own imports
 from teatype.io import file
 
-def load_env():
+def load(env_path:str|None=None) -> bool:
     """
     Load environment variables from a .env file into the environment.
 
@@ -26,12 +26,16 @@ def load_env():
     If the file exists, it reads each line, ignoring empty lines and comments,
     and sets the corresponding environment variables.
     """
-    # Load environment variables from .env file if it exists
-    env_file = file.read('.env')
-    for line in env_file:
-        # Check if the line is not empty and does not start with a comment
-        if line.strip() and not line.startswith('#'):
-            # Split the line into key and value using the first '=' as delimiter
-            key, _, value = line.partition('=')
-            # Strip whitespace and set the environment variable
-            os.environ[key.strip()] = value.strip()
+    try:
+        # Load environment variables from .env file if it exists
+        env_vars = file.read(env_path if env_path else '.env', force='env')
+        os.environ.update(env_vars)
+        return True
+    except FileNotFoundError:
+        # Log an error message if the .env file is not found
+        print('No .env file found in the current directory.')
+        return False
+    except Exception as e:
+        # Log an error message if an exception occurs
+        print(f'An error occurred while loading the .env file: {e}')
+        return False

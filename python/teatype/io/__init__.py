@@ -12,7 +12,7 @@
 # 
 # For more details, check the LICENSE file in the root directory of this repository.
 
-from .env import load_env
+from .env import load
 from .file import append, read, write
 from .prompt import prompt
 from .shell import shell

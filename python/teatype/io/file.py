@@ -23,7 +23,7 @@ import json
 # From own imports
 from teatype.logging import err
 
-def append(path:str, data:any) -> bool:
+def append(path:str, data:any, force:str|None=None) -> bool:
     """
     Append data to a file at the specified path.
 
@@ -43,10 +43,13 @@ def append(path:str, data:any) -> bool:
     try:
         # Open the file in append mode
         with open(path, 'a') as f:
-            if path.endswith('.json'):
+            if force == 'lines':
+                # Append multiple lines to the file
+                f.writelines(data)
+            if path.endswith('.json') or force == 'json':
                 # Append JSON data to the file
                 json.dump(data, f)
-            elif path.endswith('.ini'):
+            elif path.endswith('.ini') or force == 'ini':
                 # Initialize ConfigParser and read existing INI configuration
                 config = configparser.ConfigParser()
                 config.read(path)
@@ -54,7 +57,7 @@ def append(path:str, data:any) -> bool:
                 config.update(data)
                 # Write the updated configuration back to the file
                 config.write(f)
-            elif path.endswith('.csv'):
+            elif path.endswith('.csv') or force == 'csv':
                 # Create a CSV writer object
                 writer = csv.writer(f)
                 # Write a new row to the CSV file
@@ -88,7 +91,15 @@ def read(path:str, force:str|None=None) -> any:
     try:
         if os.path.isfile(path):
             with open(path, 'r') as f:
-                if path.endswith('.json') or force == 'json':
+                if force == 'lines':
+                    # Read and return the lines of the file
+                    return f.readlines()
+                elif path.endswith('.jsonc') or force == 'jsonc':
+                    dirty_content = f.read()
+                    # Remove comments denoted by '//' to ensure valid JSON
+                    clean_content = ''.join(line for line in dirty_content.splitlines() if not line.strip().startswith('//'))
+                    return json.loads(clean_content)
+                elif path.endswith('.json') or force == 'json':
                     # Load and return JSON data from the file
                     return json.load(f)
                 elif path.endswith('.ini') or force == 'ini':
@@ -104,13 +115,13 @@ def read(path:str, force:str|None=None) -> any:
                     env_vars = {}
                     for line in f:
                         line = line.strip()
+                        # Check if the line is not empty and does not start with a comment
                         if line and not line.startswith('#'):
+                            # Split the line into key and value using the first '=' as delimiter
                             key, _, value = line.partition('=')
+                            # Strip whitespace and set the environment variable
                             env_vars[key.strip()] = value.strip()
                     return env_vars
-                elif force == 'lines':
-                    # Read and return the lines of the file
-                    return f.readlines()
                 else:
                     # Read and return plain text data from the file
                     return f.read()

@@ -21,7 +21,7 @@ import sys
 
 # From package imports
 from teatype.cli import BaseCLI, Stop
-from teatype.io import load_env, shell
+from teatype.io import env, shell
 from teatype.logging import err, warn
 
 # From-as system imports
@@ -182,7 +182,7 @@ class Start(BaseCLI):
             # Append shell redirection to merge stderr with stdout
             self.start_command += ' > /dev/null 2>&1 &'
         
-        load_env() # Load the environment variables
+        env.load() # Load the environment variables
         
         def signal_handler(signum, _):
             try:
