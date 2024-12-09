@@ -1,14 +1,16 @@
-# Copyright (C) 2024-2025 Burak Günaydin
+# Copyright (c) 2024-2025 enamentis GmbH. All rights reserved.
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
+# This software module is the proprietary property of enamentis GmbH.
+# Unauthorized copying, modification, distribution, or use of this software
+# is strictly prohibited unless explicitly authorized in writing.
+# 
+# THIS SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+# DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
+# 
+# For more details, check the LICENSE file in the root directory of this repository.
 
 # System imports
 import inspect
@@ -163,10 +165,18 @@ def _format(message:any,
             
     # If verbose is True, include caller's filename and line number in the message
     if verbose:
-        frame = inspect.currentframe().f_back # Get the caller's frame
-        filename = os.path.basename(frame.f_code.co_filename) # Extract the filename from the caller's frame
+        # Traverse the stack to find the frame of the original caller
+        stack = inspect.stack()
+        for frame_info in stack:
+            if frame_info.function not in ['_format', 'err', 'log']: # Ignore internal functions
+                caller_frame = frame_info
+                break
+        else:
+            # Fallback in case no valid frame is found
+            caller_frame = stack[-1]
+        filename = os.path.basename(caller_frame.filename)
         # TODO: Shows the wrong line number, shows line number of logging.py, not class calling it
-        lineno = frame.f_lineno # Extract the line number from the caller's frame
+        lineno = caller_frame.lineno
         # TODO: Add handling for different types of messages
         formatted_message = f'{message} - [{filename}, PRINTLN: {lineno}]' # Format the message with caller info
     
