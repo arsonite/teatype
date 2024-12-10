@@ -124,8 +124,9 @@ class ColoredFormatter(logging.Formatter):
             Returns:
                 str: The formatted log message with appropriate color codes.
     """
+    # '\033[94m' # Dark Blue
     COLOR_CODES = {
-        logging.DEBUG: '\033[94m', # Blue
+        logging.DEBUG: '\033[96m', # Light Blue
         logging.WARNING: '\033[93m', # Yellow
         logging.ERROR: '\033[91m', # Red
         logging.CRITICAL: '\033[95m', # Magenta
@@ -141,7 +142,7 @@ class ColoredFormatter(logging.Formatter):
 console_handler.setFormatter(ColoredFormatter())
 
 def _format(message:any,
-            pad_top:int|None=None,
+            pad_before:int|None=None,
             verbose:bool=False) -> any:
     """
     Formats a message with optional padding and verbosity.
@@ -149,8 +150,8 @@ def _format(message:any,
 
     Args:
         message (any, optional): The message to format. Defaults to ''.
-        pad_top (int | None, optional): Number of blank lines to add before the message. Defaults to None.
-        pad_bottom (int | None, optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int | None, optional): Number of blank lines to add before the message. Defaults to None.
+        pad_after (int | None, optional): Number of blank lines to add after the message. Defaults to None.
         verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
 
     Returns:
@@ -158,9 +159,9 @@ def _format(message:any,
     """
     formatted_message = message  # Initialize the formatted message as an empty string
     
-    # Add a blank line before the message if pad_top is specified and greater than 0
-    if pad_top and pad_top > 0:
-        for _ in range(pad_top):
+    # Add a blank line before the message if pad_before is specified and greater than 0
+    if pad_before and pad_before > 0:
+        for _ in range(pad_before):
             print() # Print a blank line to add padding above the message
             
     # If verbose is True, include caller's filename and line number in the message
@@ -184,17 +185,18 @@ def _format(message:any,
 
 def err(message:str,
         exit=False,
-        pad_bottom:int|None=None,
-        pad_top:int|None=None,
+        pad_after:int|None=None,
+        pad_before:int|None=None,
         traceback:bool=False,
-        verbose:bool=True) -> None:
+        verbose:bool=True,
+        trailing_descriptor:bool=True) -> None:
     """
     Logs an error message and optionally includes the traceback of the current exception.
 
     Args:
         message (str): The error message to be logged.
-        pad_top (int | None, optional): Number of blank lines to add before the message. Defaults to None.
-        pad_bottom (int | None, optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int | None, optional): Number of blank lines to add before the message. Defaults to None.
+        pad_after (int | None, optional): Number of blank lines to add after the message. Defaults to None.
         traceback (bool, optional): Flag to determine whether to include the traceback.
             Defaults to False.
         verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
@@ -205,7 +207,9 @@ def err(message:str,
     # Retrieve the current exception information from the system
     exc_info = sys.exc_info()
     
-    error_message = _format(f'ERROR - {message}', pad_top, verbose)
+    if trailing_descriptor:
+        message = 'ERROR - ' + message
+    error_message = _format(message, pad_before, verbose)
     # Log the error message as a critical error, potentially including the traceback
     if exit:
         error_message = f'FATAL EXIT {error_message}'
@@ -222,8 +226,8 @@ def err(message:str,
         # If no exception is present, log the error message without exception info
         logger.error(error_message)
         
-    if pad_bottom and pad_bottom > 0:
-        for _ in range(pad_bottom):
+    if pad_after and pad_after > 0:
+        for _ in range(pad_after):
             print() # Print a blank line to add padding below the message
         
     if exit:
@@ -231,33 +235,33 @@ def err(message:str,
         sys.exit(1)
     
 def hint(message:str,
-         pad_bottom: int | None = None,
-         pad_top: int | None = None,
-         verbose: bool = False) -> int:
+         pad_after:int|None=None,
+         pad_before:int|None=None,
+         verbose:bool=False)->int:
     """
     Provide a hint message with optional padding and verbosity.
     
     Args:
         message (str): The message to display as a hint.
-        pad_bottom (int, optional): Number of blank lines to add below the message. Defaults to None.
-        pad_top (int, optional): Number of blank lines to add above the message. Defaults to None.
+        pad_after (int, optional): Number of blank lines to add below the message. Defaults to None.
+        pad_before (int, optional): Number of blank lines to add above the message. Defaults to None.
         verbose (bool, optional): If True, include additional verbosity in the message. Defaults to False.
     Returns:
         int: Status code indicating the outcome of the operation.
     """
-    hint_message = _format(message, pad_top, verbose) # Format the message with optional padding and verbosity
+    hint_message = _format(message, pad_before, verbose) # Format the message with optional padding and verbosity
     
     # Log the final message at the INFO level using the global logger
     logger.debug(f'HINT - {hint_message}') # Log the message as is
         
-    # Add a blank line after the message if pad_bottom is specified and greater than 0
-    if pad_bottom and pad_bottom > 0:
-        for _ in range(pad_bottom):
+    # Add a blank line after the message if pad_after is specified and greater than 0
+    if pad_after and pad_after > 0:
+        for _ in range(pad_after):
             print() # Print a blank line to add padding below the message
     
 def log(message:any,
-        pad_bottom:int|None=None,
-        pad_top:int|None=None,
+        pad_after:int|None=None,
+        pad_before:int|None=None,
         prettify:bool=False,
         verbose:bool=False) -> None:
     """
@@ -270,13 +274,13 @@ def log(message:any,
     
     Args:
         message (any, optional): The message to be logged. Defaults to ''.
-        pad_bottom (int | None, optional): Number of blank lines to add after the message. Defaults to None.
-        pad_top (int | None, optional): Number of blank lines to add before the message. Defaults to None.
+        pad_after (int | None, optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int | None, optional): Number of blank lines to add before the message. Defaults to None.
         prettify (bool, optional): If True, formats complex objects into a pretty-printed string. Defaults to False.
         verbose (bool, optional): If True, includes caller's filename and line number in the log message. Defaults to False.
     """
     # Format the message with optional padding and verbosity
-    log_message = _format(message, pad_top, verbose)
+    log_message = _format(message, pad_before, verbose)
     
     # Check if prettify flag is set to True to format the message for better readability
     if prettify:
@@ -306,12 +310,12 @@ def log(message:any,
     # Log the final message at the INFO level using the global logger
     logger.info(log_message)  # Log the message as is
         
-    # Add a blank line after the message if pad_bottom is specified and greater than 0
-    if pad_bottom and pad_bottom > 0:
-        for _ in range(pad_bottom):
+    # Add a blank line after the message if pad_after is specified and greater than 0
+    if pad_after and pad_after > 0:
+        for _ in range(pad_after):
             print() # Print a blank line to add padding below the message
     
-def nl(amount:int=1) -> None:
+def println(amount:int=1) -> None:
     """
     Logs a blank line.
     
@@ -322,24 +326,24 @@ def nl(amount:int=1) -> None:
         print()
 
 def warn(message:str='',
-         pad_bottom:int|None=None,
-         pad_top:int|None=None,
+         pad_after:int|None=None,
+         pad_before:int|None=None,
          verbose:bool=False) -> None:
     """
     Logs a warning message.
 
     Args:
         message (str): The warning message to be logged.
-        pad_bottom (int | None, optional): Number of blank lines to add after the message. Defaults to None.
-        pad_top (int | None, optional): Number of blank lines to add before the message. Defaults to None.
+        pad_after (int | None, optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int | None, optional): Number of blank lines to add before the message. Defaults to None.
         verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
 
     Returns:
         int: Returns 0 after logging the warning.
     """
-    warn_message = _format(message, pad_top, verbose)
+    warn_message = _format(message, pad_before, verbose)
     logger.warning(f'WARNING - {warn_message}') # Log the warning message
-    # Add a blank line after the message if pad_bottom is specified and greater than 0
-    if pad_bottom and pad_bottom > 0:
-        for _ in range(pad_bottom):
+    # Add a blank line after the message if pad_after is specified and greater than 0
+    if pad_after and pad_after > 0:
+        for _ in range(pad_after):
             print() # Print a blank line to add padding below the message

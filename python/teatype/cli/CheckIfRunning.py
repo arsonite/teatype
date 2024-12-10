@@ -17,7 +17,7 @@ import psutil
 
 # From package imports
 from teatype.cli import BaseCLI
-from teatype.logging import err, log, nl
+from teatype.logging import err, log, println
 
 class CheckIfRunning(BaseCLI):
     def meta(self):
@@ -39,12 +39,12 @@ class CheckIfRunning(BaseCLI):
         verbose = not self.get_flag('hide-output')
         
         if verbose:
-            nl()
+            println()
             
         if not hasattr(self, 'process_names'):
             err('No "self.process_names" provided in source code. Please provide a process name in the pre_execute function.',
                 exit=True)
-            nl()
+            println()
         
         process_pids = []
         for process_name in self.process_names:
@@ -68,7 +68,7 @@ class CheckIfRunning(BaseCLI):
                     log(f'Process "{process_name}" is not running')
                     
         if verbose:
-            nl()
+            println()
         
         return process_pids
 

@@ -19,7 +19,9 @@ def shell(command:str,
           sudo:bool=False,
           cwd:bool=False,
           env:dict=None,
-          timeout:float=None) -> int:
+          timeout:float=None,
+          mute:bool=False,
+          return_output:bool=False) -> int:
     """
     Executes a shell command using the subprocess module.
 
@@ -40,7 +42,7 @@ def shell(command:str,
     
     # If sudo is True, prepend 'sudo' to the command
     if sudo:
-        # Asking for sudo permissions before script executes any further and surpresses usage information
+        # Asking for sudo permissions before script executes any further and suppresses usage information
         subprocess.run('sudo 2>/dev/null', shell=True)
         command = f'sudo {command}'
         
@@ -50,11 +52,14 @@ def shell(command:str,
     # env is set to None by default, but can be specified with env
     # timeout is set to None by default, but can be specified with timeout
     # Not using a command list array, since I am using shell=True
-    completed_process = subprocess.run(command, 
-                                        shell=True, 
-                                        cwd=None if not cwd else cwd, 
-                                        env=None if not env else env, 
-                                        timeout=timeout)
-    
+    output = subprocess.run(command, 
+                            shell=True,
+                            cwd=None if not cwd else cwd, 
+                            env=None if not env else env,
+                            text=return_output, 
+                            timeout=timeout,
+                            stdout=subprocess.PIPE if mute else None,
+                            stderr=subprocess.PIPE if mute else None)
+        
     # Return the exit code of the completed process
-    return completed_process.returncode
+    return output.returncode if not return_output else output.stdout.replace('\n', '')

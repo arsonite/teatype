@@ -16,7 +16,7 @@
 from typing import List
 
 # From own imports
-from teatype.logging import err, log, nl
+from teatype.logging import err, log, println
 
 def prompt(prompt_text:str, options:List[any], return_bool:bool=True) -> any:
     """
@@ -36,7 +36,7 @@ def prompt(prompt_text:str, options:List[any], return_bool:bool=True) -> any:
             err('Cannot return a boolean value for more than two options.', exit=True)
             
     # Log the prompt text for debugging or record-keeping purposes
-    log(prompt_text, pad_top=1)
+    log(prompt_text, pad_before=1)
     
     # Initialize the string that will display the options
     options_string = '('
@@ -53,7 +53,7 @@ def prompt(prompt_text:str, options:List[any], return_bool:bool=True) -> any:
     
     # Prompt the user for input using the constructed options string
     prompt_answer = input(options_string)
-    nl()
+    println()
     
     # Validate the user's input against the available options
     if prompt_answer not in options:

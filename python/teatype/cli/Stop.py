@@ -22,7 +22,7 @@ import time
 
 # From package imports
 from teatype.cli import BaseCLI, CheckIfRunning
-from teatype.logging import err, hint, log, nl, warn
+from teatype.logging import err, hint, log, println, warn
 
 # From-as system imports
 from importlib import util as iutil
@@ -260,7 +260,7 @@ class Stop(BaseCLI):
             else:
                 # Log if the process is not running
                 log(f'Process (PID: "{process_pids}") is not running.')
-            nl()
+            println()
                 
         if len(self.process_pids) > 0:
             # Recursively call itself to handle any remaining processes
@@ -274,11 +274,11 @@ class Stop(BaseCLI):
         self.load_script()
         
         if len(self.process_pids) == 0:
-            nl()
+            println()
             # Inform the user if there are no processes to stop
             log('No processes to stop.')
         else:
-            nl()
+            println()
             force_signal = self.get_flag('force-signal')
             if force_signal:
                 hint(f'Forcing signal: {force_signal}')
@@ -286,11 +286,11 @@ class Stop(BaseCLI):
             if sleep:
                 hint(f'Only sleeping {sleep}s seconds between attempts')
             if force_signal or sleep:
-                nl()
+                println()
             # Begin the recursive kill process
             self.recursive_kill()
         
-        nl()
+        println()
 
 if __name__ == '__main__':
     Stop()

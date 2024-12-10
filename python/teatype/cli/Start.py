@@ -194,7 +194,7 @@ class Start(BaseCLI):
                 warning_addendum = ' (possibly user keyboard interrupt)'
                 
             # Log a warning if the process is interrupted by the user (e.g., Ctrl+C)
-            warn(f'Process killed by {signal_name} signal{warning_addendum}.', pad_bottom=1, pad_top=2)
+            warn(f'Process killed by {signal_name} signal{warning_addendum}.', pad_after=1, pad_before=2)
             exit(1) # Double making sure that the process is killed (maybe a bad idea)?
 
         signal.signal(signal.SIGINT, signal_handler)

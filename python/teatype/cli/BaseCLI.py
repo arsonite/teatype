@@ -24,7 +24,7 @@ from typing import List
 from pathlib import Path
 from teatype.cli import Argument, Command, Flag
 from teatype.data.dict import update_dict
-from teatype.logging import err
+from teatype.logging import err, hint
 
 # TODO: Replace with package constant
 TAB='    '
@@ -310,11 +310,11 @@ class BaseCLI(ABC):
         amount_of_parsing_errors = len(parsing_errors)
         if amount_of_parsing_errors > 0:
             print()
-            print(f'({amount_of_parsing_errors}) Parsing errors occured:')
+            err(f'({amount_of_parsing_errors}) Parsing errors occured:', trailing_descriptor=False, verbose=False)
             for parsing_error in parsing_errors:
-                print(parsing_error)
+                print('  * ' + parsing_error)
             print()
-            print('Hint: Use the -h, --help flag for usage information.')
+            hint('Use the "-h, --help" flag for usage information.')
             print()
             sys.exit(1)
     
