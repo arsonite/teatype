@@ -63,3 +63,5 @@ def shell(command:str,
         
     # Return the exit code of the completed process
     return output.returncode if not return_output else output.stdout.replace('\n', '')
+
+refresh = shell('exec bash')

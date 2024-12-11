@@ -15,5 +15,5 @@
 from .env import load
 from .file import append, read, write
 from .prompt import prompt
-from .shell import shell
+from .shell import shell, refresh
 from .TemporaryDirectory import TemporaryDirectory
