@@ -54,9 +54,9 @@ def shell(command:str,
     # Not using a command list array, since I am using shell=True
     output = subprocess.run(command, 
                             shell=True,
-                            cwd=None if not cwd else cwd, 
+                            cwd=None if not cwd else cwd,
                             env=None if not env else env,
-                            text=return_output, 
+                            text=return_output,
                             timeout=timeout,
                             stdout=subprocess.PIPE if mute else None,
                             stderr=subprocess.PIPE if mute else None)
@@ -64,4 +64,5 @@ def shell(command:str,
     # Return the exit code of the completed process
     return output.returncode if not return_output else output.stdout.replace('\n', '')
 
-refresh = shell('exec bash')
+# TODO: Disabled for now, since it will break the shell
+# refresh = shell('exec bash')
