@@ -28,7 +28,7 @@ def load(env_path:str|None=None) -> bool:
     """
     try:
         # Load environment variables from .env file if it exists
-        env_vars = file.read(env_path if env_path else '.env', force='env')
+        env_vars = file.read(env_path if env_path else '.env', force_format='env')
         os.environ.update(env_vars)
         return True
     except FileNotFoundError:

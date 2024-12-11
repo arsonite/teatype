@@ -32,6 +32,8 @@ TAB='    '
 # TODO: SIGINT handle_interrupt implemented traps
 # TODO: Document all return types
 # TODO: Make the class functionality less obscure, more options, maybe return to constructors?
+# TODO: Print help text even if no arguments are provided (-h optional)
+# TODO: Seperate into optional and required arguments
 class BaseCLI(ABC):
     """
     Base class for command-line interfaces.
@@ -564,7 +566,7 @@ class BaseCLI(ABC):
         # TODO: Always return long value of command
         for command in self.commands:
             if command.value:
-                return command.value
+                return command.name
         return None
         
     def get_flag(self, name:str) -> any:
