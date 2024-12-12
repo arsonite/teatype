@@ -142,7 +142,7 @@ class ColoredFormatter(logging.Formatter):
 console_handler.setFormatter(ColoredFormatter())
 
 def _format(message:any,
-            pad_before:int|None=None,
+            pad_before:int=None,
             verbose:bool=False) -> any:
     """
     Formats a message with optional padding and verbosity.
@@ -185,8 +185,8 @@ def _format(message:any,
 
 def err(message:str,
         exit=False,
-        pad_after:int|None=None,
-        pad_before:int|None=None,
+        pad_after:int=None,
+        pad_before:int=None,
         traceback:bool=False,
         verbose:bool=True,
         trailing_descriptor:bool=True) -> None:
@@ -235,8 +235,8 @@ def err(message:str,
         sys.exit(1)
     
 def hint(message:str,
-         pad_after:int|None=None,
-         pad_before:int|None=None,
+         pad_after:int=None,
+         pad_before:int=None,
          verbose:bool=False)->int:
     """
     Provide a hint message with optional padding and verbosity.
@@ -260,8 +260,8 @@ def hint(message:str,
             print() # Print a blank line to add padding below the message
     
 def log(message:any,
-        pad_after:int|None=None,
-        pad_before:int|None=None,
+        pad_after:int=None,
+        pad_before:int=None,
         prettify:bool=False,
         verbose:bool=False) -> None:
     """
@@ -326,8 +326,8 @@ def println(amount:int=1) -> None:
         print()
 
 def warn(message:str='',
-         pad_after:int|None=None,
-         pad_before:int|None=None,
+         pad_after:int=None,
+         pad_before:int=None,
          verbose:bool=False) -> None:
     """
     Logs a warning message.

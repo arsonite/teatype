@@ -24,7 +24,7 @@ from pathlib import PosixPath
 # From own imports
 from teatype.logging import err
 
-def append(path:str, data:any, force_format:str|None=None) -> bool:
+def append(path:str, data:any, force_format:str=None) -> bool:
     """
     Append data to a file at the specified path.
 
@@ -72,7 +72,7 @@ def append(path:str, data:any, force_format:str|None=None) -> bool:
         err(f'Error appending to file {path}: {e}')
         return False
 
-def read(path:PosixPath|str, force_format:str|None=None) -> any:
+def read(path:PosixPath|str, force_format:str=None) -> any:
     """
     Read data from a file at the specified path.
 
@@ -146,7 +146,7 @@ def read(path:PosixPath|str, force_format:str|None=None) -> any:
         err(f'Error reading file "{string_path}": {exc}')
         raise exc
 
-def write(path:str, data:any, force_format:str|None=None) -> bool:
+def write(path:str, data:any, force_format:str=None) -> bool:
     """
     Write data to a file at the specified path.
 

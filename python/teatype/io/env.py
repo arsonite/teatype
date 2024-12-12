@@ -18,7 +18,7 @@ import os
 # From own imports
 from teatype.io import file
 
-def load(env_path:str|None=None) -> bool:
+def load(env_path:str=None) -> bool:
     """
     Load environment variables from a .env file into the environment.
 
