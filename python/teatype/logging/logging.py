@@ -188,8 +188,8 @@ def err(message:str,
         pad_after:int=None,
         pad_before:int=None,
         traceback:bool=False,
-        verbose:bool=True,
-        trailing_descriptor:bool=True) -> None:
+        trailing_descriptor:bool=True,
+        verbose:bool=True) -> None:
     """
     Logs an error message and optionally includes the traceback of the current exception.
 
@@ -216,6 +216,7 @@ def err(message:str,
         
     # Check if there is an active exception
     if exc_info and exc_info[0] is not None:
+        print('hi')
         # Log the error message with exception information
         logger.error(error_message, exc_info=True)
         # If an exception exists, proceed to log the error with exception details

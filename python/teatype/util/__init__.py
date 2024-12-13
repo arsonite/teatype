@@ -12,4 +12,4 @@
 # 
 # For more details, check the LICENSE file in the root directory of this repository.
 
-from .util import *
+from .stopwatch import GLOBAL_STOPWATCH_CONFIG, stopwatch
