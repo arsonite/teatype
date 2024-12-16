@@ -69,6 +69,22 @@ def append(path:str, data:any, force_format:str=None) -> bool:
         # Log an error message if an exception occurs
         err(f'Error appending to file {path}: {e}')
         return False
+    
+def exists(path:PosixPath|str) -> bool:
+    """
+    Check if a file exists at the specified path.
+
+    Parameters:
+        path (str): The path to the file.
+
+    Returns:
+        bool: True if the file exists, False otherwise.
+    """
+    if isinstance(path, PosixPath):
+        string_path = str(path)
+    else:
+        string_path = path
+    return os.path.exists(string_path), os.path.isfile(string_path)
 
 def read(path:PosixPath|str, force_format:str=None) -> any:
     """
@@ -92,9 +108,10 @@ def read(path:PosixPath|str, force_format:str=None) -> any:
             string_path = str(path)
         else:
             string_path = path
-            
-        if os.path.exists(string_path):
-            if os.path.isfile(string_path):
+        
+        file_exists, is_file = exists(string_path)
+        if file_exists:
+            if is_file:
                 with open(string_path, 'r') as f:
                     if force_format == 'lines':
                         # Read and return the lines of the file

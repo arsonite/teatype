@@ -24,6 +24,7 @@ from teatype.cli import Argument, Command, Flag
 from teatype.data.dict import update_dict
 from teatype.logging import err, hint
 
+DEBUG_MODE = False
 META_TYPE = dict[
     'name':str,
     'shorthand':str,
@@ -247,98 +248,109 @@ class BaseCLI(ABC):
         Returns:
             bool: True if all required arguments and flags are provided, False otherwise.
         """
-        # Hook for pre-validation logic
-        if hasattr(self, 'pre_validate') and callable(getattr(self, 'pre_validate')):
-            self.pre_validate()
-        
-        # Initialize an empty list to store any parsing errors encountered
-        parsing_errors = []
+        def validate():
+            # Hook for pre-validation logic
+            if hasattr(self, 'pre_validate') and callable(getattr(self, 'pre_validate')):
+                self.pre_validate()
+            
+            # Initialize an empty list to store any parsing errors encountered
+            parsing_errors = []
 
-        # Check if the help flag ('-h' or '--help') is present in the parsed flags
-        help_flag_detected = '-h' in self.parsed_flags or '--help' in self.parsed_flags
-        # Check if the help flag ('-h' or '--help') is present in the parsed flags
-        if help_flag_detected:
-            # If the help flag is detected, print the CLI usage information
-            self.print_usage()
-            sys.exit(0)
-        else:
-            if len(self.commands) > 0:
-                if len(self.parsed_arguments) > 1:
-                    parsing_errors.append('More than one command provided.')
-                    
-                if self.parsed_command:
-                    found_command = False
-                    for command in self.commands:
-                        if self.parsed_command == command.name or self.parsed_command == command.shorthand:
-                            command.value = self.parsed_command
-                            found_command = True
-                    if not found_command:
-                        parsing_errors.append(f'Unknown command: {self.parsed_command}.')
-                else:
-                    parsing_errors.append('No command provided.')
+            # Check if the help flag ('-h' or '--help') is present in the parsed flags
+            help_flag_detected = '-h' in self.parsed_flags or '--help' in self.parsed_flags
+            # Check if the help flag ('-h' or '--help') is present in the parsed flags
+            if help_flag_detected:
+                # If the help flag is detected, print the CLI usage information
+                self.print_usage()
+                sys.exit(0)
             else:
-                # Determine the number of parsed arguments and the total number of expected arguments
-                amount_of_parsed_arguments = len(self.parsed_arguments)
-                amount_of_all_arguments = len(self.arguments)
-                # Check if the number of parsed arguments exceeds the number of expected arguments
-                if amount_of_parsed_arguments > amount_of_all_arguments:
-                    parsing_errors.append(
-                        f'Number of possible arguments provided ({amount_of_parsed_arguments}) is greater than expected ({amount_of_all_arguments}).'
-                    )
-
-                # Calculate the number of required arguments
-                amount_of_required_arguments = len([argument for argument in self.arguments if argument.required])
-                amount_of_required_additional_arguments = amount_of_required_arguments - amount_of_parsed_arguments
-
-                # Check if the number of parsed arguments is less than the number of required arguments
-                if amount_of_parsed_arguments < amount_of_required_arguments:
-                    parsing_errors.append(
-                        f'Script requires ({amount_of_required_additional_arguments}) additional argument{"s" if amount_of_required_additional_arguments > 1 else ""}.'
-                    )
-
-                # Check for missing required arguments
-                for argument in self.arguments:
-                    if argument.required and amount_of_required_additional_arguments > 0:
-                        parsing_errors.append(f'Missing required argument: <{argument.name}>.')
-                        continue
+                if len(self.commands) > 0:
+                    if len(self.parsed_arguments) > 1:
+                        parsing_errors.append('More than one command provided.')
                         
-                    if self.parsed_arguments[argument.position]:
-                        argument.value = self.parsed_arguments[argument.position]
-
-            # Check for unknown flags in the parsed flags
-            for parsed_flag in self.parsed_flags:
-                search_result = [flag for flag in self.flags if flag.short == parsed_flag or flag.long == parsed_flag]
-                if len(search_result) == 0:
-                    parsing_errors.append(f'Unknown flag: {parsed_flag}.')
-
-            # Check for missing required flags and validate flag values
-            for flag in self.flags:
-                if flag.required:
-                    if flag.short not in self.parsed_flags and flag.long not in self.parsed_flags:
-                        parsing_errors.append(f'Missing required flag: {flag.short}, {flag.long}.')
-                        
-                if flag.short in self.parsed_flags or flag.long in self.parsed_flags:
-                    parsed_flag_value = self.parsed_flags.get(flag.short) or self.parsed_flags.get(flag.long)
-                    if parsed_flag_value and flag.options is None and parsed_flag_value is not True:
-                        parsing_errors.append(
-                            f'Flag "{flag.short}, {flag.long}" does not expect a value, but one was given: "{parsed_flag_value}".'
-                        )
+                    if self.parsed_command:
+                        found_command = False
+                        for command in self.commands:
+                            if self.parsed_command == command.name or self.parsed_command == command.shorthand:
+                                command.value = self.parsed_command
+                                found_command = True
+                        if not found_command:
+                            parsing_errors.append(f'Unknown command: {self.parsed_command}.')
                     else:
-                        flag.value = parsed_flag_value
+                        parsing_errors.append('No command provided.')
+                else:
+                    # Determine the number of parsed arguments and the total number of expected arguments
+                    amount_of_parsed_arguments = len(self.parsed_arguments)
+                    amount_of_all_arguments = len(self.arguments)
+                    # Check if the number of parsed arguments exceeds the number of expected arguments
+                    if amount_of_parsed_arguments > amount_of_all_arguments:
+                        parsing_errors.append(
+                            f'Number of possible arguments provided ({amount_of_parsed_arguments}) is greater than expected ({amount_of_all_arguments}).'
+                        )
 
-        # Assign the list of parsing errors encountered
-        amount_of_parsing_errors = len(parsing_errors)
-        if amount_of_parsing_errors > 0:
-            print()
-            err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_trailing_descriptor=False, print_verbose=False)
-            for parsing_error in parsing_errors:
-                print('  * ' + parsing_error)
-            if USE_HELP_MESSAGE_ON_FAIL:
-                hint('Use the "-h, --help" flag for usage information.', pad_before=1, pad_after=1)
-            else:
-                hint('For correct usage, check below:', pad_before=1)
-                self.print_usage(include_usage=False, print_padding=1)
-            sys.exit(1)
+                    # Calculate the number of required arguments
+                    amount_of_required_arguments = len([argument for argument in self.arguments if argument.required])
+                    amount_of_required_additional_arguments = amount_of_required_arguments - amount_of_parsed_arguments
+
+                    # Check if the number of parsed arguments is less than the number of required arguments
+                    if amount_of_parsed_arguments < amount_of_required_arguments:
+                        parsing_errors.append(
+                            f'Script requires ({amount_of_required_additional_arguments}) additional argument{"s" if amount_of_required_additional_arguments > 1 else ""}.'
+                        )
+
+                    # Check for missing required arguments
+                    for argument in self.arguments:
+                        if argument.required and amount_of_required_additional_arguments > 0:
+                            parsing_errors.append(f'Missing required argument: <{argument.name}>.')
+                            continue
+                            
+                        if self.parsed_arguments[argument.position]:
+                            argument.value = self.parsed_arguments[argument.position]
+
+                # Check for unknown flags in the parsed flags
+                for parsed_flag in self.parsed_flags:
+                    search_result = [flag for flag in self.flags if flag.short == parsed_flag or flag.long == parsed_flag]
+                    if len(search_result) == 0:
+                        parsing_errors.append(f'Unknown flag: {parsed_flag}.')
+
+                # Check for missing required flags and validate flag values
+                for flag in self.flags:
+                    if flag.required:
+                        if flag.short not in self.parsed_flags and flag.long not in self.parsed_flags:
+                            parsing_errors.append(f'Missing required flag: {flag.short}, {flag.long}.')
+                            
+                    if flag.short in self.parsed_flags or flag.long in self.parsed_flags:
+                        parsed_flag_value = self.parsed_flags.get(flag.short) or self.parsed_flags.get(flag.long)
+                        if parsed_flag_value and flag.options is None and parsed_flag_value is not True:
+                            parsing_errors.append(
+                                f'Flag "{flag.short}, {flag.long}" does not expect a value, but one was given: "{parsed_flag_value}".'
+                            )
+                        else:
+                            flag.value = parsed_flag_value
+
+            # Assign the list of parsing errors encountered
+            amount_of_parsing_errors = len(parsing_errors)
+            if amount_of_parsing_errors > 0:
+                print()
+                err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_trailing_descriptor=False, print_verbose=False)
+                for parsing_error in parsing_errors:
+                    print('  * ' + parsing_error)
+                if USE_HELP_MESSAGE_ON_FAIL:
+                    hint('Use the "-h, --help" flag for usage information.', pad_before=1, pad_after=1)
+                else:
+                    hint('For correct usage, check below:', pad_before=1)
+                    self.print_usage(include_usage=False, print_padding=1)
+                sys.exit(1)
+                
+        if DEBUG_MODE:
+            try:
+                validate()
+            except SystemExit:
+                pass
+            except:
+                err('An error occured during validation.', exit=True, traceback=True)
+        else:
+            validate()
     
     # TODO: Check what tab padding does, again
     # TODO: Restore replace name functionality directly to streamline function header

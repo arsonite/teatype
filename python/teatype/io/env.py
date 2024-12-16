@@ -16,6 +16,23 @@ import os
 # From own imports
 from teatype.io import file
 
+def get(key:str, default:str=None) -> str:
+    """
+    Retrieve the value of an environment variable.
+
+    This function returns the value of an environment variable if it exists.
+    If the variable does not exist, it returns the default value provided.
+
+    Args:
+        key (str): The name of the environment variable to retrieve.
+        default (str): The default value to return if the environment variable does not exist.
+                       Defaults to None.
+
+    Returns:
+        str: The value of the environment variable if it exists.
+    """
+    return os.environ.get(key, default)
+
 def load(env_path:str=None) -> bool:
     """
     Load environment variables from a .env file into the environment.
