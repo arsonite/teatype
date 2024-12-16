@@ -16,7 +16,7 @@ from typing import List
 # From own imports
 from teatype.logging import err, log, println
 
-def prompt(prompt_text:str, options:List[any], return_bool:bool=True) -> any:
+def prompt(prompt_text:str, options:List[any], return_bool:bool=True, colorize:bool=True) -> any:
     """
     Displays a prompt to the user with the given text and a list of available options.
 

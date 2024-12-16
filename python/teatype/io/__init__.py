@@ -12,6 +12,7 @@
 
 from .env import load
 from .file import append, read, write
+from .path import parent, script, workdir
 from .prompt import prompt
 from .shell import shell
 from .TemporaryDirectory import TemporaryDirectory
