@@ -1,38 +1,36 @@
-# Copyright (c) 2024-2025 enamentis GmbH. All rights reserved.
+# Copyright (C) 2024-2025 Burak Günaydin
 #
-# This software module is the proprietary property of enamentis GmbH.
-# Unauthorized copying, modification, distribution, or use of this software
-# is strictly prohibited unless explicitly authorized in writing.
-# 
-# THIS SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NONINFRINGEMENT.
-# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-# DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
-# 
-# For more details, check the LICENSE file in the root directory of this repository.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 
 # From system imports
 from typing import List
 
-# TODO: Implement as package class
-# TODO: Ommit commands in favor of flags with values (e.g. --name "John Doe" or maybe even "=" assignement e.g. --name="John Doe")
 class Command:
     """
     Represents a command-line command.
 
     Attributes:
         name (str): The name of the command.
+        shorthand (str): The shorthand of the command.
         help (str): A brief description of the command.
-        help_extension (List[str], optional): Additional help information for the command.
-        value (Any): The value of the command, initially set to None.
+        required (bool): Whether the command is required or not.
     """
     def __init__(self,
                 name:str,
                 shorthand:str,
-                help:str|List[str]):
+                help:str|List[str],
+                required:bool=True):
         self.name = name
         self.shorthand = shorthand
         self.help = help
+        self.required = required
         
         self.value = None

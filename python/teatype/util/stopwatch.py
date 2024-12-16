@@ -1,16 +1,14 @@
-# Copyright (c) 2024-2025 enamentis GmbH. All rights reserved.
+# Copyright (C) 2024-2025 Burak Günaydin
 #
-# This software module is the proprietary property of enamentis GmbH.
-# Unauthorized copying, modification, distribution, or use of this software
-# is strictly prohibited unless explicitly authorized in writing.
-# 
-# THIS SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NONINFRINGEMENT.
-# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-# DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
-# 
-# For more details, check the LICENSE file in the root directory of this repository.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 
 # System imports
 import time
@@ -22,50 +20,50 @@ class GLOBAL_STOPWATCH_CONFIG:
     """
     Global configuration for the stopwatch utility.
     """
-    DETECT_UNCLOSED_STOPWATCHES:bool=False # Debug option to detect unclosed stopwatches on runtime
     DISABLE_STOPWATCHES:bool=True
     PRINT_START:bool=False
     TIME_CONVERSION:bool=False
 
-def stopwatch(label:str=None):
+def stopwatch(label: str = None):
     """
     Using class and function closure to measure execution time between calls.
     If called with a label, it starts the timer and stores the label.
     If called without a label, it prints the elapsed time since the last labeled call.
+    A new stopwatch cannot be started if the previous stopwatch hasn't been closed.
     """
-        
     # Check if the stopwatches are disabled
     if GLOBAL_STOPWATCH_CONFIG.DISABLE_STOPWATCHES:
+        # If stopwatches are disabled in the global config, exit the function
         return
-    
-    # Class closure internal state to track the timer
+
+    # Internal state to track the timer
     state = getattr(stopwatch, '_state', None)
     if state is None:
-        stopwatch._state = state = {}
-        
-    # Debug option to detect unclosed stopwatches on runtime
-    if GLOBAL_STOPWATCH_CONFIG.DETECT_UNCLOSED_STOPWATCHES:
-        last_label = state.get('last_label')
-        if last_label:
-            keys = list(state.keys())
-            if keys[-1] != last_label:
-                print(state)
-                err(f'Stopwatch "{keys[-1]}" was never closed.', traceback=True)
-                return
+        # Initialize the state if it doesn't exist
+        stopwatch._state = state = {"active": False}
+
+    # Check for an active stopwatch
+    if state["active"] and label:
+        # If a stopwatch is already active and a new label is provided, log an error
+        err(f'Stopwatch "{state["last_label"]}" is still active. Close it before starting a new one.', exit=True)
 
     if label:
         # Start a timer for the given label
-        state['last_label'] = label
-        state[label] = time.time()
+        state['last_label'] = label # Store the label of the current stopwatch
+        state[label] = time.time() # Record the start time
+        state['active'] = True # Mark the stopwatch as active
         if GLOBAL_STOPWATCH_CONFIG.PRINT_START:
+            # Optionally log the start of the stopwatch
             log(f'Started stopwatch for "{label}".')
     else:
         # Ensure there is a previous label to calculate elapsed time
         last_label = state.get('last_label')
         if last_label and last_label in state:
+            # Calculate the elapsed time since the stopwatch started
             elapsed = time.time() - state[last_label]
-            
+
             if GLOBAL_STOPWATCH_CONFIG.TIME_CONVERSION:
+                # Convert the elapsed time to a human-readable format
                 if elapsed < 1e-6:
                     elapsed = f'{elapsed * 1e9:.2f} nanoseconds'
                 elif elapsed < 1e-3:
@@ -84,9 +82,12 @@ def stopwatch(label:str=None):
                     seconds = elapsed % 60
                     elapsed = f'{hours} hours, {minutes} minutes, {seconds:.2f}'
             else:
+                # Default format for elapsed time
                 elapsed = f'{elapsed:.4f} seconds'
-            
+
+            # Log the elapsed time with appropriate color formatting
             log(f'{EscapeColor.BLUE}Stopwatch {EscapeColor.LIGHT_CYAN}[{last_label}]{EscapeColor.LIGHT_GREEN}: {elapsed}.')
+            state['active'] = False # Mark the stopwatch as inactive
         else:
-            # Replace with proper critical logger without an exit
-            raise ValueError('No label found to measure elapsed time.')
+            # Log an error if there is no active stopwatch to measure
+            err(f'No active stopwatch found to measure elapsed time.')

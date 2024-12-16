@@ -1,16 +1,14 @@
-# Copyright (c) 2024-2025 enamentis GmbH. All rights reserved.
+# Copyright (C) 2024-2025 Burak Günaydin
 #
-# This software module is the proprietary property of enamentis GmbH.
-# Unauthorized copying, modification, distribution, or use of this software
-# is strictly prohibited unless explicitly authorized in writing.
-# 
-# THIS SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NONINFRINGEMENT.
-# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-# DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
-# 
-# For more details, check the LICENSE file in the root directory of this repository.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 
 # From system imports
 from enum import Enum
@@ -37,10 +35,13 @@ class EscapeColor(Enum):
     
     def __str__(self):
         """
-        Returns the ANSI escape code associated with the color enumeration member.
+        Returns the ANSI escape code associated with the enumeration member.
 
         This method overrides the default string representation of the Enum member,
         enabling it to be used directly in string formatting for colored terminal output.
         This way enums mimick how they are implemented in other languages like C++.
+        
+        Unfortunately (for good reasons), Python does not support operator overloading and inheritance of enums,
+        so this function has to be implemented in every enum class that requires it.
         """
-        return self.value # Retrieve and return the ANSI escape code string for the specific color
+        return self.value # Retrieve and return the ANSI escape code string for the specific value

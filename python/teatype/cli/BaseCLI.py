@@ -1,16 +1,14 @@
-# Copyright (c) 2024-2025 enamentis GmbH. All rights reserved.
+# Copyright (C) 2024-2025 Burak Günaydin
 #
-# This software module is the proprietary property of enamentis GmbH.
-# Unauthorized copying, modification, distribution, or use of this software
-# is strictly prohibited unless explicitly authorized in writing.
-# 
-# THIS SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NONINFRINGEMENT.
-# IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-# DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
-# 
-# For more details, check the LICENSE file in the root directory of this repository.
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 
 # System imports
 import os
@@ -26,7 +24,15 @@ from teatype.cli import Argument, Command, Flag
 from teatype.data.dict import update_dict
 from teatype.logging import err, hint
 
-# TODO: Replace with package constant
+
+META_TYPE = dict[
+    'name':str,
+    'shorthand':str,
+    'help':str,
+    'arguments':List[Argument],
+    'commands':List[Command],
+    'flags':List[Flag]
+]
 TAB='    '
 
 # TODO: SIGINT handle_interrupt implemented traps
@@ -51,13 +57,13 @@ class BaseCLI(ABC):
         parsing_errors (list): A list of parsing errors encountered during validation.
     """
     def __init__(self,
-                 auto_init: bool = True,
-                 auto_parse: bool = True,
-                 auto_validate: bool = True,
-                 auto_execute: bool = True,
-                 auto_activate_venv: bool = True,
-                 env_path: str = '.../.env',
-                 proxy_mode: bool = False):
+                 auto_init:bool=True,
+                 auto_parse:bool=True,
+                 auto_validate:bool=True,
+                 auto_execute:bool=True,
+                 auto_activate_venv:bool=True,
+                 env_path:str='.../.env',
+                 proxy_mode:bool=False):
         """
         Initializes the BaseCLI instance with configuration options.
 
@@ -211,10 +217,12 @@ class BaseCLI(ABC):
             else:
                 if len(self.commands) > 0:
                     if command is None:
-                        for search_command in self.commands:
-                            if arg == search_command.name or arg == search_command.shorthand:
-                                command = arg
-                                continue
+                        command = arg
+                        # Now allowing wrong commands to later handle them in validation
+                        # for search_command in self.commands:
+                        #     if arg == search_command.name or arg == search_command.shorthand:
+                        #         command = arg
+                        #         continue
                 # If the argument is not a flag, add it to the positional arguments list
                 arguments.append(arg)
             
@@ -238,6 +246,9 @@ class BaseCLI(ABC):
         Returns:
             bool: True if all required arguments and flags are provided, False otherwise.
         """
+        # Hook for pre-validation logic
+        if hasattr(self, 'pre_validate') and callable(getattr(self, 'pre_validate')):
+            self.pre_validate()
         
         # Initialize an empty list to store any parsing errors encountered
         parsing_errors = []
@@ -250,12 +261,18 @@ class BaseCLI(ABC):
             self.print()
             sys.exit(0)
         else:
-            # TODO: Check too many commands and wrong commands
             if len(self.commands) > 0:
+                if len(self.parsed_arguments) > 1:
+                    parsing_errors.append('More than one command provided.')
+                    
                 if self.parsed_command:
+                    found_command = False
                     for command in self.commands:
                         if self.parsed_command == command.name or self.parsed_command == command.shorthand:
                             command.value = self.parsed_command
+                            found_command = True
+                    if not found_command:
+                        parsing_errors.append(f'Unknown command: {self.parsed_command}.')
                 else:
                     parsing_errors.append('No command provided.')
             else:
@@ -312,7 +329,7 @@ class BaseCLI(ABC):
         amount_of_parsing_errors = len(parsing_errors)
         if amount_of_parsing_errors > 0:
             print()
-            err(f'({amount_of_parsing_errors}) Parsing errors occured:', trailing_descriptor=False, verbose=False)
+            err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_trailing_descriptor=False, print_verbose=False)
             for parsing_error in parsing_errors:
                 print('  * ' + parsing_error)
             print()
@@ -530,6 +547,10 @@ class BaseCLI(ABC):
         
         # Print the final formatted string to the console
         print(indented_formatted_string)
+        
+    ###########
+    # Getters #
+    ###########
     
     def get_meta(self):
         """
@@ -577,6 +598,10 @@ class BaseCLI(ABC):
             if flag.short == f'-{name}' or flag.long == f'--{name}':
                 return flag.value
         return None
+        
+    ###########
+    # Setters #
+    ###########
     
     def set_flag(self, name:str, value:any) -> bool:
         """
@@ -588,14 +613,12 @@ class BaseCLI(ABC):
                 return True
         return False
     
+    ######################
+    # Abstract functions #
+    ######################
+    
     @abstractmethod
-    def meta(self) -> dict[
-        'name':str,
-        'shorthand':str,
-        'help':str,
-        'arguments':List[Argument],
-        'commands':List[Command],
-        'flags':List[Flag]]:
+    def meta(self) -> META_TYPE:
         """
         Override this method in the child classes to provide meta information.
         
@@ -612,38 +635,49 @@ class BaseCLI(ABC):
         """
         raise NotImplementedError("Each script MUST implement the 'execute' method.")
     
-    """
+    #########
+    # Hooks #
+    #########
+
     # TODO: Make default return type and then catch that instead of relying on developer to remember implementing function
-    Optional method to be overridden in child classes for pre-execution logic.
-    Not making it abstract, to prevent the need to implement it in every child class.
-    
-        def pre_init(self) -> void
-    
-    Optional method to be overridden in child classes for pre-parsing logic.
-    Not making it abstract, to prevent the need to implement it in every child class.
-    
-        def pre_parse(self) -> void
-    
-    Optional method to be overridden in child classes for pre-execution logic.
-    Not making it abstract, to prevent the need to implement it in every child class.
-    
-        def pre_execute(self) -> void
-    
-    Override this method in the child classes to modify meta information.
+    def modified_meta(self) -> META_TYPE:
+        """
+        Override this method in the child classes to modify meta information.
 
-    This method is used to allow dynamic modification of the meta information
-    such as name, shorthand, help, arguments, commands, and flags. The child class
-    implementing this method must provide the modified meta information.
+        This method is used to allow dynamic modification of the meta information
+        such as name, shorthand, help, arguments, commands, and flags. The child class
+        implementing this method must provide the modified meta information.
 
-    Returns:
-        dict: A dictionary containing the modified meta information with keys:
-                'name', 'shorthand', 'help', 'arguments', 'commands', and 'flags'.
+        Returns:
+            dict: A dictionary containing the modified meta information with keys:
+                    'name', 'shorthand', 'help', 'arguments', 'commands', and 'flags'.
+        """
+        return {}
     
-        def modified_meta(self) -> dict[
-            'name':str,
-            'shorthand':str,
-            'help':str,
-            'arguments':List[Argument],
-            'commands':List[Command],
-            'flags':List[Flag]]
-    """
+    def pre_init(self, *args, **kwargs) -> None:
+        """
+        Optional hook to be overridden in child classes for pre-parsing logic.
+        Not making it abstract, to prevent the need to implement it in every child class.
+        """
+        pass
+    
+    def pre_parse(self, *args, **kwargs) -> None:
+        """
+        Optional hook to be overridden in child classes for pre-parsing logic.
+        Not making it abstract, to prevent the need to implement it in every child class.
+        """
+        pass
+    
+    def pre_validate(self, *args, **kwargs) -> None:
+        """
+        Optional hook to be overridden in child classes for pre-validation logic.
+        Not making it abstract, to prevent the need to implement it in every child class.
+        """
+        pass
+    
+    def pre_execute(self, *args, **kwargs) -> None:
+        """
+        Optional hook to be overridden in child classes for pre-execution logic.
+        Not making it abstract, to prevent the need to implement it in every child class.
+        """
+        pass
