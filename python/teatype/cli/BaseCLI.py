@@ -24,7 +24,6 @@ from teatype.cli import Argument, Command, Flag
 from teatype.data.dict import update_dict
 from teatype.logging import err, hint
 
-
 META_TYPE = dict[
     'name':str,
     'shorthand':str,
@@ -33,7 +32,9 @@ META_TYPE = dict[
     'commands':List[Command],
     'flags':List[Flag]
 ]
-TAB='    '
+TAB = '    '
+# TODO: Make configurable
+USE_HELP_MESSAGE_ON_FAIL = False
 
 # TODO: SIGINT handle_interrupt implemented traps
 # TODO: Document all return types
@@ -258,7 +259,7 @@ class BaseCLI(ABC):
         # Check if the help flag ('-h' or '--help') is present in the parsed flags
         if help_flag_detected:
             # If the help flag is detected, print the CLI usage information
-            self.print()
+            self.print_usage()
             sys.exit(0)
         else:
             if len(self.commands) > 0:
@@ -332,13 +333,22 @@ class BaseCLI(ABC):
             err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_trailing_descriptor=False, print_verbose=False)
             for parsing_error in parsing_errors:
                 print('  * ' + parsing_error)
-            print()
-            hint('Use the "-h, --help" flag for usage information.')
-            print()
+            if USE_HELP_MESSAGE_ON_FAIL:
+                hint('Use the "-h, --help" flag for usage information.', pad_before=1, pad_after=1)
+            else:
+                hint('For correct usage, check below:', pad_before=1)
+                self.print_usage(include_usage=False, print_padding=1)
             sys.exit(1)
     
+    # TODO: Check what tab padding does, again
     # TODO: Restore replace name functionality directly to streamline function header
-    def format_str(self, include_args:bool, include_meta:bool, minify_usage:bool, tab_padding:int):
+    def format_str(self,
+                   include_args:bool,
+                   include_meta:bool,
+                   include_usage:bool,
+                   minify_usage:bool,
+                   tab_padding:int,
+                   print_padding) -> str:
         """
         Formats the CLI usage and meta information into a string.
 
@@ -354,7 +364,7 @@ class BaseCLI(ABC):
         Returns:
             str: The formatted string containing the CLI's usage and meta information.
         """
-        def pad(indented_formatted_string:str):
+        def pad(indented_formatted_string:str, print_padding:int=0) -> str:
             """
             Pads the given string with a specified number of tab characters.
 
@@ -371,42 +381,47 @@ class BaseCLI(ABC):
             - return f'{tabs}{indented_formatted_string}': Concatenate the accumulated tabs with the input string and return the result.
             """
             tabs = ''
-            for _ in range(tab_padding):
-                tabs += TAB
+            if print_padding:
+                for _ in range(print_padding):
+                    tabs += TAB
+            else:
+                for _ in range(tab_padding):
+                    tabs += TAB
             return f'{tabs}{indented_formatted_string}'
         
         # Initialize an empty string to store the formatted output
         indented_formatted_string = ''
+        
+        # TODO: Reduce repetition
+        amount_of_arguments_greater_0 = len(self.arguments)
+        amount_of_commands_greater_0 = len(self.commands)
+        amount_of_flags_greater_0 = len(self.flags)
         
         # Set the name to './<name>' by default
         name = f'./{self.name}'
         if minify_usage:
             # Add shorthand and name to the formatted string
             indented_formatted_string = pad(f'{self.shorthand}, {self.name}')
-        else:
+        elif include_usage:
             # Add usage information to the formatted string
             indented_formatted_string += '\n'
             indented_formatted_string += f'Usage:\n{TAB}{name}'
-        
-        # TODO: Reduce repetition
-        amount_of_arguments_greater_0 = len(self.arguments)
-        if amount_of_arguments_greater_0:
-            indented_formatted_string += ' [ARGUMENTS]'
-        
-        amount_of_commands_greater_0 = len(self.commands)
-        if amount_of_commands_greater_0:
-            indented_formatted_string += ' [COMMAND]'
-        
-        amount_of_flags_greater_0 = len(self.flags)
-        if amount_of_flags_greater_0:
-            indented_formatted_string += ' [FLAGS]'
+    
+            if amount_of_arguments_greater_0:
+                indented_formatted_string += ' [ARGUMENTS]'
+            
+            if amount_of_commands_greater_0:
+                indented_formatted_string += ' [COMMAND]'
+            
+            if amount_of_flags_greater_0:
+                indented_formatted_string += ' [FLAGS]'
+                
+            indented_formatted_string += '\n'
             
         if include_meta:
             indented_formatted_string += pad(f'\n\t{self.help}')
         
         if include_args:
-            indented_formatted_string += '\n'
-            
             # This variable will be used to keep track of the maximum width of the formatted lines
             line_width = 0
             # TODO: Refactor to prevent unncessay loops
@@ -485,7 +500,6 @@ class BaseCLI(ABC):
             # TODO: Reduce even more repetition
             # If there are arguments, include them in the formatted string
             if amount_of_arguments_greater_0:
-                indented_formatted_string += '\n'
                 indented_formatted_string += 'Arguments:\n'
                 
                 # Iterate over each argument and add its details to the formatted string
@@ -523,9 +537,18 @@ class BaseCLI(ABC):
                     indented_formatted_string += pad_arg_line(flag_line, flag.help, flag.options)
                     indented_formatted_string += '\n'
         
+        if print_padding > 0:
+            lines = indented_formatted_string.split('\n')
+            indented_formatted_string = '\n'.join([pad(line, print_padding) for line in lines])
         return indented_formatted_string
             
-    def print(self, include_args:bool=True, include_meta:bool=False, minify_usage:bool=False, tab_padding:int=0):
+    def print_usage(self,
+                    include_args:bool=True,
+                    include_meta:bool=False,
+                    include_usage:bool=True,
+                    minify_usage:bool=False,
+                    tab_padding:int=0,
+                    print_padding:int=0):
         """
         Prints the formatted CLI usage and meta information to the console.
 
@@ -543,7 +566,12 @@ class BaseCLI(ABC):
         
         # Generate the formatted string using the format_str method
         # The format_str method takes include_args, include_meta, minify_usage, and tab_padding as arguments
-        indented_formatted_string = self.format_str(include_args, include_meta, minify_usage, tab_padding)
+        indented_formatted_string = self.format_str(include_args,
+                                                    include_meta,
+                                                    include_usage,
+                                                    minify_usage,
+                                                    tab_padding,
+                                                    print_padding)
         
         # Print the final formatted string to the console
         print(indented_formatted_string)

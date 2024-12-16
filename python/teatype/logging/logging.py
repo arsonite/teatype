@@ -243,11 +243,8 @@ def err(message:str,
         println(pad_after) # Print a blank line to add padding below the message
         
     if exit:
-        try:
-            # If the exit flag is set, exit the program with an error code
-            sys.exit(1)
-        except:
-            pass
+        # If the exit flag is set, exit the program with an error code
+        sys.exit(1)
             
 def implemented_trap(message:str,
                      pad_before:int=None,
