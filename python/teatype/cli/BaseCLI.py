@@ -333,7 +333,7 @@ class BaseCLI(ABC):
             amount_of_parsing_errors = len(parsing_errors)
             if amount_of_parsing_errors > 0:
                 print()
-                err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_trailing_descriptor=False, print_verbose=False)
+                err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_log_tag=False, print_verbose=False)
                 for parsing_error in parsing_errors:
                     print('  * ' + parsing_error)
                 if USE_HELP_MESSAGE_ON_FAIL:
