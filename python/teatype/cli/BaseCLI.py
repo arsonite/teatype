@@ -35,7 +35,7 @@ META_TYPE = dict[
 ]
 TAB = '    '
 # TODO: Make configurable
-USE_HELP_MESSAGE_ON_FAIL = False
+USE_HELP_MESSAGE_ON_FAIL = True
 
 # TODO: SIGINT handle_interrupt implemented traps
 # TODO: Document all return types
@@ -339,6 +339,8 @@ class BaseCLI(ABC):
                 if USE_HELP_MESSAGE_ON_FAIL:
                     hint('Use the "-h, --help" flag for usage information.', pad_before=1, pad_after=1)
                 else:
+                    # TODO: Proper formatting without newline
+                    # TODO: Do not display additional_help
                     hint('For correct usage, check below:', pad_before=1)
                     self.print_usage(include_usage=False, print_padding=1)
                 sys.exit(1)
