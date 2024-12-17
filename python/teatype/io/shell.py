@@ -13,6 +13,9 @@
 # System imports
 import subprocess
 
+# From package imports
+from teatype.io import env as current_env
+
 def shell(command:str,
           sudo:bool=False,
           cwd:bool=False,
@@ -53,7 +56,7 @@ def shell(command:str,
     output = subprocess.run(command, 
                             shell=True,
                             cwd=None if not cwd else cwd,
-                            env=None if not env else env,
+                            env=env if not env else current_env.get(),
                             text=return_output,
                             timeout=timeout,
                             stdout=subprocess.PIPE if mute else None,

@@ -86,6 +86,7 @@ class BaseCLI(ABC):
                                           Defaults to False.
         """
         # Load the environment variables from the specified .env file
+        # TODO: Replace with own file class
         env_file = Path(env_path) # Create a Path object for the environment file path
         if env_file.exists(): # Check if the .env file exists at the given path
             with env_file.open() as f: # Open the .env file for reading

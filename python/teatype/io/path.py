@@ -16,6 +16,20 @@ import inspect
 # From system imports
 from pathlib import Path
 
+def home(stringify:bool=True) -> str:
+    """
+    Retrieve the user's home directory.
+
+    Args:
+        stringify (bool): If True, returns the user's home directory as a string.
+                           If False, returns as a Path object. Defaults to True.
+
+    Returns:
+        str: The user's home directory as a string if stringify is True.
+    """
+    user_path = Path.home() # Get the user's home directory as a Path object
+    return str(user_path) if stringify else user_path # Return as string or Path object
+
 def join(*args, stringify:bool=True) -> str:
     """
     Join multiple path components intelligently.
@@ -51,7 +65,7 @@ def parent(reverse_depth:int=1, stringify:bool=True) -> str:
         parent = parent.parent # Traverse up the directory tree
     return str(parent) if stringify else parent # Return the parent path as string or Path object
 
-def script(stringify: bool = True) -> str:
+def script(stringify:bool=True) -> str:
     """
     Retrieve the path of the calling script.
 
@@ -79,7 +93,7 @@ def script(stringify: bool = True) -> str:
     caller_path = Path(caller_frame.filename).resolve() # Resolve the absolute path of the caller's script
     return str(caller_path) if stringify else caller_path # Return the path as string or Path object based on `stringify`
 
-def workdir(stringify: bool = True) -> str:
+def workdir(stringify:bool=True) -> str:
     """
     Retrieve the current working directory.
 

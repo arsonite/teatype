@@ -16,22 +16,24 @@ import os
 # From own imports
 from teatype.io import file
 
-def get(key:str, default:str=None) -> str:
+def get(key:str=None, default:str=None) -> str | dict:
     """
-    Retrieve the value of an environment variable.
+    Retrieve environment variables.
 
-    This function returns the value of an environment variable if it exists.
-    If the variable does not exist, it returns the default value provided.
+    This function fetches the value of a specific environment variable if a key is provided.
+    If no key is provided, it returns all environment variables as a dictionary.
 
     Args:
-        key (str): The name of the environment variable to retrieve.
-        default (str): The default value to return if the environment variable does not exist.
-                       Defaults to None.
+        key (str, optional): The name of the environment variable to retrieve. Defaults to None.
+        default (str, optional): The default value to return if the specified environment variable is not found. Defaults to None.
 
     Returns:
-        str: The value of the environment variable if it exists.
+        str | dict: The value of the specified environment variable, or all environment variables if no key is provided.
     """
-    return os.environ.get(key, default)
+    # If 'key' is provided, attempt to get its value from the environment variables.
+    # If 'key' is not found, return 'default'.
+    # If 'key' is not provided, return the entire environment variables dictionary.
+    return os.environ.get(key, default) if (key or default) else os.environ
 
 def load(env_path:str=None) -> bool:
     """
