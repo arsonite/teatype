@@ -67,13 +67,13 @@ def prompt(prompt_text:str, options:List[any], return_bool:bool=True, colorize:b
             err('Invalid input. Available options are: ' + ', '.join(options),
                 pad_after=1,
                 exit=True,
-                use_log_tag=False,
+                use_prefix=False,
                 print_verbose=False)
         
         # Return the validated user input
         return prompt_answer == options[0] if return_bool else prompt_answer
     except KeyboardInterrupt:
-        warn('User interrupted the input prompt.', pad_before=2, pad_after=1, use_log_tag=False, print_verbose=False)
+        warn('User interrupted the input prompt.', pad_before=2, pad_after=1, use_prefix=False, print_verbose=False)
         sys.exit(1)
     except SystemExit as se:
         sys.exit(se.code)

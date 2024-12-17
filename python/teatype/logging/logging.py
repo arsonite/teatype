@@ -140,8 +140,8 @@ class ColoredFormatter(logging.Formatter):
 console_handler.setFormatter(ColoredFormatter())
 
 def _format(message:any,
-            log_tag:str=None,
-            use_log_tag:bool=True,
+            prefix:str=None,
+            use_prefix:bool=True,
             pad_before:int=None,
             print_verbose:bool=False) -> any:
     """
@@ -183,8 +183,8 @@ def _format(message:any,
         
         formatted_message = f'{message} - [{filename}, PRINTLN: {lineno}]' # Format the message with caller info
         
-    if log_tag and use_log_tag:
-        formatted_message = f'{log_tag} - {formatted_message}'
+    if prefix and use_prefix:
+        formatted_message = f'{prefix} - {formatted_message}'
     
     return formatted_message
 
@@ -193,7 +193,7 @@ def err(message:str,
         pad_before:int=None,
         pad_after:int=None,
         traceback:bool=False,
-        use_log_tag:bool=True,
+        use_prefix:bool=True,
         print_verbose:bool=True) -> None:
     """
     Logs an error message and optionally includes the traceback of the current exception.
@@ -214,15 +214,15 @@ def err(message:str,
     
     # Log the error message as a critical error, potentially including the traceback
     if exit:
-        log_tag = 'FATAL EXIT ERROR'
+        prefix = 'FATAL EXIT ERROR'
     elif traceback:
-        log_tag = 'FATAL ERROR'
+        prefix = 'FATAL ERROR'
     else:
-        log_tag = 'ERROR'
+        prefix = 'ERROR'
         
     error_message = _format(message=message,
-                            log_tag=log_tag,
-                            use_log_tag=use_log_tag,
+                            prefix=prefix,
+                            use_prefix=use_prefix,
                             print_verbose=print_verbose,
                             pad_before=pad_before)
     
@@ -250,10 +250,10 @@ def implemented_trap(message:str,
                      pad_before:int=None,
                      pad_after:int=None,
                      print_verbose:bool=False,
-                     use_log_tag:bool=True) -> None:
+                     use_prefix:bool=True) -> None:
     trap_message = _format(message,
-                           log_tag='IMPLEMENTED TRAP',
-                           use_log_tag=use_log_tag,
+                           prefix='IMPLEMENTED TRAP',
+                           use_prefix=use_prefix,
                            pad_before=pad_before,
                            print_verbose=print_verbose)
     
@@ -265,7 +265,7 @@ def implemented_trap(message:str,
 def hint(message:str,
          pad_before:int=None,
          pad_after:int=None,
-         use_log_tag:bool=True,
+         use_prefix:bool=True,
          print_verbose:bool=False) -> int:
     """
     Provide a hint message with optional padding and verbosity.
@@ -280,8 +280,8 @@ def hint(message:str,
     """
     # Format the message with optional padding and verbosity
     hint_message = _format(message,
-                           log_tag='HINT',
-                           use_log_tag=use_log_tag,
+                           prefix='HINT',
+                           use_prefix=use_prefix,
                            pad_before=pad_before,
                            print_verbose=print_verbose)
     
@@ -367,7 +367,7 @@ def println(amount:int=1) -> None:
 def warn(message:str='',
          pad_after:int=None,
          pad_before:int=None,
-         use_log_tag:bool=True,
+         use_prefix:bool=True,
          print_verbose:bool=False) -> None:
     """
     Logs a warning message.
@@ -382,8 +382,8 @@ def warn(message:str='',
         int: Returns 0 after logging the warning.
     """
     warn_message = _format(message,
-                           log_tag='WARN',
-                           use_log_tag=use_log_tag,
+                           prefix='WARN',
+                           use_prefix=use_prefix,
                            pad_before=pad_before,
                            print_verbose=print_verbose)
     logger.warning(warn_message) # Log the warning message
