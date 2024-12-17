@@ -25,7 +25,7 @@ from typing import List
 from teatype.logging import err, warn
 
 class _File:
-    def __init__(self, path:str, content:any=None, trimmed:bool=False):
+    def __init__(self, path:str, content:any=None, trimmed:bool=False, nested_depth:int=None):
         """
         Initializes a File object with various attributes based on the given path.
         
@@ -35,10 +35,11 @@ class _File:
             trimmed (bool, optional): Whether to skip retrieving additional file attributes. Defaults to False.
         """
         self.path = path # Store the path to the file or directory
+        self.nested_depth = nested_depth # Store the nested depth of the file or directory in case of recursive listing
 
         self.exists = os.path.exists(path) # Check if the file or directory exists
         if self.exists:
-            self.content = content # Store the content of the file
+            self.content = content # Store the content of the file (if provided)
                 
             # Check if the path is a file and store the result
             self.is_file = os.path.isfile(path)
@@ -73,6 +74,15 @@ class _File:
                 else:
                     # Get the size of the directory in bytes
                     self.size = sum(os.path.getsize(os.path.join(dirpath, filename)) for dirpath, dirnames, filenames in os.walk(path) for filename in filenames)
+                    
+    def __str__(self):
+        """
+        Returns a string representation of the File object.
+        
+        Returns:
+            str: A string representation of the File object.
+        """
+        return f'File(path="{self.path}", exists={self.exists}, is_file={self.is_file}, name="{self.name}")'
 
 def append(path:str, data:any, force_format:str=None) -> bool:
     """
@@ -217,7 +227,8 @@ def list(directory:str,
          walk:bool=True,
          depth:int=1,
          ignore_folders:List[str]=[],
-         trim_files:bool=True) -> dict:
+         trim_files:bool=True,
+         stringify:bool=False) -> List[_File]:
     """
     Walk through a directory and return a list of files and subdirectories.
 
@@ -232,32 +243,46 @@ def list(directory:str,
         list: A list of files and subdirectories in the directory.
     """
     try:
+        # Check if a depth greater than 1 is specified without enabling recursive walking
         if depth > 1 and walk == False:
             warn('Cannot specify depth without walking through subdirectories. Ignoring depth parameter.')
-            
+        
+        # Initialize an empty list to store the results of files and directories
         results = []
+        
+        # Define an inner function to handle recursive directory walking
         def walk_directory(dir_path, current_depth):
+            # Terminate recursion if the current depth exceeds the specified maximum depth
             if current_depth > depth:
                 return
+            # Iterate over each entry in the current directory
             for entry in os.scandir(dir_path):
                 if entry.is_dir():
+                    # Skip folders that are in the ignore list
                     if entry.name in ignore_folders:
                         continue
-                    results.append({'type': 'directory', 'name': entry.name, 'path': entry.path, 'depth': current_depth})
+                    # Append directory details to the results list
+                    results.append(_File(entry.path, trimmed=trim_files, nested_depth=current_depth))
+                    # Recursively walk through the subdirectory, increasing the depth
                     walk_directory(entry.path, current_depth + 1)
                 else:
-                    results.append({'type': 'file', 'name': entry.name, 'path': entry.path, 'depth': current_depth})
-
+                    # Append directory details to the results list
+                    results.append(_File(entry.path, trimmed=trim_files, nested_depth=current_depth))
         if walk:
+            # If recursive walking is enabled, start walking from the root directory
             walk_directory(directory, 1)
         else:
+            # If recursive walking is disabled, list only the immediate entries in the root directory
             for entry in os.scandir(directory):
-                results.append({'type': 'directory' if entry.is_dir() else 'file', 'name': entry.name, 'path': entry.path, 'depth': 0})
-
+                # Append directory details to the results list
+                results.append(_File(entry.path, trimmed=trim_files))
+        
+        # Return the compiled list of files and directories with their details
         return results
     except Exception as exc:
-        # Log an error message if an exception occurs
+        # Log an error message if an exception occurs during directory walking
         err(f'Error walking through directory "{directory}": {exc}')
+        # Re-raise the exception to allow further handling upstream
         raise exc
 
 def move(source:str, destination:str, create_parent_directories:bool=True, overwrite:bool=True) -> bool:

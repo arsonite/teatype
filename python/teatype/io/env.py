@@ -56,3 +56,15 @@ def load(env_path:str=None) -> bool:
         # Log an error message if an exception occurs
         print(f'An error occurred while loading the .env file: {e}')
         return False
+    
+def set(key:str, value:str) -> None:
+    """
+    Set an environment variable.
+
+    This function sets the value of an environment variable.
+
+    Args:
+        key (str): The name of the environment variable.
+        value (str): The value to assign to the environment variable.
+    """
+    os.environ[key] = value

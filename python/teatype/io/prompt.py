@@ -13,7 +13,8 @@
 # From system imports
 from typing import List
 
-# From own imports
+# From package imports
+from teatype.enum import EscapeColor
 from teatype.logging import err, log, println
 
 def prompt(prompt_text:str, options:List[any], return_bool:bool=True, colorize:bool=True) -> any:
