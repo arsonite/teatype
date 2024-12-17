@@ -10,12 +10,15 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
+# System import
+import sys
+
 # From system imports
 from typing import List
 
 # From package imports
 from teatype.enum import EscapeColor
-from teatype.logging import err, log, println, warn
+from teatype.logging import err, log, warn
 
 def prompt(prompt_text:str, options:List[any], return_bool:bool=True, colorize:bool=True) -> any:
     """
@@ -34,8 +37,10 @@ def prompt(prompt_text:str, options:List[any], return_bool:bool=True, colorize:b
             if len(options) > 2:
                 # Raise an error if more than two options are provided, as a boolean return is only valid for binary choices
                 err('Cannot return a boolean value for more than two options.', exit=True)
-                
+        
         # Log the prompt text for debugging or record-keeping purposes
+        if colorize:
+            prompt_text = f'{EscapeColor.LIGHT_GREEN}{prompt_text}{EscapeColor.RESET}'
         log(prompt_text, pad_before=1)
         
         # Initialize the string that will display the options
@@ -52,17 +57,25 @@ def prompt(prompt_text:str, options:List[any], return_bool:bool=True, colorize:b
         options_string += '): '
         
         # Prompt the user for input using the constructed options string
+        if colorize:
+            options_string = f'{EscapeColor.GRAY}{options_string}{EscapeColor.RESET}'
         prompt_answer = input(options_string)
-        println()
         
         # Validate the user's input against the available options
         if prompt_answer not in options:
             # Log an error message and exit if the input is invalid
-            err('Invalid input. Available options are: ' + ', '.join(options), exit=True)
+            err('Invalid input. Available options are: ' + ', '.join(options),
+                pad_after=1,
+                exit=True,
+                use_log_tag=False,
+                print_verbose=False)
         
         # Return the validated user input
         return prompt_answer == options[0] if return_bool else prompt_answer
     except KeyboardInterrupt:
-        warn('User interrupted the input prompt.', use_log_tag=False, verbose=False)
+        warn('User interrupted the input prompt.', pad_before=2, pad_after=1, use_log_tag=False, print_verbose=False)
+        sys.exit(1)
+    except SystemExit as se:
+        sys.exit(se.code)
     except:
-        err(f'An error occurred while prompting the user for input', exit=True, traceback=True)
+        err(f'An error occurred while prompting the user for input', pad_after=1, exit=True, traceback=True)
