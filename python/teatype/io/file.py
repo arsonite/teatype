@@ -15,12 +15,14 @@ import configparser
 import csv
 import json
 import os
+import shutil
 
 # From system imports
 from pathlib import PosixPath
+from typing import List
 
 # From own imports
-from teatype.logging import err
+from teatype.logging import err, warn
 
 def append(path:str, data:any, force_format:str=None) -> bool:
     """
@@ -70,6 +72,56 @@ def append(path:str, data:any, force_format:str=None) -> bool:
         err(f'Error appending to file {path}: {e}')
         return False
     
+def copy(source:str, destination:str, create_parent_directories:bool=True, overwrite:bool=True) -> bool:
+    """
+    Copy a file from the source path to the destination path.
+
+    Parameters:
+        source (str): The path to the source file.
+        destination (str): The path to the destination file.
+
+    Returns:
+        bool: True if the operation was successful, False otherwise.
+    """
+    try:
+        if not exists(source):
+            # Log an error message if the source file does not exist
+            err(f'File "{source}" does not exist.')
+            return False
+        
+        if exists(destination):
+            if overwrite:
+                pass
+            else:
+                # Log a warning message if the destination file already exists
+                err(f'File "{destination}" already exists. Call with "overwrite=True" to replace it.')
+                return False
+            
+        shutil.copy(source, destination)
+        return True
+    except Exception as exc:
+        # Log an error message if an exception occurs
+        err(f'Error copying file from {source} to {destination}: {exc}')
+        return False
+
+def delete(path:str) -> bool:
+    """
+    Delete a file (or directory) at the specified path.
+
+    Parameters:
+        path (str): The path to the file.
+
+    Returns:
+        bool: True if the operation was successful, False otherwise.
+    """
+    try:
+        os.remove(path)
+        return True
+    except Exception as exc:
+        # Log an error message if an exception occurs
+        err(f'Error deleting file "{path}": {exc}')
+        return False
+    
 def exists(path:PosixPath|str) -> bool:
     """
     Check if a file exists at the specified path.
@@ -85,6 +137,68 @@ def exists(path:PosixPath|str) -> bool:
     else:
         string_path = path
     return os.path.exists(string_path), os.path.isfile(string_path)
+    
+def list(directory:str, recursive:bool=True) -> List[str]:
+    """
+    Walk through a directory and return a list of files and subdirectories.
+
+    Parameters:
+        directory (str): The path to the directory to walk through.
+        recursive (bool): Whether to walk through subdirectories recursively.
+
+    Returns:
+        list: A list of files and subdirectories in the directory.
+    """
+    try:
+        # TODO: Check formatting of the returned list
+        # Initialize an empty list to store the files and subdirectories
+        files = []
+        # Walk through the directory and append files and subdirectories to the list
+        for root, directory, filenames in os.walk(directory):
+            # print(root)
+            # print(directory)
+            # print(filenames)
+            for filename in filenames:
+                files.append(os.path.join(root, filename))
+            if not recursive:
+                break
+        return files
+    except Exception as exc:
+        # Log an error message if an exception occurs
+        err(f'Error walking through directory "{directory}": {exc}')
+        raise exc
+
+def move(source:str, destination:str, create_parent_directories:bool=True, overwrite:bool=True) -> bool:
+    """
+    Move a file from the source path to the destination path.
+
+    Parameters:
+        source (str): The path to the source file.
+        destination (str): The path to the destination file.
+
+    Returns:
+        bool: True if the operation was successful, False otherwise.
+    """
+    try:
+        if not exists(source):
+            # Log an error message if the source file does not exist
+            err(f'File "{source}" does not exist.')
+            return False
+        
+        if exists(destination):
+            if overwrite:
+                pass
+            else:
+                # Log a warning message if the destination file already exists
+                err(f'File "{destination}" already exists. Call with "overwrite=True" to replace it.')
+                return False
+            
+        shutil.move(source, destination)
+        return True
+    except Exception as exc:
+        # Log an error message if an exception occurs
+        err(f'Error moving file from {source} to {destination}: {exc}')
+        return False
 
 def read(path:PosixPath|str, force_format:str=None) -> any:
     """

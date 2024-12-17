@@ -10,9 +10,9 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-from .env import load
-from .file import append, read, write
-from .path import parent, script, workdir
+from .env import get, load
+from .file import append, copy, delete, exists, list, move, read, write
+from .path import join, parent, script, workdir
 from .prompt import prompt
 from .shell import shell
 from .TemporaryDirectory import TemporaryDirectory
