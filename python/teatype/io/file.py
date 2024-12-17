@@ -75,6 +75,83 @@ class _File:
                     # Get the size of the directory in bytes
                     self.size = sum(os.path.getsize(os.path.join(dirpath, filename)) for dirpath, dirnames, filenames in os.walk(path) for filename in filenames)
                     
+    def append(self, data:any, force_format:str=None) -> bool:
+        """
+        Proxy-method for the append function to append data to the file at the specified path.
+        
+        Parameters:
+            data (any): The data to append to the file.
+            force_format (str, optional): The format to force when appending data. Defaults to None.
+        
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+        """
+        return append(self.path, data, force_format)
+    
+    def copy(self, destination:str, create_parent_directories:bool=True, overwrite:bool=True) -> bool:
+        """
+        Proxy-method for the copy function to copy the file from the source path to the destination path.
+        
+        Parameters:
+            destination (str): The path to the destination file.
+            create_parent_directories (bool, optional): Whether to create parent directories if they do not exist. Defaults to True.
+            overwrite (bool, optional): Whether to overwrite the destination file if it already exists. Defaults to True.
+        
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+        """
+        return copy(self.path, destination, create_parent_directories, overwrite)
+    
+    def delete(self) -> bool:
+        """
+        Proxy-method for the delete function to delete the file (or directory) at the specified path.
+        
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+        """
+        return delete(self.path)
+    
+    def move(self, destination:str, create_parent_directories:bool=True, overwrite:bool=True) -> bool:
+        """
+        Proxy-method for the move function to move the file from the source path to the destination path.
+        
+        Parameters:
+            destination (str): The path to the destination file.
+            create_parent_directories (bool, optional): Whether to create parent directories if they do not exist. Defaults to True.
+            overwrite (bool, optional): Whether to overwrite the destination file if it already exists. Defaults to True.
+        
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+        """
+        return move(self.path, destination, create_parent_directories, overwrite)
+    
+    def read(self, force_format:str=None, return_file:bool=False, trim_file:bool=False) -> any:
+        """
+        Proxy-method for the read function to read data from the file at the specified path.
+        
+        Parameters:
+            force_format (str, optional): The format to force when reading data. Defaults to None.
+            return_file (bool, optional): Whether to return a _File object with additional attributes. Defaults to False.
+            trim_file (bool, optional): Whether to skip retrieving additional file attributes. Defaults to False.
+        
+        Returns:
+            any: The data read from the file, or None if an error occurred.
+        """
+        return read(self, force_format, return_file, trim_file)
+    
+    def write(self, data:any, force_format:str=None) -> bool:
+        """
+        Proxy-method for the write function to write data to the file at the specified path.
+        
+        Parameters:
+            data (any): The data to write to the file.
+            force_format (str, optional): The format to force when writing data. Defaults to None.
+        
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+        """
+        return write(self.path, data, force_format)
+                    
     def __str__(self):
         """
         Returns a string representation of the File object.
@@ -82,7 +159,7 @@ class _File:
         Returns:
             str: A string representation of the File object.
         """
-        return f'File(path="{self.path}", exists={self.exists}, is_file={self.is_file}, name="{self.name}")'
+        return f'File(path="{self.path}", is_file={self.is_file}, name="{self.name}")'
 
 def append(path:str, data:any, force_format:str=None) -> bool:
     """
@@ -214,14 +291,14 @@ def exists(path:PosixPath|str, return_file:bool=False, trim_file:bool=False) -> 
     # Check if the provided path is a PosixPath object
     if isinstance(path, PosixPath):
         # Convert PosixPath to string for compatibility with os.path functions
-        string_path = str(path)
+        path_string = str(path)
     else:
         # Use the path as-is if it's already a string
-        string_path = path
+        path_string = path
     
     # Return a _File object with the specified path and trimming option if requested
     # Otherwise, return a boolean indicating whether the path exists
-    return _File(string_path, trimmed=trim_file) if return_file else os.path.exists(string_path)
+    return _File(path_string, trimmed=trim_file) if return_file else os.path.exists(path_string)
     
 def list(directory:str,
          walk:bool=True,
@@ -277,6 +354,8 @@ def list(directory:str,
                 # Append directory details to the results list
                 results.append(_File(entry.path, trimmed=trim_files))
         
+        if stringify:
+            results = [str(result) for result in results]
         # Return the compiled list of files and directories with their details
         return results
     except Exception as exc:
@@ -317,7 +396,7 @@ def move(source:str, destination:str, create_parent_directories:bool=True, overw
         err(f'Error moving file from {source} to {destination}: {exc}')
         return False
 
-def read(path:PosixPath|str,
+def read(file:_File|PosixPath|str,
          force_format:str=None,
          return_file:bool=False,
          trim_file:bool=False) -> any:
@@ -338,36 +417,45 @@ def read(path:PosixPath|str,
         any: The data read from the file, or None if an error occurred.
     """
     try:
-        if isinstance(path, PosixPath):
-            string_path = str(path)
+        if isinstance(file, _File):
+            path_string = file.path
+            file_extension = file.extension
+        if isinstance(file, PosixPath):
+            path_string = str(file)
+            file_extension = os.path.splitext(path_string)[1]
         else:
-            string_path = path
-        
-        f =_File(string_path, trimmed=trim_file)
-        if f.exists:
-            if f.is_file:
+            path_string = file
+            file_extension = '.' + path_string.split('.')[-1]
+            
+        # TODO: Make dynamic with plug'n'play function array
+        # handlers = {
+        #     'json': read_json,
+        # }
+        file_class =_File(path_string, trimmed=trim_file)
+        if file_class.exists:
+            if file_class.is_file:
                 content = None
-                with open(string_path, 'r') as f:
+                with open(path_string, 'r') as f:
                     if force_format == 'lines':
                         # Read and return the lines of the file
                         content = f.readlines()
-                    elif string_path.endswith('.jsonc') or force_format == 'jsonc':
+                    elif file_extension == '.jsonc' or force_format == 'jsonc':
                         dirty_content = f.read()
                         # Remove comments denoted by '//' to ensure valid JSON
                         clean_content = ''.join(line for line in dirty_content.splitlines() if not line.strip().startswith('//'))
                         content = json.loads(clean_content)
-                    elif string_path.endswith('.json') or force_format == 'json':
+                    elif file_extension == '.json' or force_format == 'json':
                         # Load and return JSON data from the file
                         content = json.load(f)
-                    elif string_path.endswith('.ini') or force_format == 'ini':
+                    elif file_extension == '.ini' or force_format == 'ini':
                         # Initialize ConfigParser and read INI configuration
                         config = configparser.ConfigParser()
-                        config.read(string_path)
+                        config.read(path_string)
                         content = config
-                    elif string_path.endswith('.csv') or force_format == 'csv':
+                    elif file_extension == '.csv' or force_format == 'csv':
                         # Read and return CSV data as a list of rows
                         content = list(csv.reader(f))
-                    elif string_path.endswith('.env') or force_format == 'env':
+                    elif file_extension == '.env' or force_format == 'env':
                         # Parse and return environment variables from the file
                         env_vars = {}
                         for line in f:
@@ -385,26 +473,26 @@ def read(path:PosixPath|str,
                 
                 if content is None:
                     # Log an error if the file is empty
-                    warn(f'File "{string_path}" seems to be empty. Returning "None".')
+                    warn(f'File "{path_string}" seems to be empty. Returning "None".')
                     return None
                 
                 if return_file:
                     # Return a _File object with the content if requested
-                    f.content = content
+                    file_class.content = content
                     return f
                 return content
             else:
-                file_is_folder_message = f'"{string_path}" is a directory, not a file.'
+                file_is_folder_message = f'"{path_string}" is a directory, not a file.'
                 err(file_is_folder_message)
                 raise IsADirectoryError(file_is_folder_message)
         else:
-            file_not_found_message = f'File "{string_path}" does not exist.'
+            file_not_found_message = f'File "{path_string}" does not exist.'
             # Log an error message if the file does not exist
             err(file_not_found_message)
             raise FileNotFoundError(file_not_found_message)
     except Exception as exc:
         # Log an error message if an exception occurs
-        err(f'Error reading file "{string_path}": {exc}')
+        err(f'Error reading file "{path_string}": {exc}')
         raise exc
 
 def write(path:str, data:any, force_format:str=None) -> bool:
