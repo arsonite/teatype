@@ -86,6 +86,7 @@ def shell(command:str,
         # an exit code of 0. In such cases, the exception will be caught and the exit code will be set to 1.
         output.returncode = 1
         
+    print(output.stderr)
     # Return the exit code of the completed process
     return output.returncode if not return_output else output.stdout.replace('\n', '')
 
