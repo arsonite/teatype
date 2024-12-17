@@ -11,9 +11,15 @@
 # all copies or substantial portions of the Software.
 
 # System imports
+import getpass
 import subprocess
+import sys
 
 # From package imports
+from teatype.enum import EscapeColor
+from teatype.logging import log
+
+# From-as package imports
 from teatype.io import env as current_env
 
 def shell(command:str,
@@ -64,6 +70,29 @@ def shell(command:str,
         
     # Return the exit code of the completed process
     return output.returncode if not return_output else output.stdout.replace('\n', '')
+
+def sudo(max_fail_count:int=3) -> None:
+    """
+    Executes a sudo command with suppressed error output.
+
+    This function runs the 'sudo' command to elevate privileges without displaying
+    any error messages. It is intended to be used as a preliminary step before executing
+    other shell commands that require root access.
+
+    Returns:
+        None
+    """
+    log(f'{EscapeColor.LIGHT_GREEN}Elevated privileges required. Please enter your password:')
+    password = getpass.getpass('Password: ')
+    # Invoke the 'sudo' command to elevate privileges
+    # The '2>/dev/null' redirects standard error to null, suppressing any error messages
+    # 'shell=True' allows the command to be executed through the shell
+    output = subprocess.run(f'echo {password} | sudo -S ls 2>/dev/null', shell=True)
+    if output.returncode != 0:
+        log(f'{EscapeColor.RED}Invalid password. Abort.', pad_before=1, pad_after=1)
+        sys.exit(1)
+    else:
+        log('Privileges elevated successfully.')
 
 # TODO: Disabled for now, since it will break the shell
 # refresh = shell('exec bash')

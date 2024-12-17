@@ -12,7 +12,7 @@
 
 # From own imports
 from .prompt import prompt
-from .shell import shell
+from .shell import shell, sudo
 from .TemporaryDirectory import TemporaryDirectory
 
 # From-as own imports
