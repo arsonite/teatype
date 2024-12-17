@@ -12,7 +12,7 @@
 
 # From own imports
 from .prompt import prompt
-from .shell import shell, sudo
+from .shell import clear, shell, sudo
 from .TemporaryDirectory import TemporaryDirectory
 
 # From-as own imports
@@ -27,3 +27,5 @@ from .file import list as list_files
 from .file import move as move_file
 from .file import read as read_file
 from .file import write as write_file
+from .shell import clear as clear_shell
+from .shell import sudo as sudo_shell

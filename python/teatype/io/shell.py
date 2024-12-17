@@ -22,6 +22,21 @@ from teatype.logging import err, log
 # From-as package imports
 from teatype.io import env as current_env
 
+def clear(use_ansi:bool=True) -> None:
+    """
+    Clears the terminal screen using ANSI escape sequences.
+
+    This function prints ANSI escape codes to reset the terminal cursor position and clear the screen.
+    It serves as an alternative to using the 'clear' shell command via subprocess, which can be choppy and slow.
+    """
+    if use_ansi:
+        # Using ANSI escape sequences to clear the terminal instead of clear, since clear is too choppy and slow
+        # '\033[H' moves the cursor to the home position (top-left corner) of the terminal.
+        # '\033[J' clears the screen from the cursor down.
+        print('\033[H\033[J')
+    else:
+        subprocess.run('clear', shell=True)
+
 def shell(command:str,
           sudo:bool=False,
           cwd:bool=False,
