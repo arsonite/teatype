@@ -17,7 +17,7 @@ import sys
 
 # From package imports
 from teatype.enum import EscapeColor
-from teatype.logging import log
+from teatype.logging import err, log
 
 # From-as package imports
 from teatype.io import env as current_env
@@ -28,7 +28,8 @@ def shell(command:str,
           env:dict=None,
           timeout:float=None,
           mute:bool=False,
-          return_output:bool=False) -> int:
+          return_output:bool=False,
+          ignore_errors:bool=False) -> int:
     """
     Executes a shell command using the subprocess module.
 
@@ -52,21 +53,38 @@ def shell(command:str,
         # Asking for sudo permissions before script executes any further and suppresses usage information
         subprocess.run('sudo 2>/dev/null', shell=True)
         command = f'sudo {command}'
+    
+    try:
+        # Run the command in a subprocess
+        # shell=True allows the command to be executed through the shell
+        # cwd is set to None by default, but can be specified if cwd is True
+        # env is set to None by default, but can be specified with env
+        # timeout is set to None by default, but can be specified with timeout
+        # Not using a command list array, since I am using shell=True
+        output = subprocess.run(command, 
+                                check=not ignore_errors, # Raise an exception if the command fails
+                                shell=True, # Execute the command through the shell
+                                cwd=None if not cwd else cwd,
+                                env=env if not env else current_env.get(),
+                                text=return_output,
+                                timeout=timeout,
+                                stdout=subprocess.PIPE if mute else None,
+                                stderr=subprocess.PIPE if mute else None)
         
-    # Run the command in a subprocess
-    # shell=True allows the command to be executed through the shell
-    # cwd is set to None by default, but can be specified if cwd is True
-    # env is set to None by default, but can be specified with env
-    # timeout is set to None by default, but can be specified with timeout
-    # Not using a command list array, since I am using shell=True
-    output = subprocess.run(command, 
-                            shell=True,
-                            cwd=None if not cwd else cwd,
-                            env=env if not env else current_env.get(),
-                            text=return_output,
-                            timeout=timeout,
-                            stdout=subprocess.PIPE if mute else None,
-                            stderr=subprocess.PIPE if mute else None)
+        if len(output.stderr) > 1:
+            if ignore_errors:
+                err(f'Shell command "{command}" seems to have thrown an error.' \
+                    'If you believe this to be a mistake, set "ignore_warnings=True",' \
+                    'otherwise set "mute=False" to debug.',
+                    pad_before=1,
+                    pad_after=1)
+            else:
+                output.returncode = 1
+    except:
+        # If an exception is raised, return the exit code 1 as a failsafe
+        # Sometimes the command may fail due to a non-zero exit code, but still return
+        # an exit code of 0. In such cases, the exception will be caught and the exit code will be set to 1.
+        output.returncode = 1
         
     # Return the exit code of the completed process
     return output.returncode if not return_output else output.stdout.replace('\n', '')
@@ -87,7 +105,7 @@ def sudo(max_fail_count:int=3) -> None:
     # Invoke the 'sudo' command to elevate privileges
     # The '2>/dev/null' redirects standard error to null, suppressing any error messages
     # 'shell=True' allows the command to be executed through the shell
-    output = subprocess.run(f'echo {password} | sudo -S ls 2>/dev/null', shell=True)
+    output = subprocess.run(f'echo {password} | sudo -S ls 2>&1 > /dev/null', shell=True)
     if output.returncode != 0:
         log(f'{EscapeColor.RED}Invalid password. Abort.', pad_before=1, pad_after=1)
         sys.exit(1)

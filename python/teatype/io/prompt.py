@@ -27,6 +27,8 @@ def prompt(prompt_text:str, options:List[any]=None, return_bool:bool=True, color
     Args:
         prompt_text (str): The message to display to the user.
         options (List[any]): A list of valid options that the user can choose from.
+        return_bool (bool): Whether to return a boolean value based on the user's selection. Default is True.
+        colorize (bool): Whether to colorize the prompt text. Default is True.
 
     Returns:
         any: The user's selected option.
