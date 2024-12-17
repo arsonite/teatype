@@ -71,14 +71,16 @@ def shell(command:str,
                                 stdout=subprocess.PIPE if mute else None,
                                 stderr=subprocess.PIPE if mute else None)
         
-        if len(output.stderr) > 1:
-            if ignore_errors:
+        if not ignore_errors:
+            stderr = str(output.stderr)
+            
+            # Edge case: If a python subprocess install fails
+            if 'exit code: 1' in stderr:
                 err(f'Shell command "{command}" seems to have thrown an error.' \
                     'If you believe this to be a mistake, set "ignore_warnings=True",' \
                     'otherwise set "mute=False" to debug.',
                     pad_before=1,
                     pad_after=1)
-            else:
                 output.returncode = 1
     except:
         # If an exception is raised, return the exit code 1 as a failsafe
@@ -86,7 +88,6 @@ def shell(command:str,
         # an exit code of 0. In such cases, the exception will be caught and the exit code will be set to 1.
         output.returncode = 1
         
-    print(output.stderr)
     # Return the exit code of the completed process
     return output.returncode if not return_output else output.stdout.replace('\n', '')
 
