@@ -122,7 +122,8 @@ def sudo(max_fail_count:int=3) -> None:
     # Invoke the 'sudo' command to elevate privileges
     # The '2>/dev/null' redirects standard error to null, suppressing any error messages
     # 'shell=True' allows the command to be executed through the shell
-    output = subprocess.run(f'echo {password} | sudo -S ls 2>&1 > /dev/null', shell=True)
+    # output = subprocess.run(f'echo {password} | sudo -S ls 2>&1 > /dev/null', shell=True)
+    output = subprocess.run(f'echo {password} | sudo -S -v >/dev/null 2>&1', shell=True)
     if output.returncode != 0:
         log(f'{EscapeColor.RED}Invalid password. Abort.', pad_before=1, pad_after=1)
         sys.exit(1)
