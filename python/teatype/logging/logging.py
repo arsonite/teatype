@@ -150,8 +150,8 @@ def _format(message:any,
 
     Args:
         message (any, optional): The message to format. Defaults to ''.
-        pad_before (int | None, optional): Number of blank lines to add before the message. Defaults to None.
-        pad_after (int | None, optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
+        pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
         print_verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
 
     Returns:
@@ -200,8 +200,8 @@ def err(message:str,
 
     Args:
         message (str): The error message to be logged.
-        pad_before (int | None, optional): Number of blank lines to add before the message. Defaults to None.
-        pad_after (int | None, optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
+        pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
         traceback (bool, optional): Flag to determine whether to include the traceback.
             Defaults to False.
         print_verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
@@ -307,8 +307,8 @@ def log(message:any,
     
     Args:
         message (any, optional): The message to be logged. Defaults to ''.
-        pad_after (int | None, optional): Number of blank lines to add after the message. Defaults to None.
-        pad_before (int | None, optional): Number of blank lines to add before the message. Defaults to None.
+        pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
         prettify (bool, optional): If True, formats complex objects into a pretty-printed string. Defaults to False.
         print_verbose (bool, optional): If True, includes caller's filename and line number in the log message. Defaults to False.
     """
@@ -374,8 +374,8 @@ def warn(message:str='',
 
     Args:
         message (str): The warning message to be logged.
-        pad_after (int | None, optional): Number of blank lines to add after the message. Defaults to None.
-        pad_before (int | None, optional): Number of blank lines to add before the message. Defaults to None.
+        pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
         print_verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
 
     Returns:
