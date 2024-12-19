@@ -45,7 +45,27 @@ def join(*args, stringify:bool=True) -> str:
     joined_path = Path(*args) # Join the path components
     return str(joined_path) if stringify else joined_path # Return the joined path as string or Path object
 
-def parent(reverse_depth:int=1, stringify:bool=True) -> str:
+def parent(path:str, reverse_depth:int=1, stringify:bool=True) -> str:
+    """
+    Retrieve the parent directory of the given path.
+
+    Args:
+        path (str): The path to the file or directory.
+        reverse_depth (int): The number of levels to traverse up the directory tree.
+                             Defaults to 1.
+        stringify (bool): If True, returns the parent path as a string.
+                           If False, returns as a Path object. Defaults to True.
+
+    Returns:
+        str: The parent directory path as a string if stringify is True.
+    """
+    path = Path(path) # Convert the path to a Path object
+    parent = path.parent # Get the immediate parent directory
+    for _ in range(reverse_depth - 1):
+        parent = parent.parent # Traverse up the directory tree
+    return str(parent) if stringify else parent # Return the parent path as string or Path object
+
+def this_parent(reverse_depth:int=1, stringify:bool=True) -> str:
     """
     Retrieve the parent directory of the script's path.
 
@@ -59,13 +79,13 @@ def parent(reverse_depth:int=1, stringify:bool=True) -> str:
         str: The parent directory path as a string if stringify is True.
         Path: The parent directory as a Path object if stringify is False.
     """
-    script_path = script(stringify=False) # Get the script path as a Path object
+    script_path = this(stringify=False) # Get the script path as a Path object
     parent = script_path.parent # Get the immediate parent directory
     for _ in range(reverse_depth - 1):
         parent = parent.parent # Traverse up the directory tree
     return str(parent) if stringify else parent # Return the parent path as string or Path object
 
-def script(stringify:bool=True) -> str:
+def this(stringify:bool=True) -> str:
     """
     Retrieve the path of the calling script.
 
