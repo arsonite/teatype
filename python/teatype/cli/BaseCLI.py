@@ -24,24 +24,29 @@ from teatype.cli import Argument, Command, Flag
 from teatype.data.dict import update_dict
 from teatype.logging import err, hint
 
-DEBUG_MODE = False
-META_TYPE = dict[
-    'name':str,
-    'shorthand':str,
-    'help':str,
-    'arguments':List[Argument],
-    'commands':List[Command],
-    'flags':List[Flag]
-]
-TAB = '    '
-# TODO: Make configurable
-USE_HELP_MESSAGE_ON_FAIL = True
+class GLOBAL_CLI_CONFIG:
+    """
+    Global configuration for the CLI utility.
+    """
+    DEBUG_MODE = False
+    META_TYPE = dict[
+        'name':str,
+        'shorthand':str,
+        'help':str,
+        'arguments':List[Argument],
+        'commands':List[Command],
+        'flags':List[Flag]
+    ]
+    TAB = '    '
+    USE_HELP_MESSAGE_ON_FAIL = False
 
+# TODO: Use log instead of print and println instead of pad_before and pad_after
+# TODO: Create a variable that controls behaviour of the CLI if called from another script
+#       helps with things like format_str, print_usage, hooks, etc.
+# TODO: Seperate into optional and required arguments
 # TODO: SIGINT handle_interrupt implemented traps
 # TODO: Document all return types
 # TODO: Make the class functionality less obscure, more options, maybe return to constructors?
-# TODO: Print help text even if no arguments are provided (-h optional)
-# TODO: Seperate into optional and required arguments
 # TODO: Add support for any flag values
 class BaseCLI(ABC):
     """
@@ -172,6 +177,9 @@ class BaseCLI(ABC):
         self.flags = []
         for flag in flags:
             self.flags.append(Flag(**flag))
+            
+        # Add the default help flag for all scripts
+        self.flags.append(Flag(short='h', long='help', help='Display the (sometimes more detailed) help message.', required=False))
 
     # TODO: Make positioning of arguments optional
     # TODO: Make flag assignment work with "="
@@ -237,7 +245,7 @@ class BaseCLI(ABC):
         self.parsed_arguments = arguments
         self.parsed_command = command
         self.parsed_flags = flags
-    
+        
     # TODO: Reduce repetition and amount of loops, more efficient algorithm
     def validate_args(self):
         """
@@ -255,21 +263,18 @@ class BaseCLI(ABC):
             if hasattr(self, 'pre_validate') and callable(getattr(self, 'pre_validate')):
                 self.pre_validate()
             
-            # Initialize an empty list to store any parsing errors encountered
-            parsing_errors = []
-
             # Check if the help flag ('-h' or '--help') is present in the parsed flags
-            help_flag_detected = '-h' in self.parsed_flags or '--help' in self.parsed_flags
-            # Check if the help flag ('-h' or '--help') is present in the parsed flags
-            if help_flag_detected:
+            if '-h' in self.parsed_flags or '--help' in self.parsed_flags:
+                self.set_flag('help', True)
                 # If the help flag is detected, print the CLI usage information
                 self.print_usage()
-                sys.exit(0)
             else:
+                # Initialize an empty list to store any parsing errors encountered
+                parsing_errors = []
                 if len(self.commands) > 0:
                     if len(self.parsed_arguments) > 1:
                         parsing_errors.append('More than one command provided.')
-                        
+
                     if self.parsed_command:
                         found_command = False
                         for command in self.commands:
@@ -279,7 +284,10 @@ class BaseCLI(ABC):
                         if not found_command:
                             parsing_errors.append(f'Unknown command: {self.parsed_command}.')
                     else:
-                        parsing_errors.append('No command provided.')
+                        if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
+                            parsing_errors.append('No command provided.')
+                        else:
+                            self.print_usage()
                 else:
                     # Determine the number of parsed arguments and the total number of expected arguments
                     amount_of_parsed_arguments = len(self.parsed_arguments)
@@ -296,18 +304,21 @@ class BaseCLI(ABC):
 
                     # Check if the number of parsed arguments is less than the number of required arguments
                     if amount_of_parsed_arguments < amount_of_required_arguments:
-                        parsing_errors.append(
-                            f'Script requires ({amount_of_required_additional_arguments}) additional argument{"s" if amount_of_required_additional_arguments > 1 else ""}.'
-                        )
+                        if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
+                            parsing_errors.append(
+                                f'Script requires ({amount_of_required_additional_arguments}) additional argument{"s" if amount_of_required_additional_arguments > 1 else ""}.'
+                            )
 
-                    # Check for missing required arguments
-                    for argument in self.arguments:
-                        if argument.required and amount_of_required_additional_arguments > 0:
-                            parsing_errors.append(f'Missing required argument: <{argument.name}>.')
-                            continue
-                            
-                        if self.parsed_arguments[argument.position]:
-                            argument.value = self.parsed_arguments[argument.position]
+                            # Check for missing required argumentsw
+                            for argument in self.arguments:
+                                if argument.required and amount_of_required_additional_arguments > 0:
+                                    parsing_errors.append(f'Missing required argument: <{argument.name}>.')
+                                    continue
+                                    
+                                if self.parsed_arguments[argument.position]:
+                                    argument.value = self.parsed_arguments[argument.position]
+                        else:
+                            self.print_usage()
 
                 # Check for unknown flags in the parsed flags
                 for parsed_flag in self.parsed_flags:
@@ -337,16 +348,11 @@ class BaseCLI(ABC):
                 err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_prefix=False, print_verbose=False)
                 for parsing_error in parsing_errors:
                     print('  * ' + parsing_error)
-                if USE_HELP_MESSAGE_ON_FAIL:
+                if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
                     hint('Use the "-h, --help" flag for usage information.', pad_before=1, pad_after=1)
-                else:
-                    # TODO: Proper formatting without newline
-                    # TODO: Do not display additional_help
-                    hint('For correct usage, check below:', pad_before=1)
-                    self.print_usage(include_usage=False, print_padding=1)
                 sys.exit(1)
                 
-        if DEBUG_MODE:
+        if GLOBAL_CLI_CONFIG.DEBUG_MODE:
             try:
                 validate()
             except SystemExit:
@@ -356,7 +362,6 @@ class BaseCLI(ABC):
         else:
             validate()
     
-    # TODO: Check what tab padding does, again
     # TODO: Restore replace name functionality directly to streamline function header
     def format_str(self,
                    include_args:bool,
@@ -399,10 +404,10 @@ class BaseCLI(ABC):
             tabs = ''
             if print_padding:
                 for _ in range(print_padding):
-                    tabs += TAB
+                    tabs += GLOBAL_CLI_CONFIG.TAB
             else:
                 for _ in range(tab_padding):
-                    tabs += TAB
+                    tabs += GLOBAL_CLI_CONFIG.TAB
             return f'{tabs}{indented_formatted_string}'
         
         # Initialize an empty string to store the formatted output
@@ -411,7 +416,9 @@ class BaseCLI(ABC):
         # TODO: Reduce repetition
         amount_of_arguments_greater_0 = len(self.arguments)
         amount_of_commands_greater_0 = len(self.commands)
-        amount_of_flags_greater_0 = len(self.flags)
+        # Filter out the help flag from the list of flags
+        flags = list(filter(lambda flag: not flag.short == '-h' and not flag.long == '--help', self.flags)) 
+        amount_of_flags_greater_0 = len(flags)
         
         # Set the name to './<name>' by default
         name = f'./{self.name}'
@@ -421,7 +428,7 @@ class BaseCLI(ABC):
         elif include_usage:
             # Add usage information to the formatted string
             indented_formatted_string += '\n'
-            indented_formatted_string += f'Usage:\n{TAB}{name}'
+            indented_formatted_string += f'Usage:\n{GLOBAL_CLI_CONFIG.TAB}{name}'
     
             if amount_of_arguments_greater_0:
                 indented_formatted_string += ' [ARGUMENTS]'
@@ -445,7 +452,7 @@ class BaseCLI(ABC):
             if amount_of_arguments_greater_0:
                 for argument in self.arguments:
                     # Format the argument line with indentation and argument name
-                    argument_line = f'{TAB}<{argument.name}>'
+                    argument_line = f'{GLOBAL_CLI_CONFIG.TAB}<{argument.name}>'
                     # Update the maximum line width based on the length of the argument line
                     line_width = max(line_width, len(argument_line))
                             
@@ -453,15 +460,15 @@ class BaseCLI(ABC):
             if amount_of_commands_greater_0:
                 for command in self.commands:
                     # Format the command line with indentation, shorthand, and command name
-                    command_line = f'{TAB}{command.shorthand}, {command.name}'
+                    command_line = f'{GLOBAL_CLI_CONFIG.TAB}{command.shorthand}, {command.name}'
                     # Update the maximum line width based on the length of the command line
                     line_width = max(line_width, len(command_line))              
             
             # Check if there are any flags and calculate the maximum line width for formatting
             if amount_of_flags_greater_0:
-                for flag in self.flags:
+                for flag in flags:
                     # Format the flag line with indentation, short flag, and long flag
-                    flag_line = f'{TAB}{flag.short}, {flag.long}'
+                    flag_line = f'{GLOBAL_CLI_CONFIG.TAB}{flag.short}, {flag.long}'
                     # If the flag has options, include them in the flag line
                     if flag.options:
                         flag_line += f' <{flag.long.replace("-", "")}>'
@@ -491,24 +498,24 @@ class BaseCLI(ABC):
                     for index, help_line in enumerate(arg_help):
                         if index == 0:
                             # For the first line of help text, add it with indentation
-                            formatted_string += f'{TAB}{help_line}\n'
+                            formatted_string += f'{GLOBAL_CLI_CONFIG.TAB}{help_line}\n'
                             continue
                         # For subsequent lines of help text, add them with indentation and alignment
-                        formatted_string += f'{TAB}{" " * line_width}{help_line}'
+                        formatted_string += f'{GLOBAL_CLI_CONFIG.TAB}{" " * line_width}{help_line}'
                 else:
                     # If the help text is a single string
                     if arg_line_rest_width > 0:
                         # If there is remaining width, add the help text with indentation
-                        help_line = f'{TAB}{arg_help}'
+                        help_line = f'{GLOBAL_CLI_CONFIG.TAB}{arg_help}'
                     else:
                         # If there is no remaining width, add the help text with alignment
-                        help_line = f'{TAB}{" " * (arg_line_rest_width * -1)}{arg_help}'
+                        help_line = f'{GLOBAL_CLI_CONFIG.TAB}{" " * (arg_line_rest_width * -1)}{arg_help}'
                     # Add the help text to the formatted string
                     formatted_string += help_line
                 
                 if arg_options:
                     formatted_string += '\n'
-                    formatted_string += f'{TAB}{" " * line_width}Options: {arg_options}'
+                    formatted_string += f'{GLOBAL_CLI_CONFIG.TAB}{" " * line_width}Options: {arg_options}'
                     
                 # Return the final formatted string
                 return formatted_string
@@ -520,7 +527,7 @@ class BaseCLI(ABC):
                 
                 # Iterate over each argument and add its details to the formatted string
                 for argument in self.arguments:
-                    argument_line = f'{TAB}<{argument.name}>'
+                    argument_line = f'{GLOBAL_CLI_CONFIG.TAB}<{argument.name}>'
                     # Add the formatted argument line to the indented formatted string with a newline
                     indented_formatted_string += pad_arg_line(argument_line, argument.help)
                     indented_formatted_string += '\n' 
@@ -533,7 +540,7 @@ class BaseCLI(ABC):
                 # Iterate over each argument and add its details to the formatted string
                 for command in self.commands:
                     # Format the command line with indentation
-                    command_line = f'{TAB}{command.shorthand}, {command.name}'
+                    command_line = f'{GLOBAL_CLI_CONFIG.TAB}{command.shorthand}, {command.name}'
                     # Add the formatted command line to the indented formatted string with a newline
                     indented_formatted_string += pad_arg_line(command_line, command.help)
                     indented_formatted_string += '\n'
@@ -543,9 +550,9 @@ class BaseCLI(ABC):
                 indented_formatted_string += '\n'
                 indented_formatted_string += 'Flags:\n'
                 # Iterate over each flag and add its details to the formatted string
-                for flag in self.flags:
+                for flag in flags:
                     # Format the flag line with indentation
-                    flag_line = f'{TAB}{flag.short}, {flag.long}'
+                    flag_line = f'{GLOBAL_CLI_CONFIG.TAB}{flag.short}, {flag.long}'
                     # TODO: Check wrong flag options
                     if flag.options:
                         flag_line += f' <{flag.long.replace("-", "")}>'
@@ -576,6 +583,7 @@ class BaseCLI(ABC):
         Args:
             include_args (bool): Whether to include arguments, commands, and flags in the formatted string.
             include_meta (bool): Whether to include meta information in the formatted string.
+            include_usage (bool): Whether to include usage information in the formatted string.
             minify_usage (bool): Whether to include minified usage information in the formatted string.
             tab_padding (int): The number of spaces to use for indentation.
         """
@@ -591,6 +599,7 @@ class BaseCLI(ABC):
         
         # Print the final formatted string to the console
         print(indented_formatted_string)
+        sys.exit(1)
         
     ###########
     # Getters #
@@ -657,34 +666,12 @@ class BaseCLI(ABC):
                 return True
         return False
     
-    ######################
-    # Abstract functions #
-    ######################
-    
-    @abstractmethod
-    def meta(self) -> META_TYPE:
-        """
-        Override this method in the child classes to provide meta information.
-        
-        This method is used to ensure that the script works the same way whether it is executed directly
-        or imported and then executed. The meta information such as name, shorthand, help, arguments, commands,
-        and flags must be provided by the child class implementing this method.
-        """
-        raise NotImplementedError("Each script MUST implement the 'meta' method.")
-                
-    @abstractmethod
-    def execute(self):
-        """
-        Override this method in the child classes to implement functionality.
-        """
-        raise NotImplementedError("Each script MUST implement the 'execute' method.")
-    
     #########
     # Hooks #
     #########
 
     # TODO: Make default return type and then catch that instead of relying on developer to remember implementing function
-    def modified_meta(self) -> META_TYPE:
+    def modified_meta(self) -> GLOBAL_CLI_CONFIG.META_TYPE:
         """
         Override this method in the child classes to modify meta information.
 
@@ -725,3 +712,25 @@ class BaseCLI(ABC):
         Not making it abstract, to prevent the need to implement it in every child class.
         """
         pass
+    
+    ######################
+    # Abstract functions #
+    ######################
+    
+    @abstractmethod
+    def meta(self) -> GLOBAL_CLI_CONFIG.META_TYPE:
+        """
+        Override this method in the child classes to provide meta information.
+        
+        This method is used to ensure that the script works the same way whether it is executed directly
+        or imported and then executed. The meta information such as name, shorthand, help, arguments, commands,
+        and flags must be provided by the child class implementing this method.
+        """
+        raise NotImplementedError("Each script MUST implement the 'meta' method.")
+                
+    @abstractmethod
+    def execute(self):
+        """
+        Override this method in the child classes to implement functionality.
+        """
+        raise NotImplementedError("Each script MUST implement the 'execute' method.")

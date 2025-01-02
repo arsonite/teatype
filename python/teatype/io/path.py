@@ -16,6 +16,23 @@ import inspect
 # From system imports
 from pathlib import Path
 
+def create(*args, stringify:bool=True) -> str:
+    """
+    Create a new folder and its parent directories if they do not exist.
+    Ignore if the folder already exists.
+
+    Args:
+        *args (str): The path components to join.
+        stringify (bool): If True, returns the new path as a string.
+                           If False, returns as a Path object. Defaults to True.
+
+    Returns:
+        str: The new path as a string if stringify is True.
+    """
+    new_path = Path(*args) # Join the path components
+    new_path.mkdir(parents=True, exist_ok=True) # Create the new folder and its parents if they do not exist
+    return str(new_path) if stringify else new_path # Return the new path as string or Path object
+
 def home(stringify:bool=True) -> str:
     """
     Retrieve the user's home directory.
@@ -65,26 +82,6 @@ def parent(path:str, reverse_depth:int=1, stringify:bool=True) -> str:
         parent = parent.parent # Traverse up the directory tree
     return str(parent) if stringify else parent # Return the parent path as string or Path object
 
-def this_parent(reverse_depth:int=1, stringify:bool=True) -> str:
-    """
-    Retrieve the parent directory of the script's path.
-
-    Args:
-        reverse_depth (int): The number of levels to traverse up the directory tree.
-                             Defaults to 1.
-        stringify (bool): If True, returns the parent path as a string.
-                           If False, returns as a Path object. Defaults to True.
-
-    Returns:
-        str: The parent directory path as a string if stringify is True.
-        Path: The parent directory as a Path object if stringify is False.
-    """
-    script_path = this(stringify=False) # Get the script path as a Path object
-    parent = script_path.parent # Get the immediate parent directory
-    for _ in range(reverse_depth - 1):
-        parent = parent.parent # Traverse up the directory tree
-    return str(parent) if stringify else parent # Return the parent path as string or Path object
-
 def this(stringify:bool=True) -> str:
     """
     Retrieve the path of the calling script.
@@ -112,6 +109,26 @@ def this(stringify:bool=True) -> str:
             break
     caller_path = Path(caller_frame.filename).resolve() # Resolve the absolute path of the caller's script
     return str(caller_path) if stringify else caller_path # Return the path as string or Path object based on `stringify`
+
+def this_parent(reverse_depth:int=1, stringify:bool=True) -> str:
+    """
+    Retrieve the parent directory of the script's path.
+
+    Args:
+        reverse_depth (int): The number of levels to traverse up the directory tree.
+                             Defaults to 1.
+        stringify (bool): If True, returns the parent path as a string.
+                           If False, returns as a Path object. Defaults to True.
+
+    Returns:
+        str: The parent directory path as a string if stringify is True.
+        Path: The parent directory as a Path object if stringify is False.
+    """
+    script_path = this(stringify=False) # Get the script path as a Path object
+    parent = script_path.parent # Get the immediate parent directory
+    for _ in range(reverse_depth - 1):
+        parent = parent.parent # Traverse up the directory tree
+    return str(parent) if stringify else parent # Return the parent path as string or Path object
 
 def workdir(stringify:bool=True) -> str:
     """

@@ -27,9 +27,9 @@ class Flag:
         value (Any): The value of the flag, initially set to None.
     """
     def __init__(self,
-                short: str,
-                long: str,
-                help: str|List[str],
+                short:str,
+                long:str,
+                help:str|List[str],
                 required:bool,
                 options:List[str]=None):
         self.short = f'-{short}'

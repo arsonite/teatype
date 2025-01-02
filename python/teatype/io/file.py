@@ -427,7 +427,7 @@ def read(file:_File|PosixPath|str,
             path_string = file
             file_extension = '.' + path_string.split('.')[-1]
             
-        # TODO: Make dynamic with plug'n'play function array
+        # TODO: Make dynamic with plug'n'play function array and allow passing of custom functions
         # handlers = {
         #     'json': read_json,
         # }
@@ -512,6 +512,7 @@ def write(path:str, data:any, force_format:str=None) -> bool:
     Returns:
         bool: True if the operation was successful, False otherwise.
     """
+    # TODO: Make dynamic with plug'n'play function array and allow passing of custom functions
     try:
         # Open the file in write mode
         with open(path, 'w') as f:
