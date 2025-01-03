@@ -141,7 +141,7 @@ def shell(command:str,
         newline_count = stdout.count('\n')
         if newline_count > 1:
             # If multiple lines are present, split the stdout into a list of lines
-            stdout = stdout.split('\n')
+            stdout = stdout.split('\n')[:-1] # Remove the last empty line
         else:
             # If only one line, remove the newline character from stdout
             stdout = stdout.replace('\n', '')
