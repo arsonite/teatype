@@ -67,8 +67,7 @@ def shell(command:str,
           env:dict=None,
           timeout:float=None,
           mute:bool=False,
-          return_output:bool=False,
-          ignore_errors:bool=False) -> int:
+          return_stdout:bool=False) -> any:
     """
     Executes a shell command using the subprocess module.
 
@@ -87,6 +86,20 @@ def shell(command:str,
         int: The exit code of the completed process.
     """
     
+    # List of lambda functions to handle specific error scenarios
+    edge_cases = [
+        lambda stderr, command, output: (
+            err(
+                f'Shell command "{command}" seems to have thrown an error. '
+                'If you believe this to be a mistake, set "ignore_warnings=True", '
+                'otherwise set "mute=False" to debug.',
+                pad_before=1,
+                pad_after=1 
+            ),
+            setattr(output, "returncode", 1) # Modify the output object's returncode attribute to 1 to indicate an error
+        ) if 'exit code: 1' in stderr else None, # Apply this lambda only if the specific error is detected
+    ]
+    
     # If sudo is True, prepend 'sudo' to the command
     if sudo:
         # Asking for sudo permissions before script executes any further and suppresses usage information
@@ -101,34 +114,42 @@ def shell(command:str,
         # timeout is set to None by default, but can be specified with timeout
         # Not using a command list array, since I am using shell=True
         output = subprocess.run(command, 
-                                check=not ignore_errors, # Raise an exception if the command fails
                                 shell=True, # Execute the command through the shell
                                 cwd=None if not cwd else cwd,
                                 env=env if not env else current_env.get(),
-                                text=return_output,
+                                text=return_stdout,
                                 timeout=timeout,
                                 stdout=subprocess.PIPE if mute else None,
                                 stderr=subprocess.PIPE if mute else None)
-        
-        if not ignore_errors:
-            stderr = str(output.stderr)
-            
-            # Edge case: If a python subprocess install fails
-            if 'exit code: 1' in stderr:
-                err(f'Shell command "{command}" seems to have thrown an error.' \
-                    'If you believe this to be a mistake, set "ignore_warnings=True",' \
-                    'otherwise set "mute=False" to debug.',
-                    pad_before=1,
-                    pad_after=1)
-                output.returncode = 1
-    except:
+
+        # Check if errors should not be ignored before processing
+        stderr = str(output.stderr) # Convert the subprocess's standard error output from bytes to a string for analysis
+        for edge_case in edge_cases:
+            # Iterate over each edge case handler function in the list
+            # and execute it with the current stderr, command, and output
+            edge_case(stderr, command, output)
+    except Exception:
         # If an exception is raised, return the exit code 1 as a failsafe
         # Sometimes the command may fail due to a non-zero exit code, but still return
         # an exit code of 0. In such cases, the exception will be caught and the exit code will be set to 1.
         output.returncode = 1
+    
+    if return_stdout:
+        # Retrieve the standard output from the subprocess
+        stdout = output.stdout
+        # Count the number of newline characters in the stdout
+        newline_count = stdout.count('\n')
+        if newline_count > 1:
+            # If multiple lines are present, split the stdout into a list of lines
+            stdout = stdout.split('\n')
+        else:
+            # If only one line, remove the newline character from stdout
+            stdout = stdout.replace('\n', '')
+        # Return the processed stdout to the caller
+        return stdout
         
     # Return the exit code of the completed process
-    return output.returncode if not return_output else output.stdout.replace('\n', '')
+    return output.returncode
 
 # TODO: Disabled for now, since it will break the shell
 # refresh = shell('exec bash')
