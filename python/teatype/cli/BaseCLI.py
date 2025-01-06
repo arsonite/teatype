@@ -599,6 +599,34 @@ class BaseCLI(ABC):
         print(indented_formatted_string)
         sys.exit(1)
         
+    def return_flags(self):
+        """
+        Returns a string of active flags with their corresponding values if applicable.
+
+        This method iterates through all flags configured in the CLI. For each flag that has been set (i.e., has a value),
+        it appends the long-form name of the flag to the result string. If the flag accepts an option, the value is appended
+        alongside the flag name. The resulting string can be used for display or logging purposes to show which flags
+        are currently active.
+        
+        Returns:
+            str: A space-separated string of active flags, including their values if they have associated options.
+        """
+        # Initialize an empty string to accumulate active flags
+        flags = ''
+        
+        # Iterate over each flag in the CLI's flags list
+        for flag in self.flags:
+            # Check if the current flag has been set (i.e., has a value)
+            if flag.value:
+                # If the flag accepts an option, append the flag's long name and its value
+                if flag.options:
+                    flags += f'{flag.long} {flag.value} '
+                else:
+                    # If the flag does not accept an option, append only the flag's long name
+                    flags += f'{flag.long} '
+        # Return the concatenated string of active flags
+        return flags
+        
     ###########
     # Getters #
     ###########

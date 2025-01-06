@@ -29,7 +29,7 @@ from importlib import util as iutil
 from teatype.io import TemporaryDirectory as TempDir
 
 class Start(BaseCLI):
-    def __init__(self, auto_navigate:bool=True, auto_activate_venv:bool=False, auto_find_config:bool=True):
+    def __init__(self, auto_navigate:bool=True, auto_activate_venv:bool=True, auto_find_config:bool=True):
         """
         Initialize the Start class with additional configuration options.
 
@@ -38,46 +38,19 @@ class Start(BaseCLI):
             auto_activate_venv (bool): Automatically activate the virtual environment if set to True.
             auto_find_config (bool): Automatically find and load the module configuration if set to True.
         """
+        # Assign the auto_activate_venv parameter to an instance variable to control virtual environment activation
+        self.auto_activate_venv = auto_activate_venv
         # Assign the auto_navigate parameter to an instance variable to control directory navigation behavior
         self.auto_navigate = auto_navigate
         
         # Skipping 1 step in the call stack to get the script path implementing this class
-        parent_path = path.this_parent(reverse_depth=2, skip_call_stack_steps=1)
-        # TODO: Set auto_activate_venv to False by default for now, because it doesn't seem to properly propagate
-        # Check if automatic virtual environment activation is enabled
-        if auto_activate_venv:
-            # Notify user that auto activation is attempted
-            hint('"auto_activate_venv" automatically set to "True". Trying to activate a possibly present virtual environment ...')
-            
-            venv_found = False  # Initialize flag to track if a virtual environment is found
-            # Iterate through all files in the parent directory to locate a virtual environment
-            for f in file.list(parent_path):
-                if 'venv' in f.name:
-                    venv_path = f.path  # Store the path of the found virtual environment
-                    log(f'Virtual environment {f.name} found.')  # Log the discovery of the virtual environment
-                    venv_found = True  # Update the flag as a virtual environment is found
-                    break  # Exit the loop since the virtual environment has been found
-                
-            if not venv_found:
-                # Warn the user if no virtual environment is found, indicating limited functionality
-                warn('No virtual environment found. Script functionality may be limited.')
-            else:
-                try:
-                    # Attempt to activate the found virtual environment
-                    shell(f'. {venv_path}/bin/activate')
-                    # Append the site-packages directory of the virtual environment to sys.path for module resolution
-                    sys.path.append(f'{venv_path}/lib/python3.11/site-packages')
-                    log('Virtual environment activated.')  # Log successful activation
-                except Exception as e:
-                    # Log an error if activation fails, providing the exception details
-                    err('An error occurred while trying to activate the virtual environment:', e)
-        
+        self.parent_path = path.this_parent(reverse_depth=2, skip_call_stack_steps=1)
         # Check if automatic configuration discovery is enabled
         if auto_find_config:
             # Notify user that auto configuration discovery is initiated
             hint('"auto_find_config" automatically set to "True". Auto-finding module configuration...')
             # Construct the path to the module configuration file
-            config_path = path.join(parent_path, 'config', 'module.cfg')
+            config_path = path.join(self.parent_path, 'config', 'module.cfg')
             # Read the configuration file and assign its contents to self.module_config
             self.module_config = file.read(config_path)
             # Log the successful application of the module configuration
@@ -264,4 +237,32 @@ class Start(BaseCLI):
         # Warning: You cannot catch the SIGKILL signal, it is a kernel-level signal and cannot be caught by the process
         #          So do NOT even bother to try to catch it, it is a waste of time
         
-        shell(self.start_command)
+        # Check if automatic virtual environment activation is enabled
+        if self.auto_activate_venv:
+            # Notify user that auto activation is attempted
+            hint('"auto_activate_venv" automatically set to "True". Trying to activate a possibly present virtual environment ...')
+            
+            venv_found = False  # Initialize flag to track if a virtual environment is found
+            # Iterate through all files in the parent directory to locate a virtual environment
+            for f in file.list(self.parent_path):
+                if 'venv' in f.name:
+                    venv_path = f.path # Store the path of the found virtual environment
+                    log(f'Virtual environment {f.name} found.') # Log the discovery of the virtual environment
+                    venv_found = True # Update the flag as a virtual environment is found
+                    break # Exit the loop since the virtual environment has been found
+                
+            if not venv_found:
+                # Warn the user if no virtual environment is found, indicating limited functionality
+                warn('No virtual environment found. Script functionality may be limited.')
+                shell(self.start_command)
+            else:
+                try:
+                    # Attempt to activate the found virtual environment
+                    # shell(f'. {venv_path}/bin/activate')
+                    # Append the site-packages directory of the virtual environment to sys.path for module resolution
+                    # sys.path.append(f'{venv_path}/lib/python3.11/site-packages')
+                    shell(f'. {venv_path}/bin/activate && {self.start_command}')
+                    log('Virtual environment activated.')  # Log successful activation
+                except Exception as e:
+                    # Log an error if activation fails, providing the exception details
+                    err('An error occurred while trying to activate the virtual environment:', e)
