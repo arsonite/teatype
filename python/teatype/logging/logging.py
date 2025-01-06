@@ -143,7 +143,7 @@ def _format(message:any,
             prefix:str=None,
             use_prefix:bool=True,
             pad_before:int=None,
-            print_verbose:bool=False) -> any:
+            verbose:bool=False) -> any:
     """
     Formats a message with optional padding and verbosity.
     Only has an effect on terminal logging, not file logging.
@@ -152,7 +152,7 @@ def _format(message:any,
         message (any, optional): The message to format. Defaults to ''.
         pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
         pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
-        print_verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
+        verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
 
     Returns:
         any: The formatted message string.
@@ -164,8 +164,8 @@ def _format(message:any,
         for _ in range(pad_before):
             println() # Print a blank line to add padding above the message
             
-    # If print_verbose is True, include caller's filename and line number in the message
-    if print_verbose:
+    # If verbose is True, include caller's filename and line number in the message
+    if verbose:
         # Traverse the stack to find the frame of the original caller
         stack = inspect.stack()
         for frame_info in stack:
@@ -194,7 +194,8 @@ def err(message:str,
         pad_after:int=None,
         traceback:bool=False,
         use_prefix:bool=True,
-        print_verbose:bool=True) -> None:
+        verbose:bool=True,
+        raise_error:Exception|bool=False) -> None:
     """
     Logs an error message and optionally includes the traceback of the current exception.
 
@@ -204,8 +205,8 @@ def err(message:str,
         pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
         traceback (bool, optional): Flag to determine whether to include the traceback.
             Defaults to False.
-        print_verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
-
+        verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
+        raise_error (Exception, optional): If specified, raises the provided exception with the error message.
     Returns:
         int: Returns 1 to indicate an error has occurred.
     """
@@ -213,18 +214,31 @@ def err(message:str,
     exc_info = sys.exc_info()
     
     # Log the error message as a critical error, potentially including the traceback
-    if exit:
-        prefix = 'FATAL EXIT ERROR'
-    elif traceback:
-        prefix = 'FATAL ERROR'
+    if not raise_error:
+        if exit:
+            prefix = 'FATAL EXIT ERROR'
+        elif traceback:
+            prefix = 'FATAL ERROR'
+        else:
+            prefix = 'ERROR'
     else:
-        prefix = 'ERROR'
-        
+        prefix = None
+        use_prefix = False
     error_message = _format(message=message,
                             prefix=prefix,
                             use_prefix=use_prefix,
-                            print_verbose=print_verbose,
+                            verbose=verbose,
                             pad_before=pad_before)
+    
+    # Handle the raising of exceptions based on the 'raise_error' parameter
+    if raise_error:
+        # Check if 'raise_error' is an instance of the Exception class
+        if isinstance(raise_error, bool):
+            # If 'raise_error' is not an Exception instance, raise a generic Exception with the error message
+            raise Exception(error_message)
+        else:
+            # Raise the provided exception with the specified error message
+            raise raise_error(error_message)
     
     # Check if there is an active exception
     if exc_info and exc_info[0] is not None:
@@ -249,13 +263,13 @@ def err(message:str,
 def implemented_trap(message:str,
                      pad_before:int=None,
                      pad_after:int=None,
-                     print_verbose:bool=False,
+                     verbose:bool=False,
                      use_prefix:bool=True) -> None:
     trap_message = _format(message,
                            prefix='IMPLEMENTED TRAP',
                            use_prefix=use_prefix,
                            pad_before=pad_before,
-                           print_verbose=print_verbose)
+                           verbose=verbose)
     
     logger.critical(trap_message) # Log the message as is
     
@@ -266,7 +280,7 @@ def hint(message:str,
          pad_before:int=None,
          pad_after:int=None,
          use_prefix:bool=True,
-         print_verbose:bool=False) -> int:
+         verbose:bool=False) -> int:
     """
     Provide a hint message with optional padding and verbosity.
     
@@ -274,7 +288,7 @@ def hint(message:str,
         message (str): The message to display as a hint.
         pad_after (int, optional): Number of blank lines to add below the message. Defaults to None.
         pad_before (int, optional): Number of blank lines to add above the message. Defaults to None.
-        print_verbose (bool, optional): If True, include additional verbosity in the message. Defaults to False.
+        verbose (bool, optional): If True, include additional verbosity in the message. Defaults to False.
     Returns:
         int: Status code indicating the outcome of the operation.
     """
@@ -283,7 +297,7 @@ def hint(message:str,
                            prefix='HINT',
                            use_prefix=use_prefix,
                            pad_before=pad_before,
-                           print_verbose=print_verbose)
+                           verbose=verbose)
     
     # Log the final message at the INFO level using the global logger
     logger.debug(hint_message) # Log the message as is
@@ -296,7 +310,7 @@ def log(message:any,
         pad_after:int=None,
         pad_before:int=None,
         prettify:bool=False,
-        print_verbose:bool=False) -> None:
+        verbose:bool=False) -> None:
     """
     Logs a message with optional formatting, padding, and prettification.
     
@@ -310,11 +324,11 @@ def log(message:any,
         pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
         pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
         prettify (bool, optional): If True, formats complex objects into a pretty-printed string. Defaults to False.
-        print_verbose (bool, optional): If True, includes caller's filename and line number in the log message. Defaults to False.
+        verbose (bool, optional): If True, includes caller's filename and line number in the log message. Defaults to False.
     """
     # Format the message with optional padding and verbosity
     log_message = _format(message,
-                          print_verbose=print_verbose,
+                          verbose=verbose,
                           pad_before=pad_before)
     
     # Check if prettify flag is set to True to format the message for better readability
@@ -368,7 +382,7 @@ def warn(message:str='',
          pad_after:int=None,
          pad_before:int=None,
          use_prefix:bool=True,
-         print_verbose:bool=False) -> None:
+         verbose:bool=False) -> None:
     """
     Logs a warning message.
 
@@ -376,7 +390,7 @@ def warn(message:str='',
         message (str): The warning message to be logged.
         pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
         pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
-        print_verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
+        verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
 
     Returns:
         int: Returns 0 after logging the warning.
@@ -385,7 +399,7 @@ def warn(message:str='',
                            prefix='WARN',
                            use_prefix=use_prefix,
                            pad_before=pad_before,
-                           print_verbose=print_verbose)
+                           verbose=verbose)
     logger.warning(warn_message) # Log the warning message
     
     # Add a blank line after the message if pad_after is specified and greater than 0

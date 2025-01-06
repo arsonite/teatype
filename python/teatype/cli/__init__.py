@@ -14,6 +14,7 @@ from .args.Argument import Argument
 from .args.Command import Command
 from .args.Flag import Flag
 from .BaseCLI import BaseCLI
-from .CheckIfRunning import CheckIfRunning
+from .CheckRunning import CheckRunning
+from .Install import Install
 from .Start import Start
 from .Stop import Stop

@@ -435,42 +435,41 @@ def read(file:_File|PosixPath|str,
         if file_class.exists:
             if file_class.is_file:
                 content = None
-                if file_extension == '.ini' or force_format == 'ini':
-                    # Initialize ConfigParser and read INI configuration
-                    config = configparser.ConfigParser()
-                    config.read(path_string)
-                    content = config
-                else:
-                    with open(path_string, 'r') as f:
-                        if force_format == 'lines':
-                            # Read and return the lines of the file
-                            content = f.readlines()
-                        elif file_extension == '.jsonc' or force_format == 'jsonc':
-                            dirty_content = f.read()
-                            # Remove comments denoted by '//' to ensure valid JSON
-                            clean_content = ''.join(line for line in dirty_content.splitlines() if not line.strip().startswith('//'))
-                            content = json.loads(clean_content)
-                        elif file_extension == '.json' or force_format == 'json':
-                            # Load and return JSON data from the file
-                            content = json.load(f)
-                        elif file_extension == '.csv' or force_format == 'csv':
-                            # Read and return CSV data as a list of rows
-                            content = list(csv.reader(f))
-                        elif file_extension == '.env' or force_format == 'env':
-                            # Parse and return environment variables from the file
-                            env_vars = {}
-                            for line in f:
-                                line = line.strip()
-                                # Check if the line is not empty and does not start with a comment
-                                if line and not line.startswith('#'):
-                                    # Split the line into key and value using the first '=' as delimiter
-                                    key, _, value = line.partition('=')
-                                    # Strip whitespace and set the environment variable
-                                    env_vars[key.strip()] = value.strip()
-                            content = env_vars
-                        else:
-                            # Read and return plain text data from the file
-                            content = f.read()
+                with open(path_string, 'r') as f:
+                    if force_format == 'lines':
+                        # Read and return the lines of the file
+                        content = f.readlines()
+                    if file_extension == '.ini' or file_extension == '.cfg' or force_format == 'ini' or force_format == 'cfg':
+                        # Initialize ConfigParser and read INI configuration
+                        config = configparser.ConfigParser()
+                        config.read(path_string)
+                        content = config
+                    elif file_extension == '.jsonc' or force_format == 'jsonc':
+                        dirty_content = f.read()
+                        # Remove comments denoted by '//' to ensure valid JSON
+                        clean_content = ''.join(line for line in dirty_content.splitlines() if not line.strip().startswith('//'))
+                        content = json.loads(clean_content)
+                    elif file_extension == '.json' or force_format == 'json':
+                        # Load and return JSON data from the file
+                        content = json.load(f)
+                    elif file_extension == '.csv' or force_format == 'csv':
+                        # Read and return CSV data as a list of rows
+                        content = list(csv.reader(f))
+                    elif file_extension == '.env' or force_format == 'env':
+                        # Parse and return environment variables from the file
+                        env_vars = {}
+                        for line in f:
+                            line = line.strip()
+                            # Check if the line is not empty and does not start with a comment
+                            if line and not line.startswith('#'):
+                                # Split the line into key and value using the first '=' as delimiter
+                                key, _, value = line.partition('=')
+                                # Strip whitespace and set the environment variable
+                                env_vars[key.strip()] = value.strip()
+                        content = env_vars
+                    else:
+                        # Read and return plain text data from the file
+                        content = f.read()
                 
                 if content is None:
                     # Log an error if the file is empty

@@ -74,14 +74,14 @@ def prompt(prompt_text:str, options:List[any]=None, return_bool:bool=True, color
                     pad_after=1,
                     exit=True,
                     use_prefix=False,
-                    print_verbose=False)
+                    verbose=False)
         else:
             prompt_answer = input()
         
         # Return the validated user input
         return prompt_answer == options[0] if return_bool else prompt_answer
     except KeyboardInterrupt:
-        warn('User interrupted the input prompt.', pad_before=2, pad_after=1, use_prefix=False, print_verbose=False)
+        warn('User interrupted the input prompt.', pad_before=2, pad_after=1, use_prefix=False, verbose=False)
         sys.exit(1)
     except SystemExit as se:
         sys.exit(se.code)

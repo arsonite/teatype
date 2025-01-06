@@ -38,7 +38,7 @@ class GLOBAL_CLI_CONFIG:
         'flags':List[Flag]
     ]
     TAB = '    '
-    USE_HELP_MESSAGE_ON_FAIL = False
+    USE_HELP_MESSAGE_ON_FAIL = True
 
 # TODO: Use log instead of print and println instead of pad_before and pad_after
 # TODO: Create a variable that controls behaviour of the CLI if called from another script
@@ -65,17 +65,18 @@ class BaseCLI(ABC):
         parsing_errors (list): A list of parsing errors encountered during validation.
     """
     def __init__(self,
+                 proxy_mode:bool=False,
                  auto_init:bool=True,
                  auto_parse:bool=True,
                  auto_validate:bool=True,
                  auto_execute:bool=True,
-                 auto_activate_venv:bool=True,
-                 env_path:str='.../.env',
-                 proxy_mode:bool=False):
+                 env_path:str='.../.env'):
         """
         Initializes the BaseCLI instance with configuration options.
 
         Args:
+            proxy_mode (bool, optional): If set to True, the CLI will operate in proxy mode, altering its behavior to function as a proxy.
+                                          Defaults to False.
             auto_init (bool, optional): If set to True, the CLI will automatically initialize upon instantiation.
                                          Defaults to True.
             auto_parse (bool, optional): If set to True, the CLI will automatically parse command-line arguments upon initialization.
@@ -88,9 +89,9 @@ class BaseCLI(ABC):
                                                  Defaults to True.
             env_path (str, optional): The file path to the `.env` file from which environment variables will be loaded.
                                        Defaults to '.../.env'.
-            proxy_mode (bool, optional): If set to True, the CLI will operate in proxy mode, altering its behavior to function as a proxy.
-                                          Defaults to False.
         """
+        self.proxy_mode = proxy_mode
+        
         # Load the environment variables from the specified .env file
         # TODO: Replace with own file class
         env_file = Path(env_path) # Create a Path object for the environment file path
@@ -137,7 +138,6 @@ class BaseCLI(ABC):
             self.pre_init()
             
         meta = self.meta()
-        
         # Hook for modifying meta information
         if hasattr(self, 'modified_meta') and callable(getattr(self, 'modified_meta')):
             modfied_meta = self.modified_meta()
@@ -180,6 +180,7 @@ class BaseCLI(ABC):
             
         # Add the default help flag for all scripts
         self.flags.append(Flag(short='h', long='help', help='Display the (sometimes more detailed) help message.', required=False))
+        self.flags.sort(key=lambda flag: flag.short) # Sort the flags by their short notation
 
     # TODO: Make positioning of arguments optional
     # TODO: Make flag assignment work with "="
@@ -284,10 +285,7 @@ class BaseCLI(ABC):
                         if not found_command:
                             parsing_errors.append(f'Unknown command: {self.parsed_command}.')
                     else:
-                        if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
                             parsing_errors.append('No command provided.')
-                        else:
-                            self.print_usage()
                 else:
                     # Determine the number of parsed arguments and the total number of expected arguments
                     amount_of_parsed_arguments = len(self.parsed_arguments)
@@ -304,21 +302,18 @@ class BaseCLI(ABC):
 
                     # Check if the number of parsed arguments is less than the number of required arguments
                     if amount_of_parsed_arguments < amount_of_required_arguments:
-                        if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
-                            parsing_errors.append(
-                                f'Script requires ({amount_of_required_additional_arguments}) additional argument{"s" if amount_of_required_additional_arguments > 1 else ""}.'
-                            )
+                        parsing_errors.append(
+                            f'Script requires ({amount_of_required_additional_arguments}) additional argument{"s" if amount_of_required_additional_arguments > 1 else ""}.'
+                        )
 
-                            # Check for missing required argumentsw
-                            for argument in self.arguments:
-                                if argument.required and amount_of_required_additional_arguments > 0:
-                                    parsing_errors.append(f'Missing required argument: <{argument.name}>.')
-                                    continue
-                                    
-                                if self.parsed_arguments[argument.position]:
-                                    argument.value = self.parsed_arguments[argument.position]
-                        else:
-                            self.print_usage()
+                        # Check for missing required argumentsw
+                        for argument in self.arguments:
+                            if argument.required and amount_of_required_additional_arguments > 0:
+                                parsing_errors.append(f'Missing required argument: <{argument.name}>.')
+                                continue
+                                
+                            if self.parsed_arguments[argument.position]:
+                                argument.value = self.parsed_arguments[argument.position]
 
                 # Check for unknown flags in the parsed flags
                 for parsed_flag in self.parsed_flags:
@@ -345,11 +340,13 @@ class BaseCLI(ABC):
             amount_of_parsing_errors = len(parsing_errors)
             if amount_of_parsing_errors > 0:
                 print()
-                err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_prefix=False, print_verbose=False)
+                err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_prefix=False, verbose=False)
                 for parsing_error in parsing_errors:
                     print('  * ' + parsing_error)
                 if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
-                    hint('Use the "-h, --help" flag for usage information.', pad_before=1, pad_after=1)
+                    self.print_usage()
+                else:
+                    print()
                 sys.exit(1)
                 
         if GLOBAL_CLI_CONFIG.DEBUG_MODE:
@@ -416,9 +413,10 @@ class BaseCLI(ABC):
         # TODO: Reduce repetition
         amount_of_arguments_greater_0 = len(self.arguments)
         amount_of_commands_greater_0 = len(self.commands)
+        # Deprecated: Not needed anymore really
         # Filter out the help flag from the list of flags
-        flags = list(filter(lambda flag: not flag.short == '-h' and not flag.long == '--help', self.flags)) 
-        amount_of_flags_greater_0 = len(flags)
+        # flags = list(filter(lambda flag: not flag.short == '-h' and not flag.long == '--help', self.flags)) 
+        amount_of_flags_greater_0 = len(self.flags)
         
         # Set the name to './<name>' by default
         name = f'./{self.name}'
@@ -466,7 +464,7 @@ class BaseCLI(ABC):
             
             # Check if there are any flags and calculate the maximum line width for formatting
             if amount_of_flags_greater_0:
-                for flag in flags:
+                for flag in self.flags:
                     # Format the flag line with indentation, short flag, and long flag
                     flag_line = f'{GLOBAL_CLI_CONFIG.TAB}{flag.short}, {flag.long}'
                     # If the flag has options, include them in the flag line
@@ -550,7 +548,7 @@ class BaseCLI(ABC):
                 indented_formatted_string += '\n'
                 indented_formatted_string += 'Flags:\n'
                 # Iterate over each flag and add its details to the formatted string
-                for flag in flags:
+                for flag in self.flags:
                     # Format the flag line with indentation
                     flag_line = f'{GLOBAL_CLI_CONFIG.TAB}{flag.short}, {flag.long}'
                     # TODO: Check wrong flag options

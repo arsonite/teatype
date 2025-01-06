@@ -33,6 +33,18 @@ def create(*args, stringify:bool=True) -> str:
     new_path.mkdir(parents=True, exist_ok=True) # Create the new folder and its parents if they do not exist
     return str(new_path) if stringify else new_path # Return the new path as string or Path object
 
+def exists(path:str) -> bool:
+    """
+    Check if the given path exists.
+
+    Args:
+        path (str): The path to the file or directory.
+
+    Returns:
+        bool: True if the path exists, False otherwise.
+    """
+    return Path(path).exists() # Check if the path exists
+
 def home(stringify:bool=True) -> str:
     """
     Retrieve the user's home directory.
@@ -82,7 +94,7 @@ def parent(path:str, reverse_depth:int=1, stringify:bool=True) -> str:
         parent = parent.parent # Traverse up the directory tree
     return str(parent) if stringify else parent # Return the parent path as string or Path object
 
-def this(stringify:bool=True) -> str:
+def this(skip_call_stack_steps:int=None, stringify:bool=True) -> str:
     """
     Retrieve the path of the calling script.
 
@@ -91,6 +103,7 @@ def this(stringify:bool=True) -> str:
     or as a Path object based on the `stringify` parameter.
 
     Args:
+        skip_call_stack_steps (int): The number of frames to skip in the call stack.
         stringify (bool): Determines the return type of the script path.
                           - If True, returns the path as a string.
                           - If False, returns the path as a Path object.
@@ -100,23 +113,31 @@ def this(stringify:bool=True) -> str:
         str: The caller's script path as a string if `stringify` is True.
         Path: The caller's script path as a Path object if `stringify` is False.
     """
+    if skip_call_stack_steps and skip_call_stack_steps < 1:
+        raise ValueError('skip_call_stack_steps must be greater than or equal to 1')
+    
     stack = inspect.stack() # Get the current call stack
     for frame in stack:
         # Iterate through each frame in the call stack
         if frame.filename != __file__:
+            if skip_call_stack_steps:
+                if skip_call_stack_steps > 0:
+                    skip_call_stack_steps -= 1
+                    continue
             # Identify the first frame that is not this file, i.e., the caller
             caller_frame = frame
             break
     caller_path = Path(caller_frame.filename).resolve() # Resolve the absolute path of the caller's script
     return str(caller_path) if stringify else caller_path # Return the path as string or Path object based on `stringify`
 
-def this_parent(reverse_depth:int=1, stringify:bool=True) -> str:
+def this_parent(reverse_depth:int=1, skip_call_stack_steps:int=None, stringify:bool=True) -> str:
     """
     Retrieve the parent directory of the script's path.
 
     Args:
         reverse_depth (int): The number of levels to traverse up the directory tree.
                              Defaults to 1.
+        skip_call_stack_steps (int): The number of frames to skip in the call stack.
         stringify (bool): If True, returns the parent path as a string.
                            If False, returns as a Path object. Defaults to True.
 
@@ -124,7 +145,8 @@ def this_parent(reverse_depth:int=1, stringify:bool=True) -> str:
         str: The parent directory path as a string if stringify is True.
         Path: The parent directory as a Path object if stringify is False.
     """
-    script_path = this(stringify=False) # Get the script path as a Path object
+    # Get the script path as a Path object
+    script_path = this(skip_call_stack_steps=skip_call_stack_steps, stringify=False)
     parent = script_path.parent # Get the immediate parent directory
     for _ in range(reverse_depth - 1):
         parent = parent.parent # Traverse up the directory tree

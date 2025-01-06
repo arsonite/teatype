@@ -19,7 +19,7 @@ import sys
 import time
 
 # From package imports
-from teatype.cli import BaseCLI, CheckIfRunning
+from teatype.cli import BaseCLI, CheckRunning
 from teatype.logging import err, hint, log, println, warn
 
 # From-as system imports
@@ -114,7 +114,7 @@ class Stop(BaseCLI):
                             script_class = getattr(module, camel_case_name, None)
 
                             # Ensure the retrieved class exists, is a class type, and is a subclass of CheckIfRunning
-                            if script_class and inspect.isclass(script_class) and issubclass(script_class, CheckIfRunning):
+                            if script_class and inspect.isclass(script_class) and issubclass(script_class, CheckRunning):
                                 # Instantiate the class without automatic validation or execution
                                 self.check_if_running = script_class(auto_validate=False,
                                                                      auto_execute=False)
