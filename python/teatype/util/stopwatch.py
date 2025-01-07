@@ -8,9 +8,9 @@ class GLOBAL_STOPWATCH_CONFIG:
     """
     Global configuration for the stopwatch utility.
     """
-    DISABLE_STOPWATCHES:bool=False
-    PRINT_START:bool=False
-    TIME_CONVERSION:bool=False
+    DISABLE_STOPWATCHES:bool = False
+    PRINT_START:bool = False
+    TIME_CONVERSION:bool = False
 
 # Module-specific state tracker, unique to each importing module
 STATE = {

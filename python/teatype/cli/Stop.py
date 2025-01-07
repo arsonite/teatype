@@ -28,6 +28,7 @@ from importlib import util as iutil
 # From-as package imports
 from teatype.io import TemporaryDirectory as TempDir
 
+# TODO: Redis adapter to remove entries from a redis db?
 class Stop(BaseCLI):
     def meta(self):
         return {
