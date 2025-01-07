@@ -105,7 +105,6 @@ def shell(command:str,
         # Asking for sudo permissions before script executes any further and suppresses usage information
         subprocess.run('sudo 2>/dev/null', shell=True)
         command = f'sudo {command}'
-    
     try:
         # Run the command in a subprocess
         # shell=True allows the command to be executed through the shell
@@ -133,7 +132,7 @@ def shell(command:str,
         # Sometimes the command may fail due to a non-zero exit code, but still return
         # an exit code of 0. In such cases, the exception will be caught and the exit code will be set to 1.
         output.returncode = 1
-    
+        
     if return_stdout:
         # Retrieve the standard output from the subprocess
         stdout = output.stdout

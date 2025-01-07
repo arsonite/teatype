@@ -24,6 +24,10 @@ import traceback as traceback_exc
 from datetime import datetime
 from pprint import pformat
 
+# TODO: Use class closure like with the old stopwatch, to set global variables once somewhere, for consistency
+#       in the file saving, like the path to the log directory, etc.
+#       This way, the log directory can be created once and used throughout all files.
+
 # Define a global base log directory
 BASE_LOG_DIR = os.path.join(os.path.expanduser("~"), "ApplicationLogs") # User home directory
 

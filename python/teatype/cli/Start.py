@@ -48,7 +48,7 @@ class Start(BaseCLI):
         # Check if automatic configuration discovery is enabled
         if auto_find_config:
             # Notify user that auto configuration discovery is initiated
-            hint('"auto_find_config" automatically set to "True". Auto-finding module configuration...')
+            hint('"auto_find_config" automatically set to "True". Auto-finding module configuration...', pad_before=1)
             # Construct the path to the module configuration file
             config_path = path.join(self.parent_path, 'config', 'module.cfg')
             # Read the configuration file and assign its contents to self.module_config
@@ -172,7 +172,7 @@ class Start(BaseCLI):
                                 use_prefix=False,
                                 verbose=False)
                 if not stop_script_found:
-                    warn('No stop script found in scripts directory. Only limited functionality available.')
+                    warn('No "stop" script found in scripts directory. Only limited functionality available.')
 
             finally:
                 # Ensure the temporary directory is removed from sys.path after import
@@ -216,31 +216,55 @@ class Start(BaseCLI):
         env.load() # Load the environment variables
         
         def signal_handler(signum, _):
+            """
+            Handle incoming signals and perform appropriate actions based on the signal type.
+
+            Args:
+                signum (int): The signal number received.
+                _ (Any): Additional arguments (unused).
+
+            This function is designed to handle various signals sent to the process.
+            It logs a warning message indicating which signal was received and then exits
+            the process gracefully or forcefully based on the signal type.
+            """
             try:
+                # Attempt to retrieve the name of the received signal
                 signal_name = signal.Signals(signum).name
             except ValueError:
+                # If the signal number is unrecognized, assign a default message
                 signal_name = f'Unknown signal ({signum})'
-                
-            if signum == signal.SIGINT:
+            
+            warning_addendum = ''
+            # Check if the signal is SIGSTOP or SIGINT to provide additional context
+            if signum == signal.SIGSTOP or signum == signal.SIGINT:
                 warning_addendum = ' (possibly user keyboard interrupt)'
                 
-            # Log a warning if the process is interrupted by the user (e.g., Ctrl+C)
+            # Log a warning indicating that the process was killed by a specific signal
             warn(f'Process killed by {signal_name} signal{warning_addendum}.', pad_after=1, pad_before=2)
-            exit(1) # Double making sure that the process is killed (maybe a bad idea)?
+            
+            # Determine the exit code based on the signal type
+            # Warning: Doubly making sure that the process is killed (maybe a bad idea)?
+            if signum == signal.SIGSTOP or signum == signal.SIGINT:
+                # Exit with code 0 for graceful termination on interrupt signals
+                exit(0)
+            else:
+                # Exit with code 1 for other signals indicating abnormal termination
+                exit(1)
 
+        # Warning: You cannot catch the SIGKILL signal, it is a kernel-level signal and cannot be caught
+        #          by the process, so do NOT even bother to try to catch it, it is a waste of time
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         signal.signal(signal.SIGHUP, signal_handler)
         signal.signal(signal.SIGQUIT, signal_handler)
         signal.signal(signal.SIGUSR1, signal_handler)
         signal.signal(signal.SIGUSR2, signal_handler)
-        # Warning: You cannot catch the SIGKILL signal, it is a kernel-level signal and cannot be caught by the process
-        #          So do NOT even bother to try to catch it, it is a waste of time
         
         # Check if automatic virtual environment activation is enabled
         if self.auto_activate_venv:
             # Notify user that auto activation is attempted
-            hint('"auto_activate_venv" automatically set to "True". Trying to activate a possibly present virtual environment ...')
+            hint('"auto_activate_venv" automatically set to "True". Trying to activate a possibly present virtual environment ...',
+                 pad_before=1)
             
             venv_found = False  # Initialize flag to track if a virtual environment is found
             # Iterate through all files in the parent directory to locate a virtual environment
@@ -253,16 +277,15 @@ class Start(BaseCLI):
                 
             if not venv_found:
                 # Warn the user if no virtual environment is found, indicating limited functionality
-                warn('No virtual environment found. Script functionality may be limited.')
+                warn('No virtual environment found. Script functionality may be limited.', pad_after=1)
                 shell(self.start_command)
             else:
                 try:
                     # Attempt to activate the found virtual environment
-                    # shell(f'. {venv_path}/bin/activate')
-                    # Append the site-packages directory of the virtual environment to sys.path for module resolution
-                    # sys.path.append(f'{venv_path}/lib/python3.11/site-packages')
+                    log('Virtual environment activated.') # Log successful activation
                     shell(f'. {venv_path}/bin/activate && {self.start_command}')
-                    log('Virtual environment activated.')  # Log successful activation
                 except Exception as e:
                     # Log an error if activation fails, providing the exception details
                     err('An error occurred while trying to activate the virtual environment:', e)
+                    
+            signal_handler(signal.SIGSTOP, None) # Kill the process after successful activation
