@@ -37,12 +37,12 @@ class GLOBAL_CLI_CONFIG:
         'commands':List[Command],
         'flags':List[Flag]
     ]
-    TAB = '    '
+    TAB = ' ' * 4
     USE_HELP_MESSAGE_ON_FAIL = True
 
+# TODO: Make relations and depedencies between flags algorithmic
+#       depends_on: 'flag_name' -> 'flag_name' must be set before this flag can be set
 # TODO: Use log instead of print and println instead of pad_before and pad_after
-# TODO: Create a variable that controls behaviour of the CLI if called from another script
-#       helps with things like format_str, print_usage, hooks, etc.
 # TODO: Seperate into optional and required arguments
 # TODO: SIGINT handle_interrupt implemented traps
 # TODO: Document all return types
@@ -359,14 +359,11 @@ class BaseCLI(ABC):
         else:
             validate()
     
-    # TODO: Restore replace name functionality directly to streamline function header
+    # TODO: Reduce code repetition, use more inline functions
     def format_str(self,
-                   include_args:bool,
-                   include_meta:bool,
-                   include_usage:bool,
-                   minify_usage:bool,
-                   tab_padding:int,
-                   print_padding) -> str:
+                   minify_usage:bool=False,
+                   print_padding:int=0,
+                   tab_padding:int=0) -> str:
         """
         Formats the CLI usage and meta information into a string.
 
@@ -410,24 +407,26 @@ class BaseCLI(ABC):
         # Initialize an empty string to store the formatted output
         indented_formatted_string = ''
         
-        # TODO: Reduce repetition
         amount_of_arguments_greater_0 = len(self.arguments)
         amount_of_commands_greater_0 = len(self.commands)
         # Deprecated: Not needed anymore really
-        # Filter out the help flag from the list of flags
-        # flags = list(filter(lambda flag: not flag.short == '-h' and not flag.long == '--help', self.flags)) 
+            # Filter out the help flag from the list of flags
+            # flags = list(filter(lambda flag: not flag.short == '-h' and not flag.long == '--help', self.flags)) 
         amount_of_flags_greater_0 = len(self.flags)
         
         # Set the name to './<name>' by default
-        name = f'./{self.name}'
+        if self.proxy_mode:
+            name = f'{self.shorthand}, {self.name}'
+        else:
+            name = f'./{self.name}'
         if minify_usage:
             # Add shorthand and name to the formatted string
-            indented_formatted_string = pad(f'{self.shorthand}, {self.name}')
-        elif include_usage:
+            indented_formatted_string = pad(f'{name}\t{self.help}')
+        else:
             # Add usage information to the formatted string
             indented_formatted_string += '\n'
             indented_formatted_string += f'Usage:\n{GLOBAL_CLI_CONFIG.TAB}{name}'
-    
+
             if amount_of_arguments_greater_0:
                 indented_formatted_string += ' [ARGUMENTS]'
             
@@ -438,11 +437,7 @@ class BaseCLI(ABC):
                 indented_formatted_string += ' [FLAGS]'
                 
             indented_formatted_string += '\n'
-            
-        if include_meta:
-            indented_formatted_string += pad(f'\n\t{self.help}')
         
-        if include_args:
             # This variable will be used to keep track of the maximum width of the formatted lines
             line_width = 0
             # TODO: Refactor to prevent unncessay loops
@@ -564,9 +559,6 @@ class BaseCLI(ABC):
         return indented_formatted_string
             
     def print_usage(self,
-                    include_args:bool=True,
-                    include_meta:bool=False,
-                    include_usage:bool=True,
                     minify_usage:bool=False,
                     tab_padding:int=0,
                     print_padding:int=0):
@@ -579,19 +571,13 @@ class BaseCLI(ABC):
         is then printed to the console.
 
         Args:
-            include_args (bool): Whether to include arguments, commands, and flags in the formatted string.
-            include_meta (bool): Whether to include meta information in the formatted string.
-            include_usage (bool): Whether to include usage information in the formatted string.
             minify_usage (bool): Whether to include minified usage information in the formatted string.
             tab_padding (int): The number of spaces to use for indentation.
         """
         
         # Generate the formatted string using the format_str method
         # The format_str method takes include_args, include_meta, minify_usage, and tab_padding as arguments
-        indented_formatted_string = self.format_str(include_args,
-                                                    include_meta,
-                                                    include_usage,
-                                                    minify_usage,
+        indented_formatted_string = self.format_str(minify_usage,
                                                     tab_padding,
                                                     print_padding)
         
