@@ -199,7 +199,7 @@ def err(message:str,
         traceback:bool=False,
         use_prefix:bool=True,
         verbose:bool=True,
-        raise_error:Exception|bool=False) -> None:
+        raise_exception:Exception|bool=False) -> None:
     """
     Logs an error message and optionally includes the traceback of the current exception.
 
@@ -210,7 +210,7 @@ def err(message:str,
         traceback (bool, optional): Flag to determine whether to include the traceback.
             Defaults to False.
         verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
-        raise_error (Exception, optional): If specified, raises the provided exception with the error message.
+        raise_exception (Exception, optional): If specified, raises the provided exception with the error message.
     Returns:
         int: Returns 1 to indicate an error has occurred.
     """
@@ -218,7 +218,7 @@ def err(message:str,
     exc_info = sys.exc_info()
     
     # Log the error message as a critical error, potentially including the traceback
-    if not raise_error:
+    if not raise_exception:
         if exit:
             prefix = 'FATAL EXIT ERROR'
         elif traceback:
@@ -234,15 +234,15 @@ def err(message:str,
                             verbose=verbose,
                             pad_before=pad_before)
     
-    # Handle the raising of exceptions based on the 'raise_error' parameter
-    if raise_error:
-        # Check if 'raise_error' is an instance of the Exception class
-        if isinstance(raise_error, bool):
-            # If 'raise_error' is not an Exception instance, raise a generic Exception with the error message
+    # Handle the raising of exceptions based on the 'raise_exception' parameter
+    if raise_exception:
+        # Check if 'raise_exception' is an instance of the Exception class
+        if isinstance(raise_exception, bool):
+            # If 'raise_exception' is not an Exception instance, raise a generic Exception with the error message
             raise Exception(error_message)
         else:
             # Raise the provided exception with the specified error message
-            raise raise_error(error_message)
+            raise raise_exception(error_message)
     
     # Check if there is an active exception
     if exc_info and exc_info[0] is not None:

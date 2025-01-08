@@ -296,9 +296,12 @@ def exists(path:PosixPath|str, return_file:bool=False, trim_file:bool=False) -> 
         # Use the path as-is if it's already a string
         path_string = path
     
-    # Return a _File object with the specified path and trimming option if requested
+    file_exists = os.path.exists(path_string)
+    if return_file:
+        # Return a _File object with the specified path and trimming option if requested
+        return _File(path_string, trimmed=trim_file) if file_exists else None
     # Otherwise, return a boolean indicating whether the path exists
-    return _File(path_string, trimmed=trim_file) if return_file else os.path.exists(path_string)
+    return file_exists
     
 def list(directory:str,
          walk:bool=True,

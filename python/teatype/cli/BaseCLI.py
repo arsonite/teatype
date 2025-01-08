@@ -63,6 +63,18 @@ class BaseCLI(ABC):
         parsed_flags (dict): A dictionary of parsed flags.
         parsing_errors (list): A list of parsing errors encountered during validation.
     """
+    arguments:List[Argument]
+    commands:List[Command]
+    flags:List[Flag]
+    help:str
+    name:str
+    parsed_arguments:List[str]
+    parsed_command:str
+    parsed_flags:dict
+    parsing_errors:List[str]
+    proxy_mode:bool
+    shorthand:str
+    
     def __init__(self,
                  proxy_mode:bool=False,
                  auto_init:bool=True,
@@ -177,8 +189,9 @@ class BaseCLI(ABC):
         for flag in flags:
             self.flags.append(Flag(**flag))
             
-        # Add the default help flag for all scripts
-        self.flags.append(Flag(short='h', long='help', help='Display the (sometimes more detailed) help message.', required=False))
+        # Deprecated: Disabled auto adding help flag for now
+            # Add the default help flag for all scripts
+            # self.flags.append(Flag(short='h', long='help', help='Display the (sometimes more detailed) help message.', required=False))
         self.flags.sort(key=lambda flag: flag.short) # Sort the flags by their short notation
 
     # TODO: Make positioning of arguments optional
@@ -328,11 +341,28 @@ class BaseCLI(ABC):
                             
                     if flag.short in self.parsed_flags or flag.long in self.parsed_flags:
                         parsed_flag_value = self.parsed_flags.get(flag.short) or self.parsed_flags.get(flag.long)
-                        if parsed_flag_value and flag.options is None and parsed_flag_value is not True:
+                        flag_options = flag.options
+                        if parsed_flag_value and flag_options is None and parsed_flag_value is not True:
                             parsing_errors.append(
                                 f'Flag "{flag.short}, {flag.long}" does not expect a value, but one was given: "{parsed_flag_value}".'
                             )
                         else:
+                            if type(flag_options) == type:
+                                try:
+                                    flag_options_name = flag_options.__name__
+                                    match flag_options_name:
+                                        case 'int':
+                                            parsed_flag_value = int(parsed_flag_value)
+                                        case 'str':
+                                            parsed_flag_value = str(parsed_flag_value)
+                                        case 'bool':
+                                            parsed_flag_value = bool(parsed_flag_value)
+                                        case 'float':
+                                            parsed_flag_value = float(parsed_flag_value)
+                                except Exception as exc:
+                                    parsing_errors.append(
+                                        f'Flag "{flag.short}, {flag.long}" expects a value of type "{flag_options_name}", but "{parsed_flag_value}" was given.'
+                                    )
                             flag.value = parsed_flag_value
 
             # Assign the list of parsing errors encountered

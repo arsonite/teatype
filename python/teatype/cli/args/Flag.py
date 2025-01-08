@@ -10,6 +10,9 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
+# From package imports
+from teatype.logging import err
+
 # From system imports
 from typing import List
 
@@ -32,12 +35,23 @@ class Flag:
                 required:bool,
                 depends_on:List[str]=None,
                 options:List[any]|type=None):
-        self.short = f'-{short}'
-        self.long = f'--{long}'
         self.help = help
+        self.depends_on = depends_on
         self.required = required
         
-        self.depends_on = depends_on
+        self.short = f'-{short}'
+        self.long = f'--{long}'
+        
+        if options:
+            if not type(options) == list and not type(options) == type:
+                flag_line += ' <option>'
+                err(f'Runtime error: Flag options must be a list or a type, not {type(options).__name__}. Affected flag: {short}, {long}.',
+                    pad_before=1,
+                    pad_after=1,
+                    exit=True,
+                    raise_exception=TypeError)
+
+        # TODO: Check type consistency of list
         self.options = options
         
         self.value = None # Initialize the value of the flag to None
