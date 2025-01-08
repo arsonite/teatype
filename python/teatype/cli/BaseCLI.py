@@ -47,7 +47,6 @@ class GLOBAL_CLI_CONFIG:
 # TODO: SIGINT handle_interrupt implemented traps
 # TODO: Document all return types
 # TODO: Make the class functionality less obscure, more options, maybe return to constructors?
-# TODO: Add support for any flag values
 class BaseCLI(ABC):
     """
     Base class for command-line interfaces.
@@ -464,11 +463,23 @@ class BaseCLI(ABC):
                     flag_line = f'{GLOBAL_CLI_CONFIG.TAB}{flag.short}, {flag.long}'
                     # If the flag has options, include them in the flag line
                     if flag.options:
-                        flag_line += f' <{flag.long.replace("-", "")}>'
+                        if type(flag.options) == list:
+                            # Deprecated: Using default keyword 'option' instead for clarity
+                                # flag_line += f' <{flag.long.replace("-", "")}>'
+                            flag_line += ' <option>'
+                        else:
+                            if type(flag.options) == type:
+                                flag_line += f' <{flag.options.__name__}>'
+                            else:
+                                err(f'Flag options must be a list or a type, not {type(flag.options).__name__}. Affected flag: {flag.short}, {flag.long}.',
+                                    pad_before=1,
+                                    pad_after=1,
+                                    exit=True)
+                    
                     # Update the maximum line width based on the length of the flag line
                     line_width = max(line_width, len(flag_line))
                     
-            def pad_arg_line(arg_line:str, arg_help:str|List[str], arg_options:List[str]=None):
+            def pad_arg_line(arg_line:str, arg_help:str|List[str], arg_options:List[any]|type=None):
                 """
                 Pads the argument line with the appropriate amount of spaces for alignment and adds help text.
 
@@ -491,7 +502,7 @@ class BaseCLI(ABC):
                     for index, help_line in enumerate(arg_help):
                         if index == 0:
                             # For the first line of help text, add it with indentation
-                            formatted_string += f'{GLOBAL_CLI_CONFIG.TAB}{help_line}\n'
+                            formatted_string += f'{" " * (arg_line_rest_width * -1)}{GLOBAL_CLI_CONFIG.TAB}{help_line}\n'
                             continue
                         # For subsequent lines of help text, add them with indentation and alignment
                         formatted_string += f'{GLOBAL_CLI_CONFIG.TAB}{" " * line_width}{help_line}'
@@ -507,8 +518,10 @@ class BaseCLI(ABC):
                     formatted_string += help_line
                 
                 if arg_options:
-                    formatted_string += '\n'
-                    formatted_string += f'{GLOBAL_CLI_CONFIG.TAB}{" " * line_width}Options: {arg_options}'
+                    if type(arg_options) == list:
+                        print(arg_options)
+                        formatted_string += '\n'
+                        formatted_string += f'{GLOBAL_CLI_CONFIG.TAB}{" " * line_width}Options: {arg_options}'
                     
                 # Return the final formatted string
                 return formatted_string
@@ -548,7 +561,13 @@ class BaseCLI(ABC):
                     flag_line = f'{GLOBAL_CLI_CONFIG.TAB}{flag.short}, {flag.long}'
                     # TODO: Check wrong flag options
                     if flag.options:
-                        flag_line += f' <{flag.long.replace("-", "")}>'
+                        if type(flag.options) == list:
+                            # Deprecated: Using default keyword 'option' instead for clarity
+                                # flag_line += f' <{flag.long.replace("-", "")}>'
+                            flag_line += ' <option>'
+                        else:
+                            flag_line += f' <{flag.options.__name__}>'
+                                
                     # Add the formatted flag line to the indented formatted string with a newline
                     indented_formatted_string += pad_arg_line(flag_line, flag.help, flag.options)
                     indented_formatted_string += '\n'

@@ -21,22 +21,23 @@ class Flag:
         short (str): The short form of the flag (e.g., '-h').
         long (str): The long form of the flag (e.g., '--help').
         help (str): A brief description of the flag.
-        help_extension (List[str], optional): Additional help information for the flag.
-        value_name (str, optional): The name of the value associated with the flag.
+        depends_on (List[str]): A list of flags that this flag depends on.
         required (bool): Indicates whether the flag is required.
-        value (Any): The value of the flag, initially set to None.
+        options (List[any]|type): A list of options for the flag or the type of option for the flag.
     """
     def __init__(self,
                 short:str,
                 long:str,
                 help:str|List[str],
                 required:bool,
-                options:List[str]=None):
+                depends_on:List[str]=None,
+                options:List[any]|type=None):
         self.short = f'-{short}'
         self.long = f'--{long}'
         self.help = help
         self.required = required
         
+        self.depends_on = depends_on
         self.options = options
         
         self.value = None # Initialize the value of the flag to None

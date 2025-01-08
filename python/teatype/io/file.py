@@ -303,7 +303,8 @@ def exists(path:PosixPath|str, return_file:bool=False, trim_file:bool=False) -> 
 def list(directory:str,
          walk:bool=True,
          depth:int=1,
-         ignore_folders:List[str]=[],
+         ignore_folders:List[str]=None,
+         only_include:List[str]=None,
          trim_files:bool=True,
          stringify:bool=False) -> List[_File]:
     """
@@ -314,6 +315,7 @@ def list(directory:str,
         walk (bool): Whether to walk through subdirectories recursively.
         depth (int): The maximum depth to walk through subdirectories.
         ignore_folders (list): A list of folder names to ignore.
+        only_include (list): A list of file extensions to include.
         trim_files (bool): Whether to skip retrieving additional file attributes.
 
     Returns:
@@ -335,9 +337,15 @@ def list(directory:str,
             # Iterate over each entry in the current directory
             for entry in os.scandir(dir_path):
                 if entry.is_dir():
-                    # Skip folders that are in the ignore list
-                    if entry.name in ignore_folders:
-                        continue
+                    if only_include:
+                        # Skip ffiles that do not have the specified extensions
+                        if not entry.name.endswith(tuple(only_include)):
+                            continue
+                        
+                    if ignore_folders:
+                        # Skip folders that are in the ignore list
+                        if entry.name in ignore_folders:
+                            continue
                     # Append directory details to the results list
                     results.append(_File(entry.path, trimmed=trim_files, nested_depth=current_depth))
                     # Recursively walk through the subdirectory, increasing the depth
