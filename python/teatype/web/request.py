@@ -121,8 +121,12 @@ def _request(crud_method:str,
             err(f'Invalid CRUD method: {crud_method}') # Log an error for invalid CRUD methods
             return None
 
-    # Log the type of request and the target URL for debugging purposes
-    log(f'Synchronous request: {request_label}')
+    if verbose:
+        if not _async:
+            # Log the type of request and the target URL for debugging purposes
+            log(f'Synchronous request: {request_label}')
+        else:
+            log(f'Asynchronous request: {request_label}')
 
     # Stop the stopwatch if a measure time was specified
     if measure_time:

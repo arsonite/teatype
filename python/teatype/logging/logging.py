@@ -27,7 +27,7 @@ from pprint import pformat
 # TODO: Maybe use class closure like with the old stopwatch, to set global variables once somewhere, for consistency
 #       in the file saving, like the path to the log directory, etc.
 #       This way, the log directory can be created once and used throughout all files.
-class GLOBAL_LOGGING_CONFIGURATION:
+class GLOBAL_LOGGING_CONFIG:
     """
     Global logging configuration class to store logging configurations.
 
@@ -37,6 +37,7 @@ class GLOBAL_LOGGING_CONFIGURATION:
         LOG_FILE (str): The file name to store log messages.
         LOG_FORMAT (str): The format for log messages.
         LOG_LEVEL (int): The minimum log level to capture.
+        SURPRESS_CONSOLE (bool): Flag to determine whether to suppress console output.
     """
     BASE_LOG_DIR = os.path.join(os.path.expanduser("~"), "ApplicationLogs")
     LOG_DIRECTORY = os.path.join(BASE_LOG_DIR, datetime.now().strftime("%Y-%m-%d"))
@@ -44,6 +45,7 @@ class GLOBAL_LOGGING_CONFIGURATION:
     LOG_FILE = "application.log"
     LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s - [File: %(filename)s, Line: %(lineno)d]'
     LOG_LEVEL = logging.DEBUG
+    SURPRESS_CONSOLE = False
 
 def create_log_directory() -> str:
     """
@@ -56,69 +58,11 @@ def create_log_directory() -> str:
     Returns:
         str: The path to the created or existing log directory.
     """
-    log_dir = os.path.join(GLOBAL_LOGGING_CONFIGURATION.BASE_LOG_DIR, datetime.now().strftime("%Y-%m-%d"))
+    log_dir = os.path.join(GLOBAL_LOGGING_CONFIG.BASE_LOG_DIR, datetime.now().strftime("%Y-%m-%d"))
     os.makedirs(log_dir, exist_ok=True) # Create directory if it doesn't exist
     return log_dir
 
-# Global logger instance
-logger = logging.getLogger(GLOBAL_LOGGING_CONFIGURATION.LOG_NAME)
-logger.setLevel(logging.DEBUG) # Set the minimum logging level to DEBUG
-
-# Create log directory
-# log_directory = create_log_directory()
-
-# Console handler for compact logging
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.DEBUG) # Set console handler to capture DEBUG and above
-
-# TODO: Properly test and evaluate the implemented custom file logging functionality
-# File handler for detailed logging at INFO level
-# info_file_handler = logging.handlers.TimedRotatingFileHandler(
-#     os.path.join(log_directory, "info.log"), 
-#     when="midnight", # Rotate log at midnight
-#     interval=1, # Rotate every 1 day
-# )
-# info_file_handler.setLevel(logging.INFO) # Set to capture INFO and above
-
-# File handler for detailed logging at WARNING level
-# warning_file_handler = logging.handlers.TimedRotatingFileHandler(
-#     os.path.join(log_directory, "warning.log"), 
-#     when="midnight", 
-#     interval=1, 
-# )
-# warning_file_handler.setLevel(logging.WARNING) # Set to capture WARNING and above
-
-# File handler for detailed logging at ERROR level
-# error_file_handler = logging.handlers.TimedRotatingFileHandler(
-#     os.path.join(log_directory, "error.log"), 
-#     when="midnight", 
-#     interval=1, 
-# )
-# error_file_handler.setLevel(logging.ERROR) # Set to capture ERROR and above
-
-# Console formatter (compact)
-# console_formatter = logging.Formatter()
-# console_handler.setFormatter(console_formatter) # Apply compact format to console
-
-# File formatter (detailed)
-# file_formatter = logging.Formatter(
-#     '%(asctime)s - %(levelname)s - %(message)s - [File: %(filename)s, Line: %(lineno)d]', 
-#     datefmt='%Y-%m-%d %H:%M:%S'  # Define date format for logs
-# )
-
-# Apply detailed formatter to all file handlers
-# info_file_handler.setFormatter(file_formatter)
-# warning_file_handler.setFormatter(file_formatter)
-# error_file_handler.setFormatter(file_formatter)
-
-# Add all handlers to the global logger
-logger.addHandler(console_handler)
-# logger.addHandler(info_file_handler)
-# logger.addHandler(warning_file_handler)
-# logger.addHandler(error_file_handler)
-# Custom colored formatter
-
-class ColoredFormatter(logging.Formatter):
+class _ColoredFormatter(logging.Formatter):
     """
     ColoredFormatter enhances log messages with ANSI color codes based on the severity level.
 
@@ -153,9 +97,6 @@ class ColoredFormatter(logging.Formatter):
         color = self.COLOR_CODES.get(record.levelno, self.RESET_CODE)
         message = record.getMessage()
         return f'{color}{message}{self.RESET_CODE}'
-    
-# Apply the colored formatter to the console handler
-console_handler.setFormatter(ColoredFormatter())
 
 def _format(message:any,
             prefix:str=None,
@@ -407,3 +348,60 @@ def warn(message:str='',
     # Add a blank line after the message if pad_after is specified and greater than 0
     if pad_after:
         println(pad_after) # Print a blank line to add padding below the message
+
+# Global logger instance
+logger = logging.getLogger(GLOBAL_LOGGING_CONFIG.LOG_NAME)
+logger.setLevel(logging.DEBUG) # Set the minimum logging level to DEBUG
+
+if not GLOBAL_LOGGING_CONFIG.SURPRESS_CONSOLE:
+    # Console handler for compact logging
+    # console_formatter = logging.Formatter()
+    # console_handler.setFormatter(console_formatter) # Apply compact format to console
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.DEBUG) # Set console handler to capture DEBUG and above
+    logger.addHandler(console_handler)# Apply the colored formatter to the console handler
+    console_handler.setFormatter(_ColoredFormatter()) # Apply colored format to console
+
+# TODO: Properly test and evaluate the implemented custom file logging functionality
+# Create log directory
+# log_directory = create_log_directory()
+
+# File handler for detailed logging at INFO level
+# info_file_handler = logging.handlers.TimedRotatingFileHandler(
+#     os.path.join(log_directory, "info.log"), 
+#     when="midnight", # Rotate log at midnight
+#     interval=1, # Rotate every 1 day
+# )
+# info_file_handler.setLevel(logging.INFO) # Set to capture INFO and above
+
+# File handler for detailed logging at WARNING level
+# warning_file_handler = logging.handlers.TimedRotatingFileHandler(
+#     os.path.join(log_directory, "warning.log"), 
+#     when="midnight", 
+#     interval=1, 
+# )
+# warning_file_handler.setLevel(logging.WARNING) # Set to capture WARNING and above
+
+# File handler for detailed logging at ERROR level
+# error_file_handler = logging.handlers.TimedRotatingFileHandler(
+#     os.path.join(log_directory, "error.log"), 
+#     when="midnight", 
+#     interval=1, 
+# )
+# error_file_handler.setLevel(logging.ERROR) # Set to capture ERROR and above
+
+# File formatter (detailed)
+# file_formatter = logging.Formatter(
+#     '%(asctime)s - %(levelname)s - %(message)s - [File: %(filename)s, Line: %(lineno)d]', 
+#     datefmt='%Y-%m-%d %H:%M:%S'  # Define date format for logs
+# )
+
+# Apply detailed formatter to all file handlers
+# info_file_handler.setFormatter(file_formatter)
+# warning_file_handler.setFormatter(file_formatter)
+# error_file_handler.setFormatter(file_formatter)
+
+# Add all handlers to the global logger
+# logger.addHandler(info_file_handler)
+# logger.addHandler(warning_file_handler)
+# logger.addHandler(error_file_handler)
