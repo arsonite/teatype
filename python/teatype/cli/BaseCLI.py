@@ -549,7 +549,6 @@ class BaseCLI(ABC):
                 
                 if arg_options:
                     if type(arg_options) == list:
-                        print(arg_options)
                         formatted_string += '\n'
                         formatted_string += f'{GLOBAL_CLI_CONFIG.TAB}{" " * line_width}Options: {arg_options}'
                     
