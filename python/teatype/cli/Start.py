@@ -181,6 +181,10 @@ class Start(BaseCLI):
         # Sort the scripts dictionary by keys for consistent ordering
         scripts = dict(sorted(scripts.items()))
         return scripts
+    
+    #########
+    # Hooks #
+    #########
 
     def execute(self):
         """
@@ -266,6 +270,7 @@ class Start(BaseCLI):
             hint('"auto_activate_venv" automatically set to "True". Trying to activate a possibly present virtual environment ...',
                  pad_before=1)
             
+            venv_path = ''
             venv_found = False  # Initialize flag to track if a virtual environment is found
             # Iterate through all files in the parent directory to locate a virtual environment
             for f in file.list(self.parent_path):
@@ -275,6 +280,9 @@ class Start(BaseCLI):
                     venv_found = True # Update the flag as a virtual environment is found
                     break # Exit the loop since the virtual environment has been found
                 
+            env.set('VIRTUAL_ENV', venv_path) # Set the VIRTUAL_ENV environment variable to an empty string
+            env.set('PYTHONUNBUFFERED', '1') # Set the PYTHONUNBUFFERED environment variable to '1'
+            env.set('PYTHONDONTWRITEBYTECODE', '1') # Set the PYTHONDONTWRITEBYTECODE environment variable to '1'
             if not venv_found:
                 # Warn the user if no virtual environment is found, indicating limited functionality
                 warn('No virtual environment found. Script functionality may be limited.', pad_after=1)
