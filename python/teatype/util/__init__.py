@@ -11,4 +11,5 @@
 # all copies or substantial portions of the Software.
 
 from .id import id
+from .implemented_trap import implemented_trap
 from .stopwatch import GLOBAL_STOPWATCH_CONFIG, stopwatch

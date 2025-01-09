@@ -24,12 +24,26 @@ import traceback as traceback_exc
 from datetime import datetime
 from pprint import pformat
 
-# TODO: Use class closure like with the old stopwatch, to set global variables once somewhere, for consistency
+# TODO: Maybe use class closure like with the old stopwatch, to set global variables once somewhere, for consistency
 #       in the file saving, like the path to the log directory, etc.
 #       This way, the log directory can be created once and used throughout all files.
+class GLOBAL_LOGGING_CONFIGURATION:
+    """
+    Global logging configuration class to store logging configurations.
 
-# Define a global base log directory
-BASE_LOG_DIR = os.path.join(os.path.expanduser("~"), "ApplicationLogs") # User home directory
+    Attributes:
+        BASE_LOG_DIR (str): The base directory for storing log files.
+        LOG_DIRECTORY (str): The directory to store log files for the current session.
+        LOG_FILE (str): The file name to store log messages.
+        LOG_FORMAT (str): The format for log messages.
+        LOG_LEVEL (int): The minimum log level to capture.
+    """
+    BASE_LOG_DIR = os.path.join(os.path.expanduser("~"), "ApplicationLogs")
+    LOG_DIRECTORY = os.path.join(BASE_LOG_DIR, datetime.now().strftime("%Y-%m-%d"))
+    LOG_NAME = "global_custom_logger"
+    LOG_FILE = "application.log"
+    LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s - [File: %(filename)s, Line: %(lineno)d]'
+    LOG_LEVEL = logging.DEBUG
 
 def create_log_directory() -> str:
     """
@@ -42,12 +56,12 @@ def create_log_directory() -> str:
     Returns:
         str: The path to the created or existing log directory.
     """
-    log_dir = os.path.join(BASE_LOG_DIR, datetime.now().strftime("%Y-%m-%d"))
+    log_dir = os.path.join(GLOBAL_LOGGING_CONFIGURATION.BASE_LOG_DIR, datetime.now().strftime("%Y-%m-%d"))
     os.makedirs(log_dir, exist_ok=True) # Create directory if it doesn't exist
     return log_dir
 
 # Global logger instance
-logger = logging.getLogger("global_custom_logger")
+logger = logging.getLogger(GLOBAL_LOGGING_CONFIGURATION.LOG_NAME)
 logger.setLevel(logging.DEBUG) # Set the minimum logging level to DEBUG
 
 # Create log directory
@@ -263,23 +277,7 @@ def err(message:str,
     if exit:
         # If the exit flag is set, exit the program with an error code
         sys.exit(1)
-            
-def implemented_trap(message:str,
-                     pad_before:int=None,
-                     pad_after:int=None,
-                     verbose:bool=False,
-                     use_prefix:bool=True) -> None:
-    trap_message = _format(message,
-                           prefix='IMPLEMENTED TRAP',
-                           use_prefix=use_prefix,
-                           pad_before=pad_before,
-                           verbose=verbose)
-    
-    logger.critical(trap_message) # Log the message as is
-    
-    if pad_after:
-        println(pad_after) # Print a blank line to add padding below the message
-    
+
 def hint(message:str,
          pad_before:int=None,
          pad_after:int=None,
@@ -359,10 +357,10 @@ def log(message:any,
         
         # Join the processed lines back into a single string separated by newline characters
         log_message = '\n'.join(truncated_lines)
-    
+
     # Log the final message at the INFO level using the global logger
     logger.info(log_message) # Log the message as is
-    
+
     # Add a blank line after the message if pad_after is specified and greater than 0
     if pad_after:
         println(pad_after) # Print a blank line to add padding below the message
