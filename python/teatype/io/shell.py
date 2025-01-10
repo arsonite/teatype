@@ -22,7 +22,7 @@ from teatype.logging import err, log
 # From-as package imports
 from teatype.io import env as current_env
 
-def clear(use_ansi:bool=True) -> None:
+def clear(use_ansi:bool=False) -> None:
     """
     Clears the terminal screen using ANSI escape sequences.
 

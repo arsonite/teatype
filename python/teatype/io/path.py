@@ -12,9 +12,25 @@
 
 # System imports
 import inspect
+import os
 
 # From system imports
 from pathlib import Path
+
+def change(path:str, stringify:bool=True) -> str:
+    """
+    Change the current working directory to the given path.
+
+    Args:
+        path (str): The path to the new working directory.
+        stringify (bool): If True, returns the new working directory as a string.
+                          If False, returns as a Path object. Defaults to True.
+
+    Returns:
+        str: The new working directory as a string if stringify is True.
+    """
+    os.chdir(path) # Change the current working directory
+    return str(Path.cwd()) if stringify else Path.cwd() # Return the new working directory as string or Path object
 
 def create(*args, stringify:bool=True) -> str:
     """
