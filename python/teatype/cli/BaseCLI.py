@@ -344,7 +344,7 @@ class BaseCLI(ABC):
                         flag_options = flag.options
                         if parsed_flag_value and flag_options is None and parsed_flag_value is not True:
                             parsing_errors.append(
-                                f'Flag "{flag.short}, {flag.long}" does not expect a value, but one was given: "{parsed_flag_value}".'
+                                f'Flag `{flag.short}, {flag.long}` does not expect a value, but one was given: "{parsed_flag_value}".'
                             )
                         else:
                             if type(flag_options) == type:
@@ -361,7 +361,12 @@ class BaseCLI(ABC):
                                             parsed_flag_value = float(parsed_flag_value)
                                 except Exception as exc:
                                     parsing_errors.append(
-                                        f'Flag "{flag.short}, {flag.long}" expects a value of type "{flag_options_name}", but "{parsed_flag_value}" was given.'
+                                        f'Flag `{flag.short}, {flag.long}` expects a value of type {flag_options_name}, but "{parsed_flag_value}" was given.'
+                                    )
+                            else:
+                                if parsed_flag_value not in flag_options:
+                                    parsing_errors.append(
+                                        f'Flag `{flag.short}, {flag.long}` expects a value from the list {flag_options}, but "{parsed_flag_value}" was given.'
                                     )
                             flag.value = parsed_flag_value
 
