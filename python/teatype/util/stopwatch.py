@@ -32,7 +32,7 @@ def stopwatch(label: str = None):
 
     global STATE # Use the global state tracker
     
-    # Deprecated: Not using class closure to track the timer anymore, using a global state tracker instead
+    # DEPRECATED: Not using class closure to track the timer anymore, using a global state tracker instead
         # # Internal state to track the timer
         # state = getattr(stopwatch, '_state', None)
         # if state is None:

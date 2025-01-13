@@ -12,6 +12,7 @@
 
 # System imports
 import os
+import re
 
 # From own imports
 from teatype.io import file
@@ -68,3 +69,35 @@ def set(key:str, value:str) -> None:
         value (str): The value to assign to the environment variable.
     """
     os.environ[key] = value
+    
+def substitute(cmd:str, env_variables:dict=get()) -> str:
+    """
+    Substitute environment variables in the command string with their actual values.
+    The format for placeholders in the command string is '{{ENV_VAR}}'.
+
+    Args:
+        cmd (str): The command string containing placeholders for environment variables.
+        env_variables (dict, optional): A dictionary of environment variables. Defaults to all environment variables.
+
+    Returns:
+        str: The command string with environment variables substituted.
+    """
+    pattern = r'\{\{(\w+)\}\}' # Regex pattern to match placeholders
+    placeholder_var = re.search(pattern, cmd) # Search for placeholders in the command
+    if not placeholder_var:
+        return cmd
+        
+    # If a placeholder is found, isolate the placeholder variable name
+    isolated_replacement_var = placeholder_var.group(1) # Isolate the placeholder variable name
+    if isolated_replacement_var in env_variables:
+        # Replace the placeholder with the actual value of the environment variable
+        cmd = cmd.replace('{{' + isolated_replacement_var + '}}', env_variables[isolated_replacement_var])
+    else:
+        raise Exception(f'Environment variable {isolated_replacement_var} parsed not found.')
+
+    # DEPRECATED: Solution not needed anymore and also kinda dumb
+        # # Sort keys by length in descending order to handle nested variables correctly
+        # for key in sorted(env_variables.keys(), key=len, reverse=True):
+        #     placeholder = '{{' + key + '}}'
+        #     cmd = cmd.replace(placeholder, env_variables[key])
+    return cmd

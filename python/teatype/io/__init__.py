@@ -19,6 +19,7 @@ from .TemporaryDirectory import TemporaryDirectory
 from .env import get as get_env
 from .env import load as load_env
 from .env import set as set_env
+from .env import substitute as substitute_env
 from .file import append as append_file
 from .file import copy as copy_file
 from .file import delete as delete_file

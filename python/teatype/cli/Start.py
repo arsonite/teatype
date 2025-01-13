@@ -247,7 +247,7 @@ class Start(BaseCLI):
             warn(f'Process killed by {signal_name} signal{warning_addendum}.', pad_after=1, pad_before=2)
             
             # Determine the exit code based on the signal type
-            # Warning: Doubly making sure that the process is killed (maybe a bad idea)?
+            # WARNING: Doubly making sure that the process is killed (maybe a bad idea)?
             if signum == signal.SIGSTOP or signum == signal.SIGINT:
                 # Exit with code 0 for graceful termination on interrupt signals
                 exit(0)
@@ -255,7 +255,7 @@ class Start(BaseCLI):
                 # Exit with code 1 for other signals indicating abnormal termination
                 exit(1)
 
-        # Warning: You cannot catch the SIGKILL signal, it is a kernel-level signal and cannot be caught
+        # WARNING: You cannot catch the SIGKILL signal, it is a kernel-level signal and cannot be caught
         #          by the process, so do NOT even bother to try to catch it, it is a waste of time
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)

@@ -19,7 +19,6 @@ from typing import List
 class Flag:
     """
     Represents a command-line flag.
-
     Attributes:
         short (str): The short form of the flag (e.g., '-h').
         long (str): The long form of the flag (e.g., '--help').
@@ -42,16 +41,22 @@ class Flag:
         self.short = f'-{short}'
         self.long = f'--{long}'
         
+        # Check if 'options' are provided for the flag
         if options:
-            if not type(options) == list and not type(options) == type:
+            # Verify that 'options' is either a list or a type
+            if not isinstance(options, list) and not isinstance(options, type):
+                # Append ' <option>' to the flag line to indicate that an option is expected
                 flag_line += ' <option>'
+                # Log a runtime error with details about the invalid 'options' type and terminate execution
                 err(f'Runtime error: Flag options must be a list or a type, not {type(options).__name__}. Affected flag: {short}, {long}.',
                     pad_before=1,
                     pad_after=1,
                     exit=True,
                     raise_exception=TypeError)
-
-        # TODO: Check type consistency of list
+            else:
+                # TODO: Check type consistency of list
+                pass
+        # Assign the validated 'options' to the flag's 'options' attribute
         self.options = options
         
         self.value = None # Initialize the value of the flag to None

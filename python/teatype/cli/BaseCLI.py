@@ -189,7 +189,7 @@ class BaseCLI(ABC):
         for flag in flags:
             self.flags.append(Flag(**flag))
             
-        # Deprecated: Disabled auto adding help flag for now
+        # DEPRECATED: Disabled auto adding help flag for now
             # Add the default help flag for all scripts
             # self.flags.append(Flag(short='h', long='help', help='Display the (sometimes more detailed) help message.', required=False))
         self.flags.sort(key=lambda flag: flag.short) # Sort the flags by their short notation
@@ -272,53 +272,66 @@ class BaseCLI(ABC):
             bool: True if all required arguments and flags are provided, False otherwise.
         """
         def validate():
+            """
+            Validates the parsed command-line arguments and flags.
+
+            This function performs several validation checks on the parsed arguments and flags to ensure
+            they meet the expected criteria defined by the CLI's configuration. It handles the presence
+            of help flags, validates commands and their correctness, checks the number of arguments,
+            and verifies the validity of flags and their associated values. Any encountered parsing
+            errors are collected and reported to the user, optionally displaying the usage information.
+
+            Raises:
+                SystemExit: Exits the program if any parsing errors are detected.
+            """
             # Hook for pre-validation logic
             if hasattr(self, 'pre_validate') and callable(getattr(self, 'pre_validate')):
                 self.pre_validate()
             
             # Check if the help flag ('-h' or '--help') is present in the parsed flags
             if '-h' in self.parsed_flags or '--help' in self.parsed_flags:
-                self.set_flag('help', True)
-                # If the help flag is detected, print the CLI usage information
-                self.print_usage()
+                self.set_flag('help', True) # Set the help flag to True
+                self.print_usage() # Display the CLI usage information
             else:
-                # Initialize an empty list to store any parsing errors encountered
-                parsing_errors = []
+                parsing_errors = [] # Initialize a list to collect any parsing errors
+
                 if len(self.commands) > 0:
+                    # If there are predefined commands, ensure only one command is provided
                     if len(self.parsed_arguments) > 1:
                         parsing_errors.append('More than one command provided.')
 
                     if self.parsed_command:
-                        found_command = False
+                        found_command = False # Flag to indicate if the command is recognized
                         for command in self.commands:
+                            # Check if the parsed command matches any predefined command name or shorthand
                             if self.parsed_command == command.name or self.parsed_command == command.shorthand:
-                                command.value = self.parsed_command
+                                command.value = self.parsed_command # Assign the parsed command value
                                 found_command = True
                         if not found_command:
                             parsing_errors.append(f'Unknown command: {self.parsed_command}.')
                     else:
-                            parsing_errors.append('No command provided.')
+                        parsing_errors.append('No command provided.')
                 else:
-                    # Determine the number of parsed arguments and the total number of expected arguments
+                    # If there are no predefined commands, validate the number of positional arguments
                     amount_of_parsed_arguments = len(self.parsed_arguments)
                     amount_of_all_arguments = len(self.arguments)
-                    # Check if the number of parsed arguments exceeds the number of expected arguments
+                    
                     if amount_of_parsed_arguments > amount_of_all_arguments:
                         parsing_errors.append(
                             f'Number of possible arguments provided ({amount_of_parsed_arguments}) is greater than expected ({amount_of_all_arguments}).'
                         )
 
-                    # Calculate the number of required arguments
+                    # Calculate the number of required arguments based on the CLI configuration
                     amount_of_required_arguments = len([argument for argument in self.arguments if argument.required])
                     amount_of_required_additional_arguments = amount_of_required_arguments - amount_of_parsed_arguments
 
-                    # Check if the number of parsed arguments is less than the number of required arguments
                     if amount_of_parsed_arguments < amount_of_required_arguments:
+                        plural = "s" if amount_of_required_additional_arguments > 1 else ""
                         parsing_errors.append(
-                            f'Script requires ({amount_of_required_additional_arguments}) additional argument{"s" if amount_of_required_additional_arguments > 1 else ""}.'
+                            f'Script requires ({amount_of_required_additional_arguments}) additional argument{plural}.'
                         )
 
-                        # Check for missing required argumentsw
+                        # Identify and report each missing required argument
                         for argument in self.arguments:
                             if argument.required and amount_of_required_additional_arguments > 0:
                                 parsing_errors.append(f'Missing required argument: <{argument.name}>.')
@@ -327,67 +340,74 @@ class BaseCLI(ABC):
                             if self.parsed_arguments[argument.position]:
                                 argument.value = self.parsed_arguments[argument.position]
 
-                # Check for unknown flags in the parsed flags
+                # Validate the presence of only known flags
                 for parsed_flag in self.parsed_flags:
                     search_result = [flag for flag in self.flags if flag.short == parsed_flag or flag.long == parsed_flag]
                     if len(search_result) == 0:
                         parsing_errors.append(f'Unknown flag: {parsed_flag}.')
 
-                # Check for missing required flags and validate flag values
+                # Check for required flags and validate flag values
                 for flag in self.flags:
                     if flag.required:
                         if flag.short not in self.parsed_flags and flag.long not in self.parsed_flags:
                             parsing_errors.append(f'Missing required flag: {flag.short}, {flag.long}.')
-                            
+
                     if flag.short in self.parsed_flags or flag.long in self.parsed_flags:
+                        # Retrieve the value associated with the flag, if any
                         parsed_flag_value = self.parsed_flags.get(flag.short) or self.parsed_flags.get(flag.long)
                         flag_options = flag.options
+                        
+                        # Validate flags that should not have a value
                         if parsed_flag_value and flag_options is None and parsed_flag_value is not True:
                             parsing_errors.append(
                                 f'Flag `{flag.short}, {flag.long}` does not expect a value, but one was given: "{parsed_flag_value}".'
                             )
                         else:
-                            if type(flag_options) == type:
-                                try:
-                                    flag_options_name = flag_options.__name__
-                                    match flag_options_name:
-                                        case 'int':
-                                            parsed_flag_value = int(parsed_flag_value)
-                                        case 'str':
-                                            parsed_flag_value = str(parsed_flag_value)
-                                        case 'bool':
-                                            parsed_flag_value = bool(parsed_flag_value)
-                                        case 'float':
-                                            parsed_flag_value = float(parsed_flag_value)
-                                except Exception as exc:
-                                    parsing_errors.append(
-                                        f'Flag `{flag.short}, {flag.long}` expects a value of type {flag_options_name}, but "{parsed_flag_value}" was given.'
-                                    )
-                            else:
-                                if parsed_flag_value not in flag_options:
-                                    parsing_errors.append(
-                                        f'Flag `{flag.short}, {flag.long}` expects a value from the list {flag_options}, but "{parsed_flag_value}" was given.'
-                                    )
-                            flag.value = parsed_flag_value
+                            # Check if options even exist, otherwise treat as "True", "False"
+                            if flag_options: 
+                                if type(flag_options) == type:
+                                    try:
+                                        flag_options_name = flag_options.__name__
+                                        # Convert the flag value to the expected type
+                                        match flag_options_name:
+                                            case 'int':
+                                                parsed_flag_value = int(parsed_flag_value)
+                                            case 'str':
+                                                parsed_flag_value = str(parsed_flag_value)
+                                            case 'bool':
+                                                parsed_flag_value = bool(parsed_flag_value)
+                                            case 'float':
+                                                parsed_flag_value = float(parsed_flag_value)
+                                    except Exception as exc:
+                                        # Report type conversion errors
+                                        parsing_errors.append(
+                                            f'Flag `{flag.short}, {flag.long}` expects a value of type {flag_options_name}, but "{parsed_flag_value}" was given.'
+                                        )
+                                else:
+                                    # Validate that the flag value is within the allowed options
+                                    if parsed_flag_value not in flag_options:
+                                        parsing_errors.append(
+                                            f'Flag `{flag.short}, {flag.long}` expects a value from the list {flag_options}, but "{parsed_flag_value}" was given.'
+                                        )
+                            flag.value = parsed_flag_value # Assign the validated flag value
 
-            # Assign the list of parsing errors encountered
-            amount_of_parsing_errors = len(parsing_errors)
-            if amount_of_parsing_errors > 0:
-                print()
-                err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_prefix=False, verbose=False)
-                for parsing_error in parsing_errors:
-                    print('  * ' + parsing_error)
-                if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
-                    self.print_usage()
-                else:
-                    print()
-                sys.exit(1)
+                amount_of_parsing_errors = len(parsing_errors) # Total number of errors found
+                if amount_of_parsing_errors > 0:
+                    print() # Print a newline for better readability
+                    err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_prefix=False, verbose=False)
+                    for parsing_error in parsing_errors:
+                        print('  * ' + parsing_error) # List each parsing error
+                    if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
+                        self.print_usage() # Optionally display usage information on failure
+                    else:
+                        print()
+                    sys.exit(1) # Exit the program due to parsing errors
                 
         if GLOBAL_CLI_CONFIG.DEBUG_MODE:
             try:
                 validate()
             except SystemExit:
-                pass
+                pass # Allow SystemExit to pass silently in debug mode
             except:
                 err('An error occured during validation.', exit=True, traceback=True)
         else:
@@ -443,7 +463,7 @@ class BaseCLI(ABC):
         
         amount_of_arguments_greater_0 = len(self.arguments)
         amount_of_commands_greater_0 = len(self.commands)
-        # Deprecated: Not needed anymore really
+        # DEPRECATED: Not needed anymore really
             # Filter out the help flag from the list of flags
             # flags = list(filter(lambda flag: not flag.short == '-h' and not flag.long == '--help', self.flags)) 
         amount_of_flags_greater_0 = len(self.flags)
@@ -499,7 +519,7 @@ class BaseCLI(ABC):
                     # If the flag has options, include them in the flag line
                     if flag.options:
                         if type(flag.options) == list:
-                            # Deprecated: Using default keyword 'option' instead for clarity
+                            # DEPRECATED: Using default keyword 'option' instead for clarity
                                 # flag_line += f' <{flag.long.replace("-", "")}>'
                             flag_line += ' <option>'
                         else:
@@ -596,7 +616,7 @@ class BaseCLI(ABC):
                     # TODO: Check wrong flag options
                     if flag.options:
                         if type(flag.options) == list:
-                            # Deprecated: Using default keyword 'option' instead for clarity
+                            # DEPRECATED: Using default keyword 'option' instead for clarity
                                 # flag_line += f' <{flag.long.replace("-", "")}>'
                             flag_line += ' <option>'
                         else:
