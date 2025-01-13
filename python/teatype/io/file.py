@@ -450,7 +450,7 @@ def read(file:_File|PosixPath|str,
                     if force_format == 'lines':
                         # Read and return the lines of the file
                         content = f.readlines()
-                    if file_extension == '.ini' or file_extension == '.cfg' or force_format == 'ini' or force_format == 'cfg':
+                    elif file_extension == '.ini' or file_extension == '.cfg' or force_format == 'ini' or force_format == 'cfg':
                         # Initialize ConfigParser and read INI configuration
                         config = configparser.ConfigParser()
                         config.read(path_string)
