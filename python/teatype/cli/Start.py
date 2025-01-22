@@ -244,7 +244,13 @@ class Start(BaseCLI):
                 warning_addendum = ' (possibly user keyboard interrupt)'
                 
             # Log a warning indicating that the process was killed by a specific signal
-            warn(f'Process killed by {signal_name} signal{warning_addendum}.', pad_after=1, pad_before=2)
+            warn(f'Process killed by {signal_name} signal{warning_addendum}.', pad_before=2)
+            
+            try:
+                self.implemented_trap()
+                hint('Executed implemented trap.', pad_after=1)
+            except:
+                warn('No implemented trap found.', pad_after=1)
             
             # Determine the exit code based on the signal type
             # WARNING: Doubly making sure that the process is killed (maybe a bad idea)?
