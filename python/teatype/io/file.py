@@ -11,11 +11,15 @@
 # all copies or substantial portions of the Software.
 
 # System imports
+import builtins
 import configparser
 import csv
 import json
 import os
 import shutil
+
+# As-system imports
+import xml.etree.ElementTree as ET
 
 # From system imports
 from pathlib import PosixPath
@@ -450,6 +454,49 @@ def read(file:_File|PosixPath|str,
                     if force_format == 'lines':
                         # Read and return the lines of the file
                         content = f.readlines()
+                    elif file_extension == '.xml' or force_format == 'xml':
+                        # Parse and return XML data from the file
+                        raw_xml_tree = ET.parse(path_string)
+                        raw_xml_root = raw_xml_tree.getroot()
+                        
+                        def xmlToDict(element):
+                            result = {}
+                            text = element.text.strip() if element.text and element.text.strip() else None
+                            if text:
+                                result['value'] = text
+                            if element.attrib:
+                                attrs = {}
+                                result['tag'] = element.tag
+                                for key, value in element.attrib.items():
+                                    if key == 'value_type':
+                                        value = value.strip()
+                                        try:
+                                            if value == 'boolean':
+                                                result['value'] = result.get('value', '').lower() in ('true', '1')
+                                            elif value == 'float':
+                                                result['value'] = float(result.get('value', 0))
+                                            elif value == 'int':
+                                                result['value'] = int(result.get('value', 0))
+                                        except ValueError as ve:
+                                            print(f"Conversion error for key '{key}': {ve}")
+                                    attrs[key] = value
+                                result['attributes'] = attrs
+                            children = builtins.list(element)
+                            if children:
+                                child_dict = {}
+                                for child in children:
+                                    child_converted = xmlToDict(child)
+                                    if child.tag in child_dict:
+                                        if isinstance(child_dict[child.tag], builtins.list):
+                                            child_dict[child.tag].append(child_converted)
+                                        else:
+                                            child_dict[child.tag] = [child_dict[child.tag], child_converted]
+                                    else:
+                                        child_dict[child.tag] = child_converted
+                                result['children'] = child_dict
+                            return result
+                        
+                        content = xmlToDict(raw_xml_root)['children']
                     elif file_extension == '.ini' or file_extension == '.cfg' or force_format == 'ini' or force_format == 'cfg':
                         # Initialize ConfigParser and read INI configuration
                         config = configparser.ConfigParser()

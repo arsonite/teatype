@@ -336,7 +336,9 @@ class BaseCLI(ABC):
                             if argument.required and amount_of_required_additional_arguments > 0:
                                 parsing_errors.append(f'Missing required argument: <{argument.name}>.')
                                 continue
-                                
+                    else:
+                        # Identify and report each missing required argument
+                        for argument in self.arguments:
                             if self.parsed_arguments[argument.position]:
                                 argument.value = self.parsed_arguments[argument.position]
 
@@ -583,6 +585,7 @@ class BaseCLI(ABC):
             # TODO: Reduce even more repetition
             # If there are arguments, include them in the formatted string
             if amount_of_arguments_greater_0:
+                indented_formatted_string += '\n'
                 indented_formatted_string += 'Arguments:\n'
                 
                 # Iterate over each argument and add its details to the formatted string
