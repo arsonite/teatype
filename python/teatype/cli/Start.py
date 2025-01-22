@@ -51,10 +51,13 @@ class Start(BaseCLI):
             hint('"auto_find_config" automatically set to "True". Auto-finding module configuration...', pad_before=1)
             # Construct the path to the module configuration file
             config_path = path.join(self.parent_path, 'config', 'module.cfg')
-            # Read the configuration file and assign its contents to self.module_config
-            self.module_config = file.read(config_path)
-            # Log the successful application of the module configuration
-            log('Module configuration found. Applying configuration to "self.module_config".')
+            if file.exists(config_path):
+                # Read the configuration file and assign its contents to self.module_config
+                self.module_config = file.read(config_path)
+                # Log the successful application of the module configuration
+                log('Module configuration found. Applying configuration to "self.module_config".')
+            else:
+                warn('No module configuration found. Limited functionality available.')
         
         # Initialize the superclass to ensure proper inheritance and setup
         super().__init__()
