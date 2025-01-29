@@ -29,37 +29,19 @@ from importlib import util as iutil
 from teatype.io import TemporaryDirectory as TempDir
 
 class Start(BaseCLI):
-    def __init__(self, auto_navigate:bool=True, auto_activate_venv:bool=True, auto_find_config:bool=True):
-        """
-        Initialize the Start class with additional configuration options.
-
-        Args:
-            auto_navigate (bool): Automatically navigate to the script's parent directory if set to True.
-            auto_activate_venv (bool): Automatically activate the virtual environment if set to True.
-            auto_find_config (bool): Automatically find and load the module configuration if set to True.
-        """
-        # Assign the auto_activate_venv parameter to an instance variable to control virtual environment activation
-        self.auto_activate_venv = auto_activate_venv
-        # Assign the auto_navigate parameter to an instance variable to control directory navigation behavior
-        self.auto_navigate = auto_navigate
-        
+    def __init__(self):
+        # TODO: Put this into BaseCLI instead, but with call_stack=2
         # Skipping 1 step in the call stack to get the script path implementing this class
         self.parent_path = path.this_parent(reverse_depth=2, skip_call_stack_steps=1)
-        # Check if automatic configuration discovery is enabled
-        if auto_find_config:
-            # Notify user that auto configuration discovery is initiated
-            hint('"auto_find_config" automatically set to "True". Auto-finding module configuration...', pad_before=1)
-            # Construct the path to the module configuration file
-            config_path = path.join(self.parent_path, 'config', 'module.cfg')
-            if file.exists(config_path):
-                # Read the configuration file and assign its contents to self.module_config
-                self.module_config = file.read(config_path)
-                # Log the successful application of the module configuration
-                log('Module configuration found. Applying configuration to "self.module_config".')
-            else:
-                warn('No module configuration found. Limited functionality available.')
         
-        # Initialize the superclass to ensure proper inheritance and setup
+        # Construct the path to the module configuration file
+        config_path = path.join(self.parent_path, 'config', 'module.cfg')
+        if file.exists(config_path):
+            # Read the configuration file and assign its contents to self.module_config
+            self.module_config = file.read(config_path)
+        else:
+            self.module_config = None
+        
         super().__init__()
     
     def meta(self):
@@ -81,6 +63,12 @@ class Start(BaseCLI):
                     'required': False
                 },
                 {
+                    'short': 's',
+                    'long': 'silent',
+                    'help': 'Silent mode (no output)',
+                    'required': False
+                },
+                {
                     'short': 't',
                     'long': 'tail-logs',
                     'help': 'Tail logs of process',
@@ -90,7 +78,7 @@ class Start(BaseCLI):
         }
         
    # TODO: Decouple this class from Start into BaseCLI to prevent DRY
-    def load_compatible_scripts(self):
+    def load_compatible_scripts(self, silent_mode:bool=False):
         """
         Discover and import all Python scripts in the `scripts/` directory, skipping __init__.py and non-Python files.
         """
@@ -170,12 +158,14 @@ class Start(BaseCLI):
                             if stop_script_found:
                                 break
                         except Exception as e:
-                            # Log an error if loading the script fails
-                            err(f'Error loading script "{filename}": {e}, skipping ...',
-                                use_prefix=False,
-                                verbose=False)
+                            if not silent_mode:
+                                # Log an error if loading the script fails
+                                err(f'Error loading script "{filename}": {e}, skipping ...',
+                                    use_prefix=False,
+                                    verbose=False)
                 if not stop_script_found:
-                    warn('No "stop" script found in scripts directory. Only limited functionality available.')
+                    if not silent_mode:
+                        warn('No "stop" script found in scripts directory. Only limited functionality available.')
 
             finally:
                 # Ensure the temporary directory is removed from sys.path after import
@@ -204,16 +194,28 @@ class Start(BaseCLI):
         if not hasattr(self, 'start_command'):
             err('No "self.start_command" provided in source code. Please provide a command to start a process in the pre_execute function.',
                 exit=True)
+            
+        silent_mode = self.get_flag('silent')        
+        if not silent_mode:
+            # Notify user that auto configuration discovery is initiated
+            hint('"auto_find_config" automatically set to "True". Auto-finding module configuration...', pad_before=1)
+
+        if self.module_config == None:
+            if not silent_mode:
+                warn('No module configuration found. Limited functionality available.')
+        else:
+            if not silent_mode:
+                # Log the successful application of the module configuration
+                log('Module configuration found. Applying configuration to "self.module_config".')
         
-        self.load_compatible_scripts()
+        self.load_compatible_scripts(silent_mode=silent_mode)
         # Auto-nativaging after loading compatible scripts, to not mess with the functionality of the algorithm
-        if self.auto_navigate:
-            # Determine the directory of the current (inherited) script
-            script_dir = os.path.abspath(self.__class__.__module__.replace('.', '/') + '.py')
-            # Determine the parent directory of the current script
-            parent_dir = os.path.dirname(script_dir)
-            # Change the working directory to the parent directory
-            os.chdir(parent_dir)
+        # Determine the directory of the current (inherited) script
+        script_dir = os.path.abspath(self.__class__.__module__.replace('.', '/') + '.py')
+        # Determine the parent directory of the current script
+        parent_dir = os.path.dirname(script_dir)
+        # Change the working directory to the parent directory
+        os.chdir(parent_dir)
         
         # If the 'detached' flag is set, run the command in the background
         if self.get_flag('detached'):
@@ -245,15 +247,19 @@ class Start(BaseCLI):
             # Check if the signal is SIGSTOP or SIGINT to provide additional context
             if signum == signal.SIGSTOP or signum == signal.SIGINT:
                 warning_addendum = ' (possibly user keyboard interrupt)'
-                
-            # Log a warning indicating that the process was killed by a specific signal
-            warn(f'Process killed by {signal_name} signal{warning_addendum}.', pad_before=2)
+            
+            if not silent_mode:
+                # Log a warning indicating that the process was killed by a specific signal
+                warn(f'Process killed by {signal_name} signal{warning_addendum}.', pad_before=2)
             
             try:
                 self.implemented_trap()
-                hint('Executed implemented trap.', pad_after=1)
+                
+                if not silent_mode:
+                    hint('Executed implemented trap.', pad_after=1)
             except:
-                warn('No implemented trap found.', pad_after=1)
+                if not silent_mode:
+                    warn('No implemented trap found.', pad_after=1)
             
             # Determine the exit code based on the signal type
             # WARNING: Doubly making sure that the process is killed (maybe a bad idea)?
@@ -273,36 +279,39 @@ class Start(BaseCLI):
         signal.signal(signal.SIGUSR1, signal_handler)
         signal.signal(signal.SIGUSR2, signal_handler)
         
-        # Check if automatic virtual environment activation is enabled
-        if self.auto_activate_venv:
+        if not silent_mode:
             # Notify user that auto activation is attempted
             hint('"auto_activate_venv" automatically set to "True". Trying to activate a possibly present virtual environment ...',
-                 pad_before=1)
-            
-            venv_path = ''
-            venv_found = False  # Initialize flag to track if a virtual environment is found
-            # Iterate through all files in the parent directory to locate a virtual environment
-            for f in file.list(self.parent_path):
-                if 'venv' in f.name:
-                    venv_path = f.path # Store the path of the found virtual environment
+                pad_before=1)
+        
+        venv_path = ''
+        venv_found = False  # Initialize flag to track if a virtual environment is found
+        # Iterate through all files in the parent directory to locate a virtual environment
+        for f in file.list(self.parent_path):
+            if 'venv' in f.name:
+                venv_path = f.path # Store the path of the found virtual environment
+                if not silent_mode:
                     log(f'Virtual environment {f.name} found.') # Log the discovery of the virtual environment
-                    venv_found = True # Update the flag as a virtual environment is found
-                    break # Exit the loop since the virtual environment has been found
-                
-            env.set('VIRTUAL_ENV', venv_path) # Set the VIRTUAL_ENV environment variable to an empty string
-            env.set('PYTHONUNBUFFERED', '1') # Set the PYTHONUNBUFFERED environment variable to '1'
-            env.set('PYTHONDONTWRITEBYTECODE', '1') # Set the PYTHONDONTWRITEBYTECODE environment variable to '1'
-            if not venv_found:
+                venv_found = True # Update the flag as a virtual environment is found
+                break # Exit the loop since the virtual environment has been found
+            
+        env.set('VIRTUAL_ENV', venv_path) # Set the VIRTUAL_ENV environment variable to an empty string
+        env.set('PYTHONUNBUFFERED', '1') # Set the PYTHONUNBUFFERED environment variable to '1'
+        env.set('PYTHONDONTWRITEBYTECODE', '1') # Set the PYTHONDONTWRITEBYTECODE environment variable to '1'
+        if not venv_found:
+            if not silent_mode:
                 # Warn the user if no virtual environment is found, indicating limited functionality
                 warn('No virtual environment found. Script functionality may be limited.', pad_after=1)
-                shell(self.start_command)
-            else:
-                try:
-                    # Attempt to activate the found virtual environment
+            shell(self.start_command)
+        else:
+            try:
+                # Attempt to activate the found virtual environment
+                if not silent_mode:
                     log('Virtual environment activated.') # Log successful activation
-                    shell(f'. {venv_path}/bin/activate && {self.start_command}')
-                except Exception as e:
+                shell(f'. {venv_path}/bin/activate && {self.start_command}')
+            except Exception as e:
+                if not silent_mode:
                     # Log an error if activation fails, providing the exception details
                     err('An error occurred while trying to activate the virtual environment:', e)
-                    
-            signal_handler(signal.SIGSTOP, None) # Kill the process after successful activation
+                
+        signal_handler(signal.SIGSTOP, None) # Kill the process after successful activation

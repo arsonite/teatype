@@ -248,7 +248,7 @@ def copy(source:str,
         err(f'Error copying file from {source} to {destination}: {exc}')
         return False
 
-def delete(path:str) -> bool:
+def delete(path:str, silent_fail:bool=True) -> bool:
     """
     Delete a file (or directory) at the specified path.
 
@@ -272,8 +272,9 @@ def delete(path:str) -> bool:
                 os.remove(path)
         return True
     except Exception as exc:
-        # Log an error message if an exception occurs
-        err(f'Error deleting file "{path}": {exc}')
+        if not silent_fail:
+            # Log an error message if an exception occurs
+            err(f'Error deleting file "{path}": {exc}')
         return False
     
 def exists(path:PosixPath|str, return_file:bool=False, trim_file:bool=False) -> bool|_File:

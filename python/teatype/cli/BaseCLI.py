@@ -40,6 +40,7 @@ class GLOBAL_CLI_CONFIG:
     TAB = ' ' * 4
     USE_HELP_MESSAGE_ON_FAIL = True
 
+# TODO: Make options and option seperate and option as a type descriptor only
 # TODO: Make relations and depedencies between flags algorithmic
 #       depends_on: 'flag_name' -> 'flag_name' must be set before this flag can be set
 # TODO: Use log instead of print and println instead of pad_before and pad_after
