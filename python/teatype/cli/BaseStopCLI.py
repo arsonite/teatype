@@ -19,7 +19,7 @@ import sys
 import time
 
 # From package imports
-from teatype.cli import BaseCLI, CheckRunning
+from teatype.cli import BaseCLI, BaseIsRunningCLI
 from teatype.logging import err, hint, log, println, warn
 
 # From-as system imports
@@ -29,7 +29,7 @@ from importlib import util as iutil
 from teatype.io import TemporaryDirectory as TempDir
 
 # TODO: Redis adapter to remove entries from a redis db?
-class Stop(BaseCLI):
+class BaseStopCLI(BaseCLI):
     def meta(self):
         return {
             'name': 'stop',
@@ -115,7 +115,7 @@ class Stop(BaseCLI):
                             script_class = getattr(module, camel_case_name, None)
 
                             # Ensure the retrieved class exists, is a class type, and is a subclass of CheckIfRunning
-                            if script_class and inspect.isclass(script_class) and issubclass(script_class, CheckRunning):
+                            if script_class and inspect.isclass(script_class) and issubclass(script_class, BaseIsRunningCLI):
                                 # Instantiate the class without automatic validation or execution
                                 self.check_if_running = script_class(auto_validate=False,
                                                                      auto_execute=False)
@@ -292,4 +292,4 @@ class Stop(BaseCLI):
         println()
 
 if __name__ == '__main__':
-    Stop()
+    BaseStopCLI()

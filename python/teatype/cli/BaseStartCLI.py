@@ -18,7 +18,7 @@ import shutil
 import sys
 
 # From package imports
-from teatype.cli import BaseCLI, Stop
+from teatype.cli import BaseCLI, BaseStopCLI
 from teatype.io import env, file, path, shell
 from teatype.logging import err, hint, log, warn
 
@@ -28,7 +28,7 @@ from importlib import util as iutil
 # From-as package imports
 from teatype.io import TemporaryDirectory as TempDir
 
-class Start(BaseCLI):
+class BaseStartCLI(BaseCLI):
     def __init__(self):
         # TODO: Put this into BaseCLI instead, but with call_stack=2
         # Skipping 1 step in the call stack to get the script path implementing this class
@@ -132,9 +132,9 @@ class Start(BaseCLI):
                             # Retrieve the class from the module by name
                             script_class = getattr(module, camel_case_name, None)
 
-                            # Ensure the retrieved class exists, is a class type, and is a subclass of Stop
-                            if script_class and inspect.isclass(script_class) and camel_case_name == 'Stop':
-                                # Having to use "camel_case_name == 'Stop'" even though issubclass(script_class, Stop) should work
+                            # Ensure the retrieved class exists, is a class type, and is a subclass of BaseStopCLI
+                            if script_class and inspect.isclass(script_class) and camel_case_name == 'BaseStopCLI':
+                                # Having to use "camel_case_name == 'BaseStopCLI'" even though issubclass(script_class, BaseStopCLI) should work
                                 # But after 30 minutes of debugging, I am tired of this stupid shit not working even though it should
                                 # And it works perfectly fine in the stop script with the check-running relation
                                 # I am convinced at this point that the line above has been vodoo cursed by someone I wronged

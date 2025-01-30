@@ -17,7 +17,7 @@ import psutil
 from teatype.cli import BaseCLI
 from teatype.logging import err, log, println
 
-class CheckRunning(BaseCLI):
+class BaseIsRunningCLI(BaseCLI):
     def meta(self):
         return {
             'name': 'check-running',
@@ -71,4 +71,4 @@ class CheckRunning(BaseCLI):
         return process_pids
 
 if __name__ == '__main__':
-    CheckRunning()
+    BaseIsRunningCLI()

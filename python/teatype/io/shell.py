@@ -118,7 +118,7 @@ def shell(command:str,
                                 env=env if not env else current_env.get(),
                                 text=return_stdout,
                                 timeout=timeout,
-                                stdout=subprocess.PIPE if mute else None,
+                                stdout=subprocess.PIPE if mute or return_stdout else None,
                                 stderr=subprocess.PIPE if mute else None)
 
         # Check if errors should not be ignored before processing

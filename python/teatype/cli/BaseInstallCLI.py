@@ -10,30 +10,15 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# System imports
-import inspect
-import os
-import signal
-import shutil
-import sys
-
 # From package imports
-from teatype.cli import BaseCLI, Stop
-from teatype.io import env, shell
-from teatype.logging import err, warn
-
-# From-as system imports
-from importlib import util as iutil
-
-# From-as package imports
-from teatype.io import TemporaryDirectory as TempDir
+from teatype.cli import BaseCLI
 
 # TODO: Write base install script that creates dist folder, adds it to .gitignore if not yet exists,
 #       and creates an install flag file in the dist folder where everytime the install script is
 #       executed, append the exact time and date of the installation and whether it was successful or not
 #       into the install flag file.
 # TODO: Write optional flag to disable adding dist to .gitignore
-class Install(BaseCLI):
+class BaseInstallCLI(BaseCLI):
     def meta(self):
         return {
             'name': 'install',
