@@ -415,7 +415,8 @@ def move(source:str, destination:str, create_parent_directories:bool=True, overw
 def read(file:_File|PosixPath|str,
          force_format:str=None,
          return_file:bool=False,
-         trim_file:bool=False) -> any:
+         trim_file:bool=False,
+         silent_fail:bool=False) -> any:
     """
     Read data from a file at the specified path.
 
@@ -542,16 +543,19 @@ def read(file:_File|PosixPath|str,
                 return content
             else:
                 file_is_folder_message = f'"{path_string}" is a directory, not a file.'
-                err(file_is_folder_message)
+                if not silent_fail:
+                    err(file_is_folder_message)
                 raise IsADirectoryError(file_is_folder_message)
         else:
             file_not_found_message = f'File "{path_string}" does not exist.'
-            # Log an error message if the file does not exist
-            err(file_not_found_message)
+            if not silent_fail:
+                # Log an error message if the file does not exist
+                err(file_not_found_message)
             raise FileNotFoundError(file_not_found_message)
     except Exception as exc:
-        # Log an error message if an exception occurs
-        err(f'Error reading file "{path_string}": {exc}')
+        if not silent_fail:
+            # Log an error message if an exception occurs
+            err(f'Error reading file "{path_string}": {exc}')
         raise exc
 
 def write(path:str, data:any, force_format:str=None) -> bool:

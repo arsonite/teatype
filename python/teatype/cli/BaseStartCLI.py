@@ -222,7 +222,7 @@ class BaseStartCLI(BaseCLI):
             # Append shell redirection to merge stderr with stdout
             self.start_command += ' > /dev/null 2>&1 &'
         
-        env.load() # Load the environment variables
+        env.load(silent_fail=silent_mode) # Load the environment variables
         
         def signal_handler(signum, _):
             """
