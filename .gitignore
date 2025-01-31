@@ -169,3 +169,5 @@ dist-ssr
 */bin/
 */dist/
 *egg-info
+*/bundle/
+*/build/

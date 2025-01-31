@@ -65,7 +65,7 @@ def _request(crud_method:str,
              return_json:bool=True,
              verbose:bool=False,
              headers:dict={},
-             _async:aiohttp.ClientSession=None,) -> requests.Response|aiohttp.ClientResponse|None:
+             _async:aiohttp.ClientSession=None) -> requests.Response|aiohttp.ClientResponse|None:
     """
     Internal helper function to perform HTTP requests based on CRUD methods.
 
