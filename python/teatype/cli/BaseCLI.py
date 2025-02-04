@@ -129,8 +129,10 @@ class BaseCLI(ABC):
                 self.validate_args()
         
         if auto_execute:
-            # Hook for pre-execution logic
+            # This check is not really necessary, since hooks are present in code, but maybe using this
+            # later to comment out the hooks and make them entirely optional and not available at runtime
             if hasattr(self, 'pre_execute') and callable(getattr(self, 'pre_execute')):
+                # Hook for pre-execution logic
                 self.pre_execute()
             
             self.execute()
@@ -789,35 +791,40 @@ class BaseCLI(ABC):
         """
         return {}
     
-    # def pre_init(self, *args, **kwargs) -> None:
+    def pre_init(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for pre-parsing logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
+        pass
     
-    # def pre_parse(self, *args, **kwargs) -> None:
+    def pre_parse(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for pre-parsing logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
+        pass
     
-    # def pre_validate(self, *args, **kwargs) -> None:
+    def pre_validate(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for pre-validation logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
+        pass
         
-    # def post_validate(self, *args, **kwargs) -> None:
+    def post_validate(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for post-validation logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
+        pass
     
-    # def pre_execute(self, *args, **kwargs) -> None:
+    def pre_execute(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for pre-execution logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
+        pass
     
     ######################
     # Abstract functions #
