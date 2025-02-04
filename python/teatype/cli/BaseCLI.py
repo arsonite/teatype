@@ -116,6 +116,8 @@ class BaseCLI(ABC):
                         key, value = line.strip().split('=', 1)
                         os.environ[key] = value # Set the environment variable in the OS environment
         
+        self._parsing_errors = []
+            
         if auto_init:
             self.init()
         
@@ -123,7 +125,6 @@ class BaseCLI(ABC):
             # Parse the command-line arguments and flags
             self.parse_args()
 
-            self._parsing_errors = []
             if auto_validate:
                 self.validate_args()
         
@@ -245,11 +246,11 @@ class BaseCLI(ABC):
                 if len(self.commands) > 0:
                     if command is None:
                         command = arg
-                        # Now allowing wrong commands to later handle them in validation
-                        # for search_command in self.commands:
-                        #     if arg == search_command.name or arg == search_command.shorthand:
-                        #         command = arg
-                        #         continue
+                        # DEPRECATED: Now allowing wrong commands to later handle them in validation
+                            # for search_command in self.commands:
+                            #     if arg == search_command.name or arg == search_command.shorthand:
+                            #         command = arg
+                            #         continue
                 # If the argument is not a flag, add it to the positional arguments list
                 arguments.append(arg)
             
@@ -403,6 +404,10 @@ class BaseCLI(ABC):
                                             f'Flag `{flag.short}, {flag.long}` expects a value from the list {flag_options}, but "{parsed_flag_value}" was given.'
                                         )
                             flag.value = parsed_flag_value # Assign the validated flag value
+                            
+                # Hook for pre-validation logic
+                if hasattr(self, 'post_validate') and callable(getattr(self, 'post_validate')):
+                    self.post_validate()
 
                 amount_of__parsing_errors = len(self._parsing_errors) # Total number of errors found
                 if amount_of__parsing_errors > 0:
@@ -784,33 +789,35 @@ class BaseCLI(ABC):
         """
         return {}
     
-    def pre_init(self, *args, **kwargs) -> None:
+    # def pre_init(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for pre-parsing logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
-        pass
     
-    def pre_parse(self, *args, **kwargs) -> None:
+    # def pre_parse(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for pre-parsing logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
-        pass
     
-    def pre_validate(self, *args, **kwargs) -> None:
+    # def pre_validate(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for pre-validation logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
-        pass
+        
+    # def post_validate(self, *args, **kwargs) -> None:
+        """
+        Optional hook to be overridden in child classes for post-validation logic.
+        Not making it abstract, to prevent the need to implement it in every child class.
+        """
     
-    def pre_execute(self, *args, **kwargs) -> None:
+    # def pre_execute(self, *args, **kwargs) -> None:
         """
         Optional hook to be overridden in child classes for pre-execution logic.
         Not making it abstract, to prevent the need to implement it in every child class.
         """
-        pass
     
     ######################
     # Abstract functions #
