@@ -10,12 +10,12 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# From own imports
+# From local imports
 from .prompt import prompt
 from .shell import enable_sudo, shell
 from .TemporaryDirectory import TemporaryDirectory
 
-# From-as own imports
+# From-as local imports
 from .env import get as get_env
 from .env import load as load_env
 from .env import set as set_env

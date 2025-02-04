@@ -25,7 +25,7 @@ import xml.etree.ElementTree as ET
 from pathlib import PosixPath
 from typing import List
 
-# From own imports
+# From local imports
 from teatype.logging import err, warn
 
 class _File:

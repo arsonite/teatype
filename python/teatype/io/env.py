@@ -14,7 +14,7 @@
 import os
 import re
 
-# From own imports
+# From local imports
 from teatype.logging import err
 from teatype.io import file
 
