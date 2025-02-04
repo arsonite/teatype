@@ -62,8 +62,9 @@ class BaseCLI(ABC):
         parsed_arguments (list): A list of parsed positional arguments.
         parsed_command (str): The parsed command name.
         parsed_flags (dict): A dictionary of parsed flags.
-        parsing_errors (list): A list of parsing errors encountered during validation.
+        _parsing_errors (list): A list of parsing errors encountered during validation.
     """
+    _parsing_errors:List[str]
     arguments:List[Argument]
     commands:List[Command]
     flags:List[Flag]
@@ -72,7 +73,6 @@ class BaseCLI(ABC):
     parsed_arguments:List[str]
     parsed_command:str
     parsed_flags:dict
-    parsing_errors:List[str]
     proxy_mode:bool
     shorthand:str
     
@@ -123,6 +123,7 @@ class BaseCLI(ABC):
             # Parse the command-line arguments and flags
             self.parse_args()
 
+            self._parsing_errors = []
             if auto_validate:
                 self.validate_args()
         
@@ -260,6 +261,17 @@ class BaseCLI(ABC):
         self.parsed_command = command
         self.parsed_flags = flags
         
+    def add_parsing_error(self, error_message:str):
+        """
+        Adds a new parsing error message to the list of parsing errors.
+
+        This method appends a provided error message string to the internal
+        list that tracks any errors encountered during argument parsing.
+        """
+        # Append the given error message to the _parsing_errors list,
+        # which manages all accumulated parsing-related errors.
+        self._parsing_errors.append(error_message)
+        
     # TODO: Reduce repetition and amount of loops, more efficient algorithm
     def validate_args(self):
         """
@@ -294,12 +306,10 @@ class BaseCLI(ABC):
                 self.set_flag('help', True) # Set the help flag to True
                 self.print_usage() # Display the CLI usage information
             else:
-                parsing_errors = [] # Initialize a list to collect any parsing errors
-
                 if len(self.commands) > 0:
                     # If there are predefined commands, ensure only one command is provided
                     if len(self.parsed_arguments) > 1:
-                        parsing_errors.append('More than one command provided.')
+                        self.add_parsing_error('More than one command provided.')
 
                     if self.parsed_command:
                         found_command = False # Flag to indicate if the command is recognized
@@ -309,16 +319,16 @@ class BaseCLI(ABC):
                                 command.value = self.parsed_command # Assign the parsed command value
                                 found_command = True
                         if not found_command:
-                            parsing_errors.append(f'Unknown command: {self.parsed_command}.')
+                            self.add_parsing_error(f'Unknown command: {self.parsed_command}.')
                     else:
-                        parsing_errors.append('No command provided.')
+                        self.add_parsing_error('No command provided.')
                 else:
                     # If there are no predefined commands, validate the number of positional arguments
                     amount_of_parsed_arguments = len(self.parsed_arguments)
                     amount_of_all_arguments = len(self.arguments)
                     
                     if amount_of_parsed_arguments > amount_of_all_arguments:
-                        parsing_errors.append(
+                        self.add_parsing_error(
                             f'Number of possible arguments provided ({amount_of_parsed_arguments}) is greater than expected ({amount_of_all_arguments}).'
                         )
 
@@ -328,14 +338,14 @@ class BaseCLI(ABC):
 
                     if amount_of_parsed_arguments < amount_of_required_arguments:
                         plural = "s" if amount_of_required_additional_arguments > 1 else ""
-                        parsing_errors.append(
+                        self.add_parsing_error(
                             f'Script requires ({amount_of_required_additional_arguments}) additional argument{plural}.'
                         )
 
                         # Identify and report each missing required argument
                         for argument in self.arguments:
                             if argument.required and amount_of_required_additional_arguments > 0:
-                                parsing_errors.append(f'Missing required argument: <{argument.name}>.')
+                                self.add_parsing_error(f'Missing required argument: <{argument.name}>.')
                                 continue
                     else:
                         # Identify and report each missing required argument
@@ -347,13 +357,13 @@ class BaseCLI(ABC):
                 for parsed_flag in self.parsed_flags:
                     search_result = [flag for flag in self.flags if flag.short == parsed_flag or flag.long == parsed_flag]
                     if len(search_result) == 0:
-                        parsing_errors.append(f'Unknown flag: {parsed_flag}.')
+                        self.add_parsing_error(f'Unknown flag: {parsed_flag}.')
 
                 # Check for required flags and validate flag values
                 for flag in self.flags:
                     if flag.required:
                         if flag.short not in self.parsed_flags and flag.long not in self.parsed_flags:
-                            parsing_errors.append(f'Missing required flag: {flag.short}, {flag.long}.')
+                            self.add_parsing_error(f'Missing required flag: {flag.short}, {flag.long}.')
 
                     if flag.short in self.parsed_flags or flag.long in self.parsed_flags:
                         # Retrieve the value associated with the flag, if any
@@ -362,7 +372,7 @@ class BaseCLI(ABC):
                         
                         # Validate flags that should not have a value
                         if parsed_flag_value and flag_options is None and parsed_flag_value is not True:
-                            parsing_errors.append(
+                            self.add_parsing_error(
                                 f'Flag `{flag.short}, {flag.long}` does not expect a value, but one was given: "{parsed_flag_value}".'
                             )
                         else:
@@ -383,22 +393,22 @@ class BaseCLI(ABC):
                                                 parsed_flag_value = float(parsed_flag_value)
                                     except Exception as exc:
                                         # Report type conversion errors
-                                        parsing_errors.append(
+                                        self.add_parsing_error(
                                             f'Flag `{flag.short}, {flag.long}` expects a value of type {flag_options_name}, but "{parsed_flag_value}" was given.'
                                         )
                                 else:
                                     # Validate that the flag value is within the allowed options
                                     if parsed_flag_value not in flag_options:
-                                        parsing_errors.append(
+                                        self.add_parsing_error(
                                             f'Flag `{flag.short}, {flag.long}` expects a value from the list {flag_options}, but "{parsed_flag_value}" was given.'
                                         )
                             flag.value = parsed_flag_value # Assign the validated flag value
 
-                amount_of_parsing_errors = len(parsing_errors) # Total number of errors found
-                if amount_of_parsing_errors > 0:
+                amount_of__parsing_errors = len(self._parsing_errors) # Total number of errors found
+                if amount_of__parsing_errors > 0:
                     print() # Print a newline for better readability
-                    err(f'({amount_of_parsing_errors}) Parsing errors occured:', use_prefix=False, verbose=False)
-                    for parsing_error in parsing_errors:
+                    err(f'({amount_of__parsing_errors}) Parsing errors occured:', use_prefix=False, verbose=False)
+                    for parsing_error in self._parsing_errors:
                         print('  * ' + parsing_error) # List each parsing error
                     if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
                         self.print_usage() # Optionally display usage information on failure
