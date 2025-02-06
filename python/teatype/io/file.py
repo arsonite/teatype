@@ -558,7 +558,7 @@ def read(file:_File|PosixPath|str,
             err(f'Error reading file "{path_string}": {exc}')
         raise exc
 
-def write(path:str, data:any, force_format:str=None) -> bool:
+def write(path:str, data:any, force_format:str=None, prettify:bool=False) -> bool:
     """
     Write data to a file at the specified path.
 
@@ -583,8 +583,11 @@ def write(path:str, data:any, force_format:str=None) -> bool:
                 # Write multiple lines to the file
                 f.writelines(data)
             elif path.endswith('.json') or force_format == 'json':
+                indent = None
+                if prettify:
+                    indent = 4
                 # Write JSON data to the file
-                json.dump(data, f)
+                json.dump(data, f, indent=indent)
             elif path.endswith('.ini') or force_format == 'ini':
                 # Initialize ConfigParser and update with new data
                 config = configparser.ConfigParser()
