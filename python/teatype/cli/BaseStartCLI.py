@@ -118,22 +118,26 @@ class BaseStartCLI(BaseCLI):
                             except Exception as e:
                                 # Log an error if the file copy fails
                                 err("An error occurred during file copy:", e)
-
+                                
                             # Create a module spec from the temporary file location
                             spec = iutil.spec_from_file_location(formatted_module_name, temp_filepath)
                             # Create a new module based on the spec
                             module = iutil.module_from_spec(spec)
-                            # Execute the module to load its contents
-                            spec.loader.exec_module(module)
-
                             # Convert the snake_case module name to CamelCase for class identification
                             camel_case_name = ''.join(word.capitalize() for word in formatted_module_name.split('_'))
-
                             # Retrieve the class from the module by name
                             script_class = getattr(module, camel_case_name, None)
-
+                            if not script_class:
+                                continue
+                            if inspect.isclass(script_class):
+                                # Only proceed if the class inherits from any of these bases
+                                if not issubclass(script_class, (BaseCLI, BaseStopCLI)):
+                                    continue
+                                
+                            # Execute the module to load its contents
+                            spec.loader.exec_module(module)
                             # Ensure the retrieved class exists, is a class type, and is a subclass of BaseStopCLI
-                            if script_class and inspect.isclass(script_class) and camel_case_name == 'BaseStopCLI':
+                            if camel_case_name == 'BaseStopCLI':
                                 # Having to use "camel_case_name == 'BaseStopCLI'" even though issubclass(script_class, BaseStopCLI) should work
                                 # But after 30 minutes of debugging, I am tired of this stupid shit not working even though it should
                                 # And it works perfectly fine in the stop script with the check-running relation
