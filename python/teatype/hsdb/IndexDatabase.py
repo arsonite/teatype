@@ -23,25 +23,30 @@ class IndexDatabase:
     _compute_index_lock:threading.Lock
     _db:dict # For all raw data
     _db_lock:threading.Lock
+    _models:List[type] # For all models
     _model_index:dict # For all model references for faster model query lookups
     _model_index_lock:threading.Lock
     _relational_index:dict # For all relations between models parsed dynamically from the model definitions
     _relational_index_lock:threading.Lock
     
-    def __init__(self):
+    def __init__(self, models:List[type]):
+        self._models = models
+        
         self._db_lock = threading.Lock()
         self._db = dict()
     
     def fill(self, raw_data:dict):
         for entry in raw_data:
-            model_name = entry.get('model')
+            model_name = entry.get('model_name')
             model_id = entry.get('id')
-            model_data = entry.get('data')
+                
+            matched_model = next((cls for cls in self._models if cls.__name__ == model_name), None)
+            if matched_model is None:
+                raise ValueError(f'Model {model_name} not found in models')
             
-            if model_name not in self._db:
-                self._db[model_name] = {}
-            self._db[model_name][model_id] = model_data
-        
+            if model_id not in self._db:
+                self._db[model_id] = matched_model(**entry)
+            
     def create_entry(self, model:object, data:dict, overwrite_path:str) -> object|None:
         try:
             with self._db_lock:
@@ -84,9 +89,12 @@ class IndexDatabase:
         
     def get_entries(self, model:object) -> List[object]:
         with self._db_lock:
-            for model_name, model_data in self._db.items():
-                if model_name == model.model_name:
-                    return [data for data in model_data.values()]
+            for entry in self._db:
+                print(entry)
+                
+            # for model_name, model_data in self._db.items():
+            #     if model_name == model.model_name:
+            #         return [data for data in model_data.values()]
         
     def query(self, model:object, query:dict) -> List[object]:
         filters = query.get('where', {})

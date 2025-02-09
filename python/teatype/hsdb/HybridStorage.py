@@ -13,8 +13,14 @@
 # DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS SOFTWARE.
 # 
 # For more details, check the LICENSE file in the root directory of this repository.
+
+# System imports
 import threading
+
+# From system imports
 from typing import List
+
+# From package imports
 from teatype.hsdb import IndexDatabase, RawFileHandler
 from teatype.io import env
 from teatype.logging import log
@@ -27,7 +33,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
     index_database: IndexDatabase
     raw_file_handler: RawFileHandler
 
-    def __init__(self, init:bool=False, overwrite_root_data_path:str=None):
+    def __init__(self, init:bool=False, models:List[type]=None, overwrite_root_data_path:str=None):
         if not init:
             return
         
@@ -35,7 +41,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
         if not getattr(self, '_initialized', False):
             # Prevent re-initialization
             self.coroutines = []
-            self.index_database = IndexDatabase()
+            self.index_database = IndexDatabase(models=models)
 
             # Set the root data path
             if overwrite_root_data_path:
