@@ -15,6 +15,9 @@
 # System imports
 import threading
 
+# From system imports
+from typing import List
+
 class IndexDatabase:
     _compute_index:dict # For all compute values for easy modification
     _compute_index_lock:threading.Lock
@@ -30,9 +33,16 @@ class IndexDatabase:
         self._db = dict()
     
     def fill(self, raw_data:dict):
-        pass
+        for entry in raw_data:
+            model_name = entry.get('model')
+            model_id = entry.get('id')
+            model_data = entry.get('data')
+            
+            if model_name not in self._db:
+                self._db[model_name] = {}
+            self._db[model_name][model_id] = model_data
         
-    def createEntry(self, model:object, data:dict, overwrite_path:str) -> object|None:
+    def create_entry(self, model:object, data:dict, overwrite_path:str) -> object|None:
         try:
             with self._db_lock:
                 model_instance = model(**data)
@@ -71,3 +81,30 @@ class IndexDatabase:
             import traceback
             traceback.print_exc()
             return None
+        
+    def get_entries(self, model:object) -> List[object]:
+        with self._db_lock:
+            for model_name, model_data in self._db.items():
+                if model_name == model.model_name:
+                    return [data for data in model_data.values()]
+        
+    def query(self, model:object, query:dict) -> List[object]:
+        filters = query.get('where', {})
+        order_by = query.get('order_by', None)
+        limit = query.get('limit', None)
+        results = []
+
+        for record_id, record_data in self._db.items():
+            if all(record_data.get(k) == v for k, v in filters.items()):
+                instance = model(**record_data)
+                results.append(instance)
+
+        if order_by:
+            field, _, direction = order_by.partition(" ")
+            reverse = direction.lower() == "desc"
+            results.sort(key=lambda x: getattr(x, field, None), reverse=reverse)
+
+        if isinstance(limit, int):
+            results = results[:limit]
+
+        return results

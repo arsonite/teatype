@@ -26,7 +26,7 @@ class RawFileHandler:
         
         path.create(self._root_data_path)
         
-    def createEntry(self, model:object, data:dict, overwrite_path:str) -> None:
+    def create_entry(self, model:object, data:dict, overwrite_path:str) -> None:
         try:
             if path.exists(model.file_path):
                 raise Exception(f'File {model.file_path} already exists')

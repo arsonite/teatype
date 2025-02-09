@@ -26,13 +26,14 @@ from teatype.hsdb.django_support.responses import NotAllowed, ServerError, Succe
 
 class HSDBDjangoView(APIView):
     __metaclass__:ABCMeta=ABCMeta
-    _COLLECTION_METHODS=['GET', 'POST']
+    __COLLECTION_METHODS=['GET', 'POST']
+    __DATA_REQUIRED_METHODS=['POST', 'PUT', 'PATCH']
     api_parents:List[str]=[]
     auto_view=True
     data_key:str=None # TODO: Automate data key as well and allow overwriting
     is_collection:bool
     hsdb_model:Type=None
-    hsdb_hybrid_storage:HybridStorage=HybridStorage()
+    hsdb_hybrid_storage:HybridStorage
     overwrite_api_name:str=None
     overwrite_api_plural_name:str=None
     overwrite_api_path:str=None
@@ -48,33 +49,38 @@ class HSDBDjangoView(APIView):
             if not self.auto_view:
                 raise NotImplementedError(f'Auto mode is off, you need to implement the {request.method} method yourself.')
 
-            if self.model is None:
-                raise ValueError('Can\' use auto mode without specifying a model in view')
-
-            if self.data_key is None:
-                data = request.data
-            else:
+            if self.hsdb_model is None:
+                raise ValueError('Can\' use auto mode without specifying a hsdb_model in view')
+            
+            if request.method in self.__DATA_REQUIRED_METHODS:
+                if not request.data:
+                    return NotAllowed(f'Data is required for {request.method} requests')
+                
+                if self.data_key not in request.data:
+                    return NotAllowed(f'Data key {self.data_key} is required for {request.method} requests')
+                
                 data = request.data[self.data_key]
-            model_instance = self.model(**data)
+                model_instance = self.hsdb_model(**data)
+            
             match request.method:
                 case 'GET':
                     if self.is_collection:
-                        response = self.hsdb_hybrid_storage.getEntries()
+                        response = self.hsdb_hybrid_storage.get_entries(self.hsdb_model)
                     else:
                         # id = kwargs.get(id)
-                        response = self.hsdb_hybrid_storage.getEntry()
+                        response = self.hsdb_hybrid_storage.get_entry()
                 case 'POST':
-                    response = self.hsdb_hybrid_storage.createEntry(model_instance, data)
+                    response = self.hsdb_hybrid_storage.create_entry(model_instance, data)
                 case 'PUT':
-                    response = self.hsdb_hybrid_storage.createEntry()
+                    response = self.hsdb_hybrid_storage.create_entry()
                 case 'PATCH':
-                    response = self.hsdb_hybrid_storage.modifyEntry()
+                    response = self.hsdb_hybrid_storage.modify_entry()
                 case 'DELETE':
-                    response = self.hsdb_hybrid_storage.deleteEntry()
+                    response = self.hsdb_hybrid_storage.delete_entry()
             if response:
                 return Success(response)
             else:
-                return ServerError(response)
+                return ServerError({'message': 'Response was "None"'})
         except Exception as exc:
             traceback.print_exc()
             return ServerError(exc)
@@ -113,11 +119,13 @@ class HSDBDjangoView(APIView):
         the CRUD methods (GET, PUT, PATCH, DELETE).
         """
         request_method = request.method
-        if self.is_collection and request_method not in self._COLLECTION_METHODS:
+        if self.is_collection and request_method not in self.__COLLECTION_METHODS:
             return NotAllowed(f'You can\'t use {request_method} requests on collections.')
 
         if request_method not in self.allowed_methods:
             return NotAllowed(f'Method not allowed. Allowed methods: {self.allowed_methods}')
+        
+        self.hsdb_hybrid_storage = HybridStorage()
         
     def handle_exception(self, exc):
         if isinstance(exc, MethodNotAllowed):
