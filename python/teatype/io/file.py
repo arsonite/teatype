@@ -28,6 +28,9 @@ from typing import List
 # From local imports
 from teatype.logging import err, warn
 
+# From-as local imports
+from teatype.io import path as path_functions
+
 class _File:
     def __init__(self, path:str, content:any=None, trimmed:bool=False, nested_depth:int=None):
         """
@@ -558,7 +561,7 @@ def read(file:_File|PosixPath|str,
             err(f'Error reading file "{path_string}": {exc}')
         raise exc
 
-def write(path:str, data:any, force_format:str=None, prettify:bool=False) -> bool:
+def write(path:str, data:any, force_format:str=None, prettify:bool=False, create_parents:bool=False) -> bool:
     """
     Write data to a file at the specified path.
 
@@ -571,14 +574,22 @@ def write(path:str, data:any, force_format:str=None, prettify:bool=False) -> boo
     Parameters:
         path (str): The path to the file.
         data (any): The data to write to the file.
-
+        force_format (str, optional): The format to force when writing data. Defaults to None.
+        prettify (bool, optional): Whether to prettify the output. Defaults to False.
+        create_parents (bool, optional): Whether to create parent directories if they do not exist. Defaults to False.
+        
     Returns:
         bool: True if the operation was successful, False otherwise.
     """
     # TODO: Make dynamic with plug'n'play function array and allow passing of custom functions
     try:
+        if create_parents:
+            # Create parent directories if they do not exist
+            parent_path = ''.join(subpath + '/' for subpath in path.split('/')[:-1])
+            path_functions.create(parent_path)
+        
         # Open the file in write mode
-        with open(path, 'w') as f:
+        with open(path, 'x') as f:
             if force_format == 'lines':
                 # Write multiple lines to the file
                 f.writelines(data)
