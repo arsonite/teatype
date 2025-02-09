@@ -34,19 +34,31 @@ class IndexDatabase:
         
         self._db_lock = threading.Lock()
         self._db = dict()
+        
+    def fill(self):
+        pass
     
-    def fill(self, raw_data:dict):
-        for entry in raw_data:
-            model_name = entry.get('model_name')
-            model_id = entry.get('id')
-                
+    def install_fixtures(self, fixtures:List[dict]):
+        for fixture in fixtures:
+            model_name = fixture.get('model')
+            
             matched_model = next((cls for cls in self._models if cls.__name__ == model_name), None)
             if matched_model is None:
                 raise ValueError(f'Model {model_name} not found in models')
             
-            if model_id not in self._db:
-                self._db[model_id] = matched_model(**entry)
-            
+            for entry in fixture.get('fixtures'):
+                model_id = entry.get('id')
+                if model_id not in self._db:
+                    data = entry.get('data')
+                    id = data.get('id')
+                    if data.get('en_EN'):
+                        name = data['en_EN']['name']
+                    elif data.get('de_DE'):
+                        name = data['de_DE']['name']
+                    else:
+                        name = data.get('name')
+                    self._db[model_id] = matched_model(id=id, name=name)
+                
     def create_entry(self, model:object, data:dict, overwrite_path:str) -> object|None:
         try:
             with self._db_lock:
@@ -87,14 +99,15 @@ class IndexDatabase:
             traceback.print_exc()
             return None
         
+    # TODO: Query optimization with indices
     def get_entries(self, model:object) -> List[object]:
+        entries = []
         with self._db_lock:
-            for entry in self._db:
-                print(entry)
-                
-            # for model_name, model_data in self._db.items():
-            #     if model_name == model.model_name:
-            #         return [data for data in model_data.values()]
+            for entry_id in self._db:
+                entry = self._db[entry_id]
+                if entry.model_name == model.__name__:
+                    entries.append(entry)
+        return entries
         
     def query(self, model:object, query:dict) -> List[object]:
         filters = query.get('where', {})

@@ -55,9 +55,6 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             
             log('HybridStorage finished initialization')
 
-    def fill(self, raw_data: dict):
-        self.index_database.fill(raw_data)
-
     def create_entry(self, model: object, data: dict, overwrite_path: str = None) -> bool:
         try:
             self.index_database.create_entry(model, data, overwrite_path)

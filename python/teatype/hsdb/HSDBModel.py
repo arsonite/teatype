@@ -11,6 +11,7 @@
 # all copies or substantial portions of the Software.
 
 # System imports
+import json
 import re
 
 # From package imports
@@ -81,7 +82,10 @@ class HSDBModel:
     
     def as_dict(self) -> dict:
         # TODO: check for hsdbattributes
-        pass
+        return self.__dict__
+    
+    def serialize(self) -> str:
+        return json.dumps(self.as_dict())
     
     def update(self, data:dict):
         for key, value in data.items():

@@ -77,7 +77,11 @@ class HSDBDjangoView(APIView):
                     response = self.hsdb_hybrid_storage.modify_entry()
                 case 'DELETE':
                     response = self.hsdb_hybrid_storage.delete_entry()
+                    
+            # TODO: Implement proper response handling
             if response:
+                if type(response) == list:
+                    response = [entry.as_dict() for entry in response]
                 return Success(response)
             else:
                 return ServerError({'message': 'Response was "None"'})
