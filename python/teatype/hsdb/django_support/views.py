@@ -60,7 +60,6 @@ class HSDBDjangoView(APIView):
                     return NotAllowed(f'Data key {self.data_key} is required for {request.method} requests')
                 
                 data = request.data[self.data_key]
-                model_instance = self.hsdb_model(**data)
             
             match request.method:
                 case 'GET':
@@ -70,7 +69,7 @@ class HSDBDjangoView(APIView):
                         # id = kwargs.get(id)
                         response = self.hsdb_hybrid_storage.get_entry()
                 case 'POST':
-                    response = self.hsdb_hybrid_storage.create_entry(model_instance, data)
+                    response = self.hsdb_hybrid_storage.create_entry(self.hsdb_model, data)
                 case 'PUT':
                     response = self.hsdb_hybrid_storage.create_entry()
                 case 'PATCH':

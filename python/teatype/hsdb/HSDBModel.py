@@ -41,6 +41,8 @@ class HSDBModel:
     name:str
     plural_name:str
     overwrite_file_path:str
+    overwrite_parsed_name:str
+    overwrite_parsed_plural_name:str
     
     def __init__(self, id:str=None, name:str=None, overwrite_file_path:str=None):
         # TODO: Turn into util function
@@ -62,7 +64,7 @@ class HSDBModel:
         self.model_name = type(self).__name__ 
         # TODO: Turn into util function
         self.parsed_name = _parse_name(self.model_name).replace('-model', '')
-        self.parsed_plural_name = self.name + 's' if not self.name.endswith('s') else self.name + 'es'
+        self.parsed_plural_name = self.parsed_name + 's' if not self.parsed_name.endswith('s') else self.parsed_name + 'es'
         
         self.created_at = dt.now()
         self.updated_at = dt.now()
@@ -76,9 +78,9 @@ class HSDBModel:
     
     @property
     def file_path(self) -> str:
-        if self.hasattr('overwrite_file_path'):
+        if hasattr(self, 'overwrite_file_path'):
             return self.overwrite_file_path
-        return f'{self.plural_name}/{self.id}.json'
+        return f'{self.parsed_plural_name}/{self.id}.json'
     
     def as_dict(self) -> dict:
         # TODO: check for hsdbattributes
