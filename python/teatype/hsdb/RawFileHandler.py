@@ -14,17 +14,17 @@
 from teatype.io import env, file, path
 
 class RawFileHandler:
-    _root_path:str
+    _root_data_path:str
     
-    def __init__(self, root_path:str=None):
-        if root_path:
-            self._root_path = root_path
+    def __init__(self, root_data_path):
+        if root_data_path:
+            self._root_data_path = root_data_path
         else:
-            # root_data_path = env.get('CIRLOG_DATA_PATH')
-            root_data_path = '/var/lib/cirlog'
-            self._root_path = f'{root_data_path}/raw'
+            # _root_data_path = env.get('CIRLOG_DATA_PATH')
+            _root_data_path = '/var/lib/cirlog'
+            self._root_data_path = f'{_root_data_path}/raw'
         
-        path.create(self._root_path)
+        path.create(self._root_data_path)
         
     def createEntry(self, model:object, data:dict, overwrite_path:str) -> None:
         try:
@@ -32,7 +32,7 @@ class RawFileHandler:
                 raise Exception(f'File {model.file_path} already exists')
 
             # TODO: Create variable in path.create for exists ok
-            absolute_file_path = path.join(self._root_path, model.file_path)
+            absolute_file_path = path.join(self._root_data_path, model.file_path)
             file.write(absolute_file_path, data, force_format='json', prettify=True, create_parents=True)
         except Exception as exc:
             raise Exception(f'Could not create raw file entry: {exc}')

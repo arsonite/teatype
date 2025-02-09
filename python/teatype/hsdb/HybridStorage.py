@@ -19,11 +19,11 @@ from typing import List
 # From package imports
 from teatype.hsdb import IndexDatabase, RawFileHandler
 from teatype.io import env
+from teatype.logging import log
 
 # A class that represents a Rolodex, from Rolodeck from rotating cards and Index a database index
 class HybridStorage(threading.Thread):
     _instance=None
-    _initialized:bool=False
     coroutines:List
     fixtures:dict
     index_database:IndexDatabase
@@ -33,10 +33,12 @@ class HybridStorage(threading.Thread):
         if cls._instance is None:
             cls._instance = super(HybridStorage, cls).__new__(cls, *args, **kwargs)
         return cls._instance
-
+    
     def __init__(self, overwrite_root_data_path:str=None):
         # Initialize any attributes if needed
-        if not hasattr(self, 'initialized'):
+        if not hasattr(self, '_initialized'):
+            self._initialized = True
+            
             # TODO: Add coroutine support
             self.coroutines = []
             
@@ -48,6 +50,5 @@ class HybridStorage(threading.Thread):
                 root_data_path = env.get('HSDB_ROOT_PATH')
             self.raw_file_handler = RawFileHandler(root_data_path=root_data_path)
             
-            print('HybridStorage finished initialization')
+            log('HybridStorage finished initialization')
             
-            self._initialized = True

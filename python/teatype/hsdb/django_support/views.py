@@ -15,21 +15,21 @@ import re
 import traceback
 
 # From system imports
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from typing import List, Type
 
 # From package imports
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.views import APIView
 from teatype.hsdb import HybridStorage
-from teatype.hsdb.django_support import NotAllowed, ServerError, Success
+from teatype.hsdb.django_support.responses import NotAllowed, ServerError, Success
 
 class HSDBDjangoView(APIView):
     __metaclass__:ABCMeta=ABCMeta
     _COLLECTION_METHODS=['GET', 'POST']
     api_parents:List[str]=[]
     auto_view=True
-    data_key:str=None
+    data_key:str=None # TODO: Automate data key as well and allow overwriting
     is_collection:bool
     hsdb_model:Type=None
     hsdb_hybrid_storage:HybridStorage=HybridStorage()

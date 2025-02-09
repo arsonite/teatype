@@ -11,9 +11,11 @@
 # all copies or substantial portions of the Software.
 
 try:
-    import django
-    from .hsdb_django_responses import *
-    from .hsdb_django_urlpatterns import parse_dynamic_routes
-    from .hsdb_django_views import HSDBDjangoView, HSDBDjangoResource, HSDBDjangoCollection
+    pass
+    # import django
+    # django.get_version()
+    # from .responses import *
+    # from .urlpatterns import parse_dynamic_routes
+    # from .views import HSDBDjangoView, HSDBDjangoResource, HSDBDjangoCollection
 except:
     pass
