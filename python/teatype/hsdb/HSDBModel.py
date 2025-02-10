@@ -55,7 +55,7 @@ class HSDBModel(ABC):
         if id is not None:
             self.id = id
         else:
-            self.id = generate_id(truncate=16)
+            self.id = generate_id()
             
         if name is not None:
             self.name = name

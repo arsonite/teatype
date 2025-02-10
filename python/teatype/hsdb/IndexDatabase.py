@@ -71,21 +71,48 @@ class IndexDatabase:
                             (
                                 obj
                                 for obj in self._db.values()
-                                if getattr(obj, "article_number", None) == data.get("article_number")
-                                and getattr(obj, "manufacturer", None) == data.get("manufacturer")
+                                if getattr(obj, 'article_number', None) == data.get('article_number')
+                                and getattr(obj, 'manufacturer', None) == data.get('manufacturer')
                             ),
                             None,
                         )
                         if existing_match:
                             return None
                     case 'InstrumentTypeModel':
-                        pass
+                        existing_match = next(
+                            (
+                                obj
+                                for obj in self._db.values()
+                                if getattr(obj, 'name', None) == data.get('name')
+                            ),
+                            None,
+                        )
+                        if existing_match:
+                            return None
                     case 'LabelModel':
                         pass
                     case 'ManufacturerModel':
-                        pass
+                        existing_match = next(
+                            (
+                                obj
+                                for obj in self._db.values()
+                                if getattr(obj, 'name', None) == data.get('name')
+                            ),
+                            None,
+                        )
+                        if existing_match:
+                            return None
                     case 'SurgeryTypeModel':
-                        pass
+                        existing_match = next(
+                            (
+                                obj
+                                for obj in self._db.values()
+                                if getattr(obj, 'name', None) == data.get('name')
+                            ),
+                            None,
+                        )
+                        if existing_match:
+                            return None
                 
                 self._db[model_id] = model_instance
                 return model_instance
