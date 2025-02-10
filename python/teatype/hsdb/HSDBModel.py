@@ -86,8 +86,14 @@ class HSDBModel(ABC):
     
     def serialize(self, json_dump:bool=False) -> dict|str:
         serialized_data = self.serializer()
+        # TODO: Remove model_meta when using a model index and seperate model-meta.json
         full_data = {
             **serialized_data,
+            'model_meta': {
+                'model_name': self.model_name,
+                'parsed_name': self.parsed_name,
+                'parsed_plural_name': self.parsed_plural_name
+            },
             'id': self.id,
             'created_at': str(self.created_at),
             'updated_at': str(self.updated_at)

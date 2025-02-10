@@ -83,8 +83,7 @@ class IndexDatabase:
                 
                 # self._db[model.plural_name][model_id] = data
                 
-                self._db[model_id] = data
-                
+                self._db[model_id] = model_instance
                 return model_instance
         except:
             import traceback
@@ -97,6 +96,7 @@ class IndexDatabase:
         with self._db_lock:
             for entry_id in self._db:
                 entry = self._db[entry_id]
+                print(entry)
                 if entry.model_name == model.__name__:
                     entries.append(entry)
         return entries
