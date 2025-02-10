@@ -56,15 +56,16 @@ class HSDBModel:
             
         if name is not None:
             self.name = name
-            
-        if overwrite_file_path:
-            self.overwrite_file_path = overwrite_file_path
         
         # TODO: Remove model name for redunancy when using a model index
         self.model_name = type(self).__name__ 
         # TODO: Turn into util function
         self.parsed_name = _parse_name(self.model_name).replace('-model', '')
         self.parsed_plural_name = self.parsed_name + 's' if not self.parsed_name.endswith('s') else self.parsed_name + 'es'
+        
+        if overwrite_file_path:
+            self.file_path = overwrite_file_path
+        self.file_path = f'{self.parsed_plural_name}/{self.id}.json'
         
         self.created_at = dt.now()
         self.updated_at = dt.now()
@@ -75,12 +76,6 @@ class HSDBModel:
     # # TODO: Implement
     # def _establishRelations(self):
     #     pass
-    
-    @property
-    def file_path(self) -> str:
-        if hasattr(self, 'overwrite_file_path'):
-            return self.overwrite_file_path
-        return f'{self.parsed_plural_name}/{self.id}.json'
     
     def as_dict(self) -> dict:
         # TODO: check for hsdbattributes

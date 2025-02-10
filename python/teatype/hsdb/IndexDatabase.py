@@ -68,14 +68,12 @@ class IndexDatabase:
                         name = data.get('name')
                     self._db[model_id] = matched_model(id=id, name=name)
                 
-    def create_entry(self, model:object, data:dict, overwrite_path:str) -> object|None:
+    def create_entry(self, model_instance:object, data:dict, overwrite_path:str) -> object|None:
         try:
             with self._db_lock:
-                model_instance = model(**data)
-                
                 model_name = model_instance.model_name
                 with self._model_index_lock:
-                    if model not in self._model_index:
+                    if model_name not in self._model_index:
                         self._model_index[model_name] = {}
                         
                 model_id = model_instance.id
@@ -98,10 +96,6 @@ class IndexDatabase:
                 # self._db[model.plural_name][model_id] = data
                 
                 self._db[model_id] = data
-                
-                # TODO: Temporary
-                import pprint
-                pprint.pprint(self._db)
                 
                 return model_instance
         except:

@@ -27,11 +27,11 @@ from teatype.logging import log
 from teatype.util import SingletonMeta
 
 class HybridStorage(threading.Thread, metaclass=SingletonMeta):
-    _instance = None
-    coroutines: List
-    fixtures: dict
-    index_database: IndexDatabase
-    raw_file_handler: RawFileHandler
+    _instance=None
+    coroutines:List
+    fixtures:dict
+    index_database:IndexDatabase
+    raw_file_handler:RawFileHandler
 
     def __init__(self, init:bool=False, models:List[type]=None, overwrite_root_data_path:str=None):
         if not init:
@@ -55,18 +55,20 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             
             log('HybridStorage finished initialization')
 
-    def create_entry(self, model: object, data: dict, overwrite_path: str = None) -> bool:
+    def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> bool:
         try:
-            self.index_database.create_entry(model, data, overwrite_path)
+            db_entry = self.index_database.create_entry(model, data, overwrite_path)
             self.raw_file_handler.create_entry(model, data, overwrite_path)
-        except Exception as e:
+            return db_entry.as_dict()
+        except Exception as exc:
             import traceback
             traceback.print_exc()
+            return None
 
     def get_entry(self) -> dict:
         pass
 
-    def get_entries(self, model: object) -> List[dict]:
+    def get_entries(self, model:object) -> List[dict]:
         return self.index_database.get_entries(model)
 
     def modify_entry(self) -> bool:
