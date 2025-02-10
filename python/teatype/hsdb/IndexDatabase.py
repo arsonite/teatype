@@ -71,8 +71,10 @@ class IndexDatabase:
                             (
                                 obj
                                 for obj in self._db.values()
-                                if getattr(obj, 'article_number', None) == data.get('article_number')
+                                if getattr(obj, 'model_name', None) == 'InstrumentModel'
+                                and getattr(obj, 'article_number', None) == data.get('article_number')
                                 and getattr(obj, 'manufacturer', None) == data.get('manufacturer')
+                                # and getattr(obj, 'manufacturer_id', None) == data.get('manufacturer_id')
                             ),
                             None,
                         )
@@ -83,7 +85,8 @@ class IndexDatabase:
                             (
                                 obj
                                 for obj in self._db.values()
-                                if getattr(obj, 'name', None) == data.get('name')
+                                if getattr(obj, 'model_name', None) == 'InstrumentTypeModel'
+                                and getattr(obj, 'name', None) == data.get('name')
                             ),
                             None,
                         )
@@ -96,7 +99,8 @@ class IndexDatabase:
                             (
                                 obj
                                 for obj in self._db.values()
-                                if getattr(obj, 'name', None) == data.get('name')
+                                if getattr(obj, 'model_name', None) == 'ManufacturerModel'
+                                and getattr(obj, 'name', None) == data.get('name')
                             ),
                             None,
                         )
@@ -107,13 +111,14 @@ class IndexDatabase:
                             (
                                 obj
                                 for obj in self._db.values()
-                                if getattr(obj, 'name', None) == data.get('name')
+                                if getattr(obj, 'model_name', None) == 'SurgeryTypeModel'
+                                and getattr(obj, 'name', None) == data.get('name')
                             ),
                             None,
                         )
                         if existing_match:
                             return None
-                
+                        
                 self._db[model_id] = model_instance
                 return model_instance
         except:

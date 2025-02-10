@@ -52,6 +52,7 @@ class HSDBDjangoView(APIView):
                 raise ValueError('Can\' use auto mode without specifying a hsdb_model in view')
             
             if request.method in self.__DATA_REQUIRED_METHODS:
+                print(request.method)
                 if not request.data:
                     return NotAllowed(f'Data is required for {request.method} requests')
                 

@@ -103,23 +103,41 @@ class HSDBModel(ABC):
     
     def serialize(self, json_dump:bool=False, use_data_key:bool=False) -> dict|str:
         serialized_data = self.serializer()
+        # TODO: Temporary workaround
         data_key = self.parsed_name + '_data' if use_data_key else 'data'
-        # TODO: Remove model_meta when using a model index and seperate model-meta.json
-        full_data = {
-            data_key: {
-                **serialized_data,
-                'created_at': str(self.created_at),
-                'updated_at': str(self.updated_at)
-            },
-            'id': self.id,
-            'model_meta': {
-                'app_name': self.app_name,
-                'migration_id': self.migration_id,
-                'model_name': self.model_name,
-                'parsed_name': self.parsed_name,
-                'parsed_plural_name': self.parsed_plural_name
-            },
-        }
+        if serialized_data == {}:
+            # TODO: Remove model_meta when using a model index and seperate model-meta.json
+            full_data = {
+                data_key: {
+                    'created_at': str(self.created_at),
+                    'updated_at': str(self.updated_at)
+                },
+                'id': self.id,
+                'model_meta': {
+                    'app_name': self.app_name,
+                    'migration_id': self.migration_id,
+                    'model_name': self.model_name,
+                    'parsed_name': self.parsed_name,
+                    'parsed_plural_name': self.parsed_plural_name
+                },
+            }
+        else:
+            full_data = {
+                data_key: {
+                    **serialized_data,
+                    'created_at': str(self.created_at),
+                    'updated_at': str(self.updated_at)
+                },
+                'id': self.id,
+                'model_meta': {
+                    'app_name': self.app_name,
+                    'migration_id': self.migration_id,
+                    'model_name': self.model_name,
+                    'parsed_name': self.parsed_name,
+                    'parsed_plural_name': self.parsed_plural_name
+                },
+            }
+            
         if hasattr(self, 'name'):
             full_data[data_key]['name'] = self.name
             
