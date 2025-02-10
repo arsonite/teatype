@@ -10,11 +10,15 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# WARNING: Do not change the order of the imports, it will break the code
-from .HSDBRelation import HSDBRelation
-from .HSDBMigration import HSDBMigration
-from .HSDBAttribute import HSDBAttribute
-from .HSDBModel import HSDBModel
-from .IndexDatabase import IndexDatabase
-from .RawFileHandler import RawFileHandler
-from .HybridStorage import HybridStorage
+# From system imports
+from typing import List
+
+# TODO: Migrations always count one up in id dependent on app and model
+# TODO: Always create a snapshot of all models before launching index db and if there are changes, create automatic migrations
+# TODO: Always create a backup of all raw db entries before every migration (with optional include_files flag)
+class HSDBMigration:
+    app_name:str
+    include_files:bool
+    migration_id:int
+    models_snapshot:dict
+    was_auto_created:bool
