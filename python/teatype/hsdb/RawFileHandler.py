@@ -26,7 +26,7 @@ class RawFileHandler:
         
         path.create(self._root_data_path)
         
-    def create_entry(self, model:object, data:dict, overwrite_path:str) -> None:
+    def create_entry(self, model:object, data:dict, overwrite_path:str) -> str:
         try:
             if path.exists(model.file_path):
                 raise Exception(f'File {model.file_path} already exists')
@@ -34,5 +34,6 @@ class RawFileHandler:
             # TODO: Create variable in path.create for exists ok
             absolute_file_path = path.join(self._root_data_path, model.file_path)
             file.write(absolute_file_path, data, force_format='json', prettify=True, create_parents=True)
+            return absolute_file_path
         except Exception as exc:
             raise Exception(f'Could not create raw file entry: {exc}')

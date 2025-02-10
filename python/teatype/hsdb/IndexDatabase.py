@@ -43,40 +43,20 @@ class IndexDatabase:
         
         self._relational_index = dict()
         self._relational_index_lock = threading.Lock()
-        
-    def fill(self):
-        pass
-    
-    def install_fixtures(self, fixtures:List[dict]):
-        for fixture in fixtures:
-            model_name = fixture.get('model')
-            
-            matched_model = next((cls for cls in self._models if cls.__name__ == model_name), None)
-            if matched_model is None:
-                raise ValueError(f'Model {model_name} not found in models')
-            
-            for entry in fixture.get('fixtures'):
-                model_id = entry.get('id')
-                if model_id not in self._db:
-                    data = entry.get('data')
-                    id = data.get('id')
-                    if data.get('de_DE'):
-                        name = data['de_DE']['name']
-                    elif data.get('en_EN'):
-                        name = data['en_EN']['name']
-                    else:
-                        name = data.get('name')
-                    self._db[model_id] = matched_model(id=id, name=name)
                 
-    def create_entry(self, model_instance:object, data:dict, overwrite_path:str) -> object|None:
+    def create_entry(self, model:type, data:dict, overwrite_path:str=None) -> object|None:
         try:
             with self._db_lock:
+                # TODO: Validation
+                model_instance = model(**data)
                 model_name = model_instance.model_name
+                print(model_name)
                 with self._model_index_lock:
                     if model_name not in self._model_index:
                         self._model_index[model_name] = {}
                         
                 model_id = model_instance.id
+                print(model_id)
                 if model_id in self._db:
                     raise ValueError(f'Model entry with id {model_id} already exists')
                 
@@ -84,9 +64,19 @@ class IndexDatabase:
                 # TODO: Quick and dirty hack, need to refactor this with proper attributes
                 # need for algorithm to be implemented with the model callhandlers
                 match model_name:
-                    case 'InstrumentModel':
+                    case 'CameraModel':
                         pass
                     case 'ImageModel':
+                        pass
+                    case 'InstrumentModel':
+                        pass
+                    case 'InstrumentTypeModel':
+                        pass
+                    case 'LabelModel':
+                        pass
+                    case 'ManufacturerModel':
+                        pass
+                    case 'SurgeryTypeModel':
                         pass
                     
                 # model_plural_name = model.plural_name
@@ -95,6 +85,7 @@ class IndexDatabase:
                 
                 # self._db[model.plural_name][model_id] = data
                 
+                print(data)
                 self._db[model_id] = data
                 
                 return model_instance
@@ -104,11 +95,12 @@ class IndexDatabase:
             return None
         
     # TODO: Query optimization with indices
-    def get_entries(self, model:object) -> List[object]:
+    def get_entries(self, model:type) -> List[object]:
         entries = []
         with self._db_lock:
             for entry_id in self._db:
                 entry = self._db[entry_id]
+                print(entry)
                 if entry.model_name == model.__name__:
                     entries.append(entry)
         return entries

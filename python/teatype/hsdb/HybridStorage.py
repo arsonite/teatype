@@ -54,12 +54,35 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             self._initialized = True # Mark as initialized
             
             log('HybridStorage finished initialization')
+        
+    def fill(self):
+        pass
+            
+    def install_fixtures(self, fixtures:List[dict]):
+        for fixture in fixtures:
+            model_name = fixture.get('model')
+            
+            matched_model = next((cls for cls in self._models if cls.__name__ == model_name), None)
+            if matched_model is None:
+                raise ValueError(f'Model {model_name} not found in models')
+            
+            for entry in fixture.get('fixtures'):
+                id = entry.get('id')
+                data = entry.get('data')
+                if data.get('de_DE'):
+                    name = data['de_DE']['name']
+                elif data.get('en_EN'):
+                    name = data['en_EN']['name']
+                else:
+                    name = data.get('name')
+                    
+                self.create_entry(matched_model, {'id': id, 'name': name})
 
     def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> bool:
         try:
-            db_entry = self.index_database.create_entry(model, data, overwrite_path)
-            self.raw_file_handler.create_entry(model, data, overwrite_path)
-            return db_entry.as_dict()
+            model_instance = self.index_database.create_entry(model, data, overwrite_path)
+            file_path = self.raw_file_handler.create_entry(model_instance, data, overwrite_path)
+            return model_instance.as_dict()
         except Exception as exc:
             import traceback
             traceback.print_exc()
