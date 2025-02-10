@@ -33,7 +33,6 @@ class RawFileHandler:
                 raise Exception(f'File {model_instance.file_path} already exists')
         
             # TODO: If model folder does not exist, create it and put model_meta.json into it
-
             # TODO: Create variable in path.create for exists ok
             absolute_file_path = path.join(self.root_data_path, model_instance.file_path)
             file.write(absolute_file_path,

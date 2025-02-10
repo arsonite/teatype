@@ -14,6 +14,9 @@
 import json
 import re
 
+# From system imports
+from abc import abstractmethod
+
 # From package imports
 from teatype.hsdb import HSDBAttribute
 from teatype.io import env
@@ -77,16 +80,22 @@ class HSDBModel:
     # def _establishRelations(self):
     #     pass
     
+    @abstractmethod
+    def serializer(self) -> dict:
+        raise NotImplementedError('Model does not have serializer')
+    
     def serialize(self, json_dump:bool=False) -> dict|str:
-        data = {
+        serialized_data = self.serializer()
+        full_data = {
+            **serialized_data,
             'id': self.id,
             'created_at': str(self.created_at),
-            'updated_at': str(self.updated_at),
+            'updated_at': str(self.updated_at)
         }
         if hasattr(self, 'name'):
-            data['name'] = self.name
+            full_data['name'] = self.name
             
-        return data if not json_dump else json.dumps(data)
+        return full_data if not json_dump else json.dumps(full_data)
     
     def update(self, data:dict):
         for key, value in data.items():
