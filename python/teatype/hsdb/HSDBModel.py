@@ -39,8 +39,10 @@ class HSDBModel(ABC):
     # plural_name=HSDBAttribute('plural_name', computed=True)
     # root_raw_path=HSDBAttribute('root_raw_path', computed=True)
     # updated_at=HSDBAttribute('updated_at', computed=True)
+    app_name:str
     id:str
     is_fixture:bool=False
+    migration_id:int
     name:str
     plural_name:str
     overwrite_file_path:str
@@ -83,6 +85,10 @@ class HSDBModel(ABC):
             self.updated_at = dt.fromisoformat(updated_at)
         else:
             self.updated_at = dt.now()
+        
+        # TODO: Make this dynamic
+        self.app_name = 'raw'
+        self.migration_id = 0
             
     # TODO: Figure out how to do this
     #     self._establishRelations()
@@ -107,6 +113,8 @@ class HSDBModel(ABC):
             },
             'id': self.id,
             'model_meta': {
+                'app_name': self.app_name,
+                'migration_id': self.migration_id,
                 'model_name': self.model_name,
                 'parsed_name': self.parsed_name,
                 'parsed_plural_name': self.parsed_plural_name
