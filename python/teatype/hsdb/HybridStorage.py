@@ -21,16 +21,22 @@ import threading
 from typing import List
 
 # From package imports
+from multiprocessing import Queue
 from teatype.hsdb import IndexDatabase, RawFileHandler
 from teatype.io import env
 from teatype.logging import log
 from teatype.util import SingletonMeta
 
+# TODO: Implement Coroutine and Operation (Atomic)
+# TODO: Implement threaded Coroutine scheduler
+# TODO: Implement threaded Operations controller
 class HybridStorage(threading.Thread, metaclass=SingletonMeta):
     _instance=None
     coroutines:List
+    coroutines_queue:Queue
     fixtures:dict
     index_database:IndexDatabase
+    operations_queue:Queue
     raw_file_handler:RawFileHandler
 
     def __init__(self, init:bool=False, models:List[type]=None, overwrite_root_data_path:str=None):
