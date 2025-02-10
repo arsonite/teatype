@@ -62,10 +62,10 @@ class IndexDatabase:
                 # TODO: Quick and dirty hack, need to refactor this with proper attributes
                 # need for algorithm to be implemented with the model callhandlers
                 match model_name:
-                    case 'CameraModel':
-                        pass
-                    case 'ImageModel':
-                        pass
+                    # case 'CameraModel':
+                    #     pass
+                    # case 'ImageModel':
+                    #     pass
                     case 'InstrumentModel':
                         existing_match = next(
                             (
@@ -89,8 +89,8 @@ class IndexDatabase:
                         )
                         if existing_match:
                             return None
-                    case 'LabelModel':
-                        pass
+                    # case 'LabelModel':
+                    #     pass
                     case 'ManufacturerModel':
                         existing_match = next(
                             (
