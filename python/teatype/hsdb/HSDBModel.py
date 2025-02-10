@@ -47,7 +47,12 @@ class HSDBModel(ABC):
     overwrite_parsed_name:str
     overwrite_parsed_plural_name:str
     
-    def __init__(self, id:str=None, name:str=None, overwrite_file_path:str=None):
+    def __init__(self,
+                 id:str=None,
+                 name:str=None,
+                 created_at:str=None,
+                 updated_at:str=None,
+                 overwrite_file_path:str=None):
         # TODO: Turn into util function
         def _parse_name(raw_name:str, seperator:str='-', plural:bool=False):
             return re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
@@ -70,9 +75,15 @@ class HSDBModel(ABC):
             self.file_path = overwrite_file_path
         self.file_path = f'{self.parsed_plural_name}/{self.id}.json'
         
-        self.created_at = dt.now()
-        self.updated_at = dt.now()
-        
+        if created_at:
+            self.created_at = dt.fromisoformat(created_at)
+        else:
+            self.created_at = dt.now()
+        if updated_at:
+            self.updated_at = dt.fromisoformat(updated_at)
+        else:
+            self.updated_at = dt.now()
+            
     # TODO: Figure out how to do this
     #     self._establishRelations()
     
@@ -84,11 +95,12 @@ class HSDBModel(ABC):
     def serializer(self) -> dict:
         raise NotImplementedError('Model does not have serializer')
     
-    def serialize(self, json_dump:bool=False) -> dict|str:
+    def serialize(self, json_dump:bool=False, use_data_key:bool=False) -> dict|str:
         serialized_data = self.serializer()
+        data_key = self.parsed_name + '_data' if use_data_key else 'data'
         # TODO: Remove model_meta when using a model index and seperate model-meta.json
         full_data = {
-            'data': {
+            data_key: {
                 **serialized_data,
                 'created_at': str(self.created_at),
                 'updated_at': str(self.updated_at)
@@ -101,7 +113,7 @@ class HSDBModel(ABC):
             },
         }
         if hasattr(self, 'name'):
-            full_data['data']['name'] = self.name
+            full_data[data_key]['name'] = self.name
             
         return full_data if not json_dump else json.dumps(full_data)
     

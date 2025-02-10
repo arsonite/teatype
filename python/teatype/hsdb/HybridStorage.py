@@ -75,8 +75,15 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                     name = data['en_EN']['name']
                 else:
                     name = data.get('name')
+                data.update({'name': name})
+                try:
+                    del data['de_DE']
+                    del data['en_EN']
+                    del data['model_meta']
+                except:
+                    pass
                     
-                self.create_entry(matched_model, {'id': id, 'name': name})
+                self.create_entry(matched_model, {'id': id, **data})
                 
     def install_raw_data(self, parsed_raw_data:List[dict]):
         for raw_data in parsed_raw_data:
@@ -87,6 +94,10 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             
             id = raw_data.get('id')
             data = raw_data.get('data')
+            
+            if self.get_entry(id):
+                continue
+                
             self.create_entry(matched_model, {'id': id, **data})
 
     def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> dict|None:

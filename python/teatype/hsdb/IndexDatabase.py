@@ -56,7 +56,7 @@ class IndexDatabase:
                         
                 model_id = model_instance.id
                 if model_id in self._db:
-                    raise ValueError(f'Model entry with id {model_id} already exists')
+                    return None
                 
                 # Model.create(overwrite_path, model_instance)
                 # TODO: Quick and dirty hack, need to refactor this with proper attributes
