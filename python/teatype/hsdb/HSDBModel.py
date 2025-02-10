@@ -88,18 +88,20 @@ class HSDBModel(ABC):
         serialized_data = self.serializer()
         # TODO: Remove model_meta when using a model index and seperate model-meta.json
         full_data = {
-            **serialized_data,
+            'data': {
+                **serialized_data,
+                'created_at': str(self.created_at),
+                'updated_at': str(self.updated_at)
+            },
+            'id': self.id,
             'model_meta': {
                 'model_name': self.model_name,
                 'parsed_name': self.parsed_name,
                 'parsed_plural_name': self.parsed_plural_name
             },
-            'id': self.id,
-            'created_at': str(self.created_at),
-            'updated_at': str(self.updated_at)
         }
         if hasattr(self, 'name'):
-            full_data['name'] = self.name
+            full_data['data']['name'] = self.name
             
         return full_data if not json_dump else json.dumps(full_data)
     
