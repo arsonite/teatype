@@ -23,14 +23,14 @@ class IndexDatabase:
     _compute_index_lock:threading.Lock
     _db:dict # For all raw data
     _db_lock:threading.Lock
-    _models:List[type] # For all models
     _model_index:dict # For all model references for faster model query lookups
     _model_index_lock:threading.Lock
     _relational_index:dict # For all relations between models parsed dynamically from the model definitions
     _relational_index_lock:threading.Lock
+    models:List[type] # For all models
     
     def __init__(self, models:List[type]):
-        self._models = models
+        self.models = models
         
         self._compute_index = dict()
         self._compute_index_lock = threading.Lock()

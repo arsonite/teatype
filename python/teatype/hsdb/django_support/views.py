@@ -80,7 +80,7 @@ class HSDBDjangoView(APIView):
             # TODO: Implement proper response handling
             if response:
                 if type(response) == list:
-                    response = [entry.as_dict() for entry in response]
+                    response = [entry.serialize() for entry in response]
                 return Success(response)
             else:
                 return ServerError({'message': 'Response was "None"'})

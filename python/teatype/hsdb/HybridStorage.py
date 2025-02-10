@@ -62,7 +62,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
         for fixture in fixtures:
             model_name = fixture.get('model')
             
-            matched_model = next((cls for cls in self._models if cls.__name__ == model_name), None)
+            matched_model = next((cls for cls in self.index_database.models if cls.__name__ == model_name), None)
             if matched_model is None:
                 raise ValueError(f'Model {model_name} not found in models')
             
@@ -81,8 +81,8 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
     def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> bool:
         try:
             model_instance = self.index_database.create_entry(model, data, overwrite_path)
-            file_path = self.raw_file_handler.create_entry(model_instance, data, overwrite_path)
-            return model_instance.as_dict()
+            file_path = self.raw_file_handler.create_entry(model_instance, overwrite_path)
+            return model_instance.serialize()
         except Exception as exc:
             import traceback
             traceback.print_exc()

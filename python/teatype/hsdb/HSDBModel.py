@@ -77,12 +77,16 @@ class HSDBModel:
     # def _establishRelations(self):
     #     pass
     
-    def as_dict(self) -> dict:
-        # TODO: check for hsdbattributes
-        return self.__dict__
-    
-    def serialize(self) -> str:
-        return json.dumps(self.as_dict())
+    def serialize(self, json_dump:bool=False) -> dict|str:
+        data = {
+            'id': self.id,
+            'created_at': str(self.created_at),
+            'updated_at': str(self.updated_at),
+        }
+        if hasattr(self, 'name'):
+            data['name'] = self.name
+            
+        return data if not json_dump else json.dumps(data)
     
     def update(self, data:dict):
         for key, value in data.items():
