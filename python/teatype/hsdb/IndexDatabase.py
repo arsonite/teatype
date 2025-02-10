@@ -67,7 +67,17 @@ class IndexDatabase:
                     case 'ImageModel':
                         pass
                     case 'InstrumentModel':
-                        pass
+                        existing_match = next(
+                            (
+                                obj
+                                for obj in self._db.values()
+                                if getattr(obj, "article_number", None) == data.get("article_number")
+                                and getattr(obj, "manufacturer", None) == data.get("manufacturer")
+                            ),
+                            None,
+                        )
+                        if existing_match:
+                            return None
                     case 'InstrumentTypeModel':
                         pass
                     case 'LabelModel':
@@ -76,12 +86,6 @@ class IndexDatabase:
                         pass
                     case 'SurgeryTypeModel':
                         pass
-                    
-                # model_plural_name = model.plural_name
-                # if model_plural_name not in self._db:
-                #     self._db[model.plural_name] = {}
-                
-                # self._db[model.plural_name][model_id] = data
                 
                 self._db[model_id] = model_instance
                 return model_instance
@@ -96,7 +100,6 @@ class IndexDatabase:
         with self._db_lock:
             for entry_id in self._db:
                 entry = self._db[entry_id]
-                print(entry)
                 if entry.model_name == model.__name__:
                     entries.append(entry)
         return entries

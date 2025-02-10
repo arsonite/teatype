@@ -70,6 +70,8 @@ class HSDBDjangoView(APIView):
                         response = hybrid_storage.get_entry(id)
                 case 'POST':
                     response = hybrid_storage.create_entry(self.hsdb_model, data)
+                    if response is None:
+                        return ServerError(f'Entry already exists')
                 # case 'PUT':
                 #     response = hybrid_storage.create_entry()
                 # case 'PATCH':

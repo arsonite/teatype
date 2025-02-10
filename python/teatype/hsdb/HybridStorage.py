@@ -78,9 +78,11 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                     
                 self.create_entry(matched_model, {'id': id, 'name': name})
 
-    def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> bool:
+    def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> dict|None:
         try:
             model_instance = self.index_database.create_entry(model, data, overwrite_path)
+            if model_instance is None:
+                return None
             file_path = self.raw_file_handler.create_entry(model_instance, overwrite_path)
             return model_instance.serialize()
         except Exception as exc:
