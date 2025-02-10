@@ -33,7 +33,6 @@ class HSDBDjangoView(APIView):
     data_key:str=None # TODO: Automate data key as well and allow overwriting
     is_collection:bool
     hsdb_model:Type=None
-    hsdb_hybrid_storage:HybridStorage
     overwrite_api_name:str=None
     overwrite_api_plural_name:str=None
     overwrite_api_path:str=None
@@ -61,21 +60,22 @@ class HSDBDjangoView(APIView):
                 
                 data = request.data[self.data_key]
             
+            hybrid_storage = HybridStorage()
             match request.method:
                 case 'GET':
                     if self.is_collection:
-                        response = self.hsdb_hybrid_storage.get_entries(self.hsdb_model)
+                        response = hybrid_storage.get_entries(self.hsdb_model)
                     else:
-                        # id = kwargs.get(id)
-                        response = self.hsdb_hybrid_storage.get_entry()
+                        id = kwargs.get(self.api_id())
+                        response = hybrid_storage.get_entry(id)
                 case 'POST':
-                    response = self.hsdb_hybrid_storage.create_entry(self.hsdb_model, data)
-                case 'PUT':
-                    response = self.hsdb_hybrid_storage.create_entry()
-                case 'PATCH':
-                    response = self.hsdb_hybrid_storage.modify_entry()
-                case 'DELETE':
-                    response = self.hsdb_hybrid_storage.delete_entry()
+                    response = hybrid_storage.create_entry(self.hsdb_model, data)
+                # case 'PUT':
+                #     response = hybrid_storage.create_entry()
+                # case 'PATCH':
+                #     response = hybrid_storage.modify_entry()
+                # case 'DELETE':
+                #     response = hybrid_storage.delete_entry()
                     
             # TODO: Implement proper response handling
             if response:
@@ -127,8 +127,6 @@ class HSDBDjangoView(APIView):
 
         if request_method not in self.allowed_methods:
             return NotAllowed(f'Method not allowed. Allowed methods: {self.allowed_methods}')
-        
-        self.hsdb_hybrid_storage = HybridStorage()
         
     def handle_exception(self, exc):
         if isinstance(exc, MethodNotAllowed):

@@ -10,10 +10,15 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# WARNING: Do not change the order of the imports, it will break the code
-from .HSDBRelation import HSDBRelation
-from .HSDBAttribute import HSDBAttribute
-from .HSDBModel import HSDBModel
-from .IndexDatabase import IndexDatabase
-from .RawFileHandler import RawFileHandler
-from .HybridStorage import HybridStorage
+# From system imports
+from typing import List
+
+class HSDBRelation:
+    primary_keys:List[str]
+    secondary_keys:List[str]
+    relation_type:str
+    
+    def __init__(self, primary_keys:List[str], secondary_keys:List[str], relation_type:str):
+        self.primary_keys = primary_keys
+        self.secondary_keys = secondary_keys
+        self.relation_type = relation_type

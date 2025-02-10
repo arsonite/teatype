@@ -15,7 +15,7 @@ import json
 import re
 
 # From system imports
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 # From package imports
 from teatype.hsdb import HSDBAttribute
@@ -30,7 +30,7 @@ from teatype import id as generate_id
 # TODO: Add validation method inside model
 # TODO: Add attribute supports
 # TODO: Add language supports
-class HSDBModel:
+class HSDBModel(ABC):
     # created_at=HSDBAttribute('created_at', computed=True)
     # id=HSDBAttribute('id', computed=True, unique=True)
     # file_path=HSDBAttribute('file_path', computed=True)

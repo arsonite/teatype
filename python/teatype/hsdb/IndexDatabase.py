@@ -100,6 +100,10 @@ class IndexDatabase:
                 if entry.model_name == model.__name__:
                     entries.append(entry)
         return entries
+    
+    def get_entry(self, model_id:str) -> object|None:
+        with self._db_lock:
+            return self._db.get(model_id)
         
     def query(self, model:object, query:dict) -> List[object]:
         filters = query.get('where', {})

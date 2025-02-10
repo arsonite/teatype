@@ -88,8 +88,8 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             traceback.print_exc()
             return None
 
-    def get_entry(self) -> dict:
-        pass
+    def get_entry(self, model_id:str) -> dict:
+        return self.index_database.get_entry(model_id)
 
     def get_entries(self, model:object) -> List[dict]:
         return self.index_database.get_entries(model)

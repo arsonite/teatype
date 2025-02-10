@@ -29,12 +29,12 @@ class RawFileHandler:
     # TODO: If new attributes surface (migrations), apply them to old files (backup before)
     def create_entry(self, model_instance:object, overwrite_path:str) -> str:
         try:
-            if path.exists(model_instance.file_path):
-                raise Exception(f'File {model_instance.file_path} already exists')
+            absolute_file_path = path.join(self.root_data_path, model_instance.file_path)
+            if path.exists(absolute_file_path):
+                return 'File already exists'
         
             # TODO: If model folder does not exist, create it and put model_meta.json into it
             # TODO: Create variable in path.create for exists ok
-            absolute_file_path = path.join(self.root_data_path, model_instance.file_path)
             file.write(absolute_file_path,
                        model_instance.serialize(),
                        force_format='json',

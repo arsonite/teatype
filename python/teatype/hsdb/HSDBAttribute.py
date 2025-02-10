@@ -10,23 +10,41 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
+# From package imports
+from teatype.hsdb import HSDBRelation
+
 class HSDBAttribute:
+    # editable:bool
+    # TODO: indexed:bool
     key:str
-    max_size:int
-    required:bool
-    relation:str
-    unique:bool
+    # TODO: max_size:int
+    # required:bool
+    # relation:HSDBRelation
+    # unique:bool
     value:any
     
-    def __init__(self, key:str, editable:bool=True, relation:str=None, required:bool=False, unique:bool=False):
+    def __init__(self,
+                 key:str,
+                 editable:bool=True,
+                 indexed:bool=False,
+                 max_size:int=None,
+                 relation:HSDBRelation=None,
+                 required:bool=False,
+                 searchable:bool=False,
+                 unique:bool=False):
         self.key = key
+        
+        self.editable = editable
+        self.indexed = indexed
+        self.max_size = max_size
         self.editable = editable
         self.relation = relation
-        self.unique = unique
         self.required = required
+        self.searchable = searchable
+        self.unique = unique
         
-    def setValue(self, key:str):
-        self.key = key
-
     def setValue(self, value:any):
         self.value = value
+        
+    def getValue(self) -> any:
+        return self.value
