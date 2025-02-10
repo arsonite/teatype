@@ -50,13 +50,11 @@ class IndexDatabase:
                 # TODO: Validation
                 model_instance = model(**data)
                 model_name = model_instance.model_name
-                print(model_name)
                 with self._model_index_lock:
                     if model_name not in self._model_index:
                         self._model_index[model_name] = {}
                         
                 model_id = model_instance.id
-                print(model_id)
                 if model_id in self._db:
                     raise ValueError(f'Model entry with id {model_id} already exists')
                 
@@ -85,7 +83,6 @@ class IndexDatabase:
                 
                 # self._db[model.plural_name][model_id] = data
                 
-                print(data)
                 self._db[model_id] = data
                 
                 return model_instance
@@ -100,7 +97,6 @@ class IndexDatabase:
         with self._db_lock:
             for entry_id in self._db:
                 entry = self._db[entry_id]
-                print(entry)
                 if entry.model_name == model.__name__:
                     entries.append(entry)
         return entries
