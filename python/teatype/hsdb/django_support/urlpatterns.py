@@ -21,6 +21,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 # From local imports
 from teatype.hsdb.django_support.views import HSDBDjangoCollection, HSDBDjangoResource, HSDBDjangoView
 
+# TODO: Create a seperate base class without hsdb support
 def parse_dynamic_routes(app_name:str, search_path:str, verbose:bool=False):
     print(f'Dynamic route registration for app "{app_name}"')
     urlpatterns = []

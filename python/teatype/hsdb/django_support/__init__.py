@@ -10,12 +10,5 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-try:
-    pass
-    # import django
-    # django.get_version()
-    # from .responses import *
-    # from .urlpatterns import parse_dynamic_routes
-    # from .views import HSDBDjangoView, HSDBDjangoResource, HSDBDjangoCollection
-except:
-    pass
+# from .urlpatterns import parse_dynamic_routes
+# from .views import HSDBDjangoView, HSDBDjangoResource, HSDBDjangoCollection
