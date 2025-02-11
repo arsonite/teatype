@@ -589,7 +589,7 @@ def write(path:str, data:any, force_format:str=None, prettify:bool=False, create
             path_functions.create(parent_path)
         
         # Open the file in write mode
-        with open(path, 'x') as f:
+        with open(path, 'w') as f:
             if force_format == 'lines':
                 # Write multiple lines to the file
                 f.writelines(data)

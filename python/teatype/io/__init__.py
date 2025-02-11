@@ -36,4 +36,8 @@ from .path import parent as parent_folder
 from .path import this as this_folder
 from .path import this_parent as this_parent_folder
 from .path import workdir as workdir_folder
+from .probe import ip as probe_ip
+from .probe import port as probe_port
+from .probe import process as probe_process
+from .probe import url as probe_url
 from .shell import clear as clear_shell

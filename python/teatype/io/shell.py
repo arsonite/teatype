@@ -17,7 +17,7 @@ import sys
 
 # From package imports
 from teatype.enum import EscapeColor
-from teatype.logging import err, log
+from teatype.logging import err, log, println
 
 # From-as package imports
 from teatype.io import env as current_env
@@ -48,6 +48,50 @@ def enable_sudo(max_fail_count:int=3) -> None:
     Returns:
         None
     """
+    # if shell('sudo -n true'):
+    #     log('User already has elevated privileges, not further prompting required.')
+    #     return
+    
+    # def getpass_asterisk(prompt='Password: '):
+    #     fd = sys.stdin.fileno()
+    #     old = termios.tcgetattr(fd)
+    #     try:
+    #         tty.setraw(fd)
+    #         print(prompt, end='', flush=True)
+    #         password = []
+    #         while True:
+    #             ch = sys.stdin.read(1)
+    #             if ch in ['\r', '\n']:
+    #                 print()
+    #                 break
+    #             elif ch == '\x7f':
+    #                 if password:
+    #                     password.pop()
+    #                     sys.stdout.write('\b \b')
+    #                     sys.stdout.flush()
+    #             else:
+    #                 password.append(ch)
+    #                 sys.stdout.write('*')
+    #                 sys.stdout.flush()
+    #         return ''.join(password)
+    #     finally:
+    #         termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
+    # for attempt in range(max_fail_count):
+    #     remaining = max_fail_count - attempt
+    #     log(f'{EscapeColor.LIGHT_GREEN}Elevated privileges required {EscapeColor.GRAY}({remaining} tries left){EscapeColor.RESET}')
+    #     password = getpass_asterisk('Password: ')
+    #     output = subprocess.run(f'echo {password} | sudo -S -v >/dev/null 2>&1', shell=True)
+        
+    #     if output.returncode == 0:
+    #         log('Privileges elevated successfully.')
+    #         return
+    #     elif attempt < max_fail_count - 1:
+    #         log(f'{EscapeColor.RED}Invalid password. Try again.')
+    #     else:
+    #         log(f'{EscapeColor.RED}Invalid password. Abort.', pad_before=1, pad_after=1)
+    #         sys.exit(1)
+    
     log(f'{EscapeColor.LIGHT_GREEN}Elevated privileges required. Please enter your password:')
     password = getpass.getpass('Password: ')
     # Invoke the 'sudo' command to elevate privileges
