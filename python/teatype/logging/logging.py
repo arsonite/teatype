@@ -99,9 +99,9 @@ class _ColoredFormatter(logging.Formatter):
         return f'{color}{message}{self.RESET_CODE}'
 
 def _format(message:any,
+            pad_before:int=None,
             prefix:str=None,
             use_prefix:bool=True,
-            pad_before:int=None,
             verbose:bool=False) -> any:
     """
     Formats a message with optional padding and verbosity.
@@ -109,8 +109,9 @@ def _format(message:any,
 
     Args:
         message (any, optional): The message to format. Defaults to ''.
-        pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
         pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
+        pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
+        use_prefix (bool, optional): If True, includes the error prefix in the message. Defaults to True.
         verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
 
     Returns:
@@ -151,10 +152,10 @@ def err(message:str,
         exit=False,
         pad_before:int=None,
         pad_after:int=None,
-        traceback:bool=False,
+        raise_exception:Exception|bool=False,
         use_prefix:bool=True,
-        verbose:bool=True,
-        raise_exception:Exception|bool=False) -> None:
+        traceback:bool=False,
+        verbose:bool=True) -> None:
     """
     Logs an error message and optionally includes the traceback of the current exception.
 
@@ -162,10 +163,11 @@ def err(message:str,
         message (str): The error message to be logged.
         pad_before (int , optional): Number of blank lines to add before the message. Defaults to None.
         pad_after (int , optional): Number of blank lines to add after the message. Defaults to None.
+        raise_exception (Exception, optional): If specified, raises the provided exception with the error message.
         traceback (bool, optional): Flag to determine whether to include the traceback.
             Defaults to False.
+        use_prefix (bool, optional): If True, includes the error prefix in the message. Defaults to True.
         verbose (bool, optional): If True, includes caller's filename and line number. Defaults to False.
-        raise_exception (Exception, optional): If specified, raises the provided exception with the error message.
     Returns:
         int: Returns 1 to indicate an error has occurred.
     """
@@ -184,10 +186,10 @@ def err(message:str,
         prefix = None
         use_prefix = False
     error_message = _format(message=message,
+                            pad_before=pad_before,
                             prefix=prefix,
                             use_prefix=use_prefix,
-                            verbose=verbose,
-                            pad_before=pad_before)
+                            verbose=verbose)
     
     # Handle the raising of exceptions based on the 'raise_exception' parameter
     if raise_exception:

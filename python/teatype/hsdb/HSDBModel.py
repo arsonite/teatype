@@ -40,14 +40,19 @@ class HSDBModel(ABC):
     # root_raw_path=HSDBAttribute('root_raw_path', computed=True)
     # updated_at=HSDBAttribute('updated_at', computed=True)
     app_name:str
+    created_at:dt
     id:str
     is_fixture:bool=False
     migration_id:int
     name:str
-    plural_name:str
     overwrite_file_path:str
     overwrite_parsed_name:str
     overwrite_parsed_plural_name:str
+    parsed_name:str
+    parsed_plural_name:str
+    plural_name:str
+    relation_updated_at:dt
+    updated_at:dt
     
     def __init__(self,
                  id:str=None,
@@ -103,8 +108,8 @@ class HSDBModel(ABC):
     
     def serialize(self, json_dump:bool=False, use_data_key:bool=False) -> dict|str:
         serialized_data = self.serializer()
-        # TODO: Temporary workaround
         data_key = self.parsed_name + '_data' if use_data_key else 'data'
+        # TODO: Temporary workaround - find more elegant solution
         if serialized_data == {}:
             # TODO: Remove model_meta when using a model index and seperate model-meta.json
             full_data = {
@@ -142,6 +147,14 @@ class HSDBModel(ABC):
             full_data[data_key]['name'] = self.name
             
         return full_data if not json_dump else json.dumps(full_data)
+    
+    def snapshot(self) -> dict:
+        snapshot_dict = {}
+        for key, value in self.__dict__.items():
+            # TODO: If variable is of type HSDBAttribute
+            if isinstance(value, dt):
+                snapshot_dict[key] = str(value)
+        return snapshot_dict
     
     def update(self, data:dict):
         for key, value in data.items():

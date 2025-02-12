@@ -11,14 +11,24 @@
 # all copies or substantial portions of the Software.
 
 # From system imports
-from typing import List
+from abc import ABC
+
+# From-as system imports
+from datetime import datetime as dt
 
 # TODO: Migrations always count one up in id dependent on app and model
 # TODO: Always create a snapshot of all models before launching index db and if there are changes, create automatic migrations
 # TODO: Always create a backup of all raw db entries before every migration (with optional include_files flag)
-class HSDBMigration:
+class HSDBMigration(ABC):
+    _models_snapshot:dict
     app_name:str
+    auto_creation_datetime:str
     include_files:bool
     migration_id:int
-    models_snapshot:dict
+    migration_name:str
+    migration_precursor:str
     was_auto_created:bool
+    
+    def auto_create(self):
+        self.auto_creation_datetime = str(dt.now().isoformat())
+        self.was_auto_created = True
