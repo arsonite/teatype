@@ -142,9 +142,36 @@ class HSDBModel(ABC):
                     'parsed_plural_name': self.parsed_plural_name
                 },
             }
-            
         if hasattr(self, 'name'):
             full_data[data_key]['name'] = self.name
+            
+        # base_data = {
+        #     'created_at': str(self.created_at),
+        #     'id': self.id,
+        #     'updated_at': str(self.updated_at)
+        # }
+        # # TODO: Make this optional instead of baked into base model?
+        # if hasattr(self, 'name'):
+        #     base_data[data_key]['name'] = self.name
+        # migration_data = {
+        #     'app_name': self.app_name,
+        #     'migration_id': self.migration_id,
+        #     'migration_precursor': self.migration_precursor,
+        # }   
+        # model_data = {
+        #     'app_name': self.app_name,
+        #     'model_name': self.model_name,
+        # }
+        # relational_data = {}
+        # serialized_data = {
+        #     data_key: {
+        #         **base_data,
+        #         **serialized_data
+        #     },
+        #     migration_data: migration_data,
+        #     model_data: model_data,
+        #     relational_data: relational_data,
+        # }
             
         return full_data if not json_dump else json.dumps(full_data)
     

@@ -62,32 +62,31 @@ class HSDBDjangoView(APIView):
                 
                 data = request.data[self.data_key]
             
-            hybrid_storage = HybridStorage()
+            hybrid_storage = HybridStorage.instance()
             match request.method:
                 case 'GET':
                     if self.is_collection:
-                        response = hybrid_storage.get_entries(self.hsdb_model)
+                        query_response = hybrid_storage.get_entries(self.hsdb_model, serialize=True)
                     else:
                         id = kwargs.get(self.api_id())
-                        response = hybrid_storage.get_entry(id)
+                        query_response = hybrid_storage.get_entry(id, serialize=True)
                 case 'POST':
-                    response = hybrid_storage.create_entry(self.hsdb_model, data)
-                    if response is None:
+                    query_response = hybrid_storage.create_entry(self.hsdb_model, data)
+                    if query_response is None:
                         return ServerError(f'Entry already exists')
                 # case 'PUT':
-                #     response = hybrid_storage.create_entry()
+                #     query_response = hybrid_storage.create_entry()
                 # case 'PATCH':
-                #     response = hybrid_storage.modify_entry()
+                #     query_response = hybrid_storage.modify_entry()
                 # case 'DELETE':
-                #     response = hybrid_storage.delete_entry()
-                    
-            # TODO: Implement proper response handling
-            if response:
-                if type(response) == list:
-                    response = [entry.serialize() for entry in response]
-                return Success(response)
+                #     query_response = hybrid_storage.delete_entry()
+            # TODO: Implement proper query_response handling
+            if query_response is not None:
+                return Success(query_response)
             else:
-                return ServerError({'message': 'Response was "None"'})
+                query_response_error = 'Query-response was "None"'
+                print(query_response_error)
+                return ServerError({'message': query_response_error})
         except Exception as exc:
             traceback.print_exc()
             return ServerError(exc)

@@ -125,18 +125,24 @@ class IndexDatabase:
             return None
         
     # TODO: Query optimization with indices
-    def get_entries(self, model:type) -> List[object]:
+    def get_entries(self, model:type, serialize:bool=False) -> List[object]:
         entries = []
         with self._db_lock:
             for entry_id in self._db:
                 entry = self._db[entry_id]
                 if entry.model_name == model.__name__:
+                    if serialize:
+                        entries.append(entry.serialize())
+                        continue
                     entries.append(entry)
         return entries
     
-    def get_entry(self, model_id:str) -> object|None:
+    def get_entry(self, model_id:str, serialize:bool=False) -> object|None:
         with self._db_lock:
-            return self._db.get(model_id)
+            entry = self._db.get(model_id)
+            if serialize:
+                return entry.serialize()
+            return entry
         
     def query(self, model:object, query:dict) -> List[object]:
         filters = query.get('where', {})

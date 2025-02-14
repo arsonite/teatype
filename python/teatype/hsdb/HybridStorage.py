@@ -27,7 +27,6 @@ from teatype.util import SingletonMeta
 # TODO: Implement threaded Coroutine scheduler
 # TODO: Implement threaded Operations controller
 class HybridStorage(threading.Thread, metaclass=SingletonMeta):
-    _instance=None
     coroutines:List
     coroutines_queue:Queue
     fixtures:dict
@@ -54,8 +53,15 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             self.raw_file_handler = RawFileHandler(root_data_path=root_data_path)
 
             self._initialized = True # Mark as initialized
+            self.__instance = self # Set the instance
             
             log('HybridStorage finished initialization')
+    
+    @staticmethod
+    def instance():
+        if not hasattr(HybridStorage, '__instance'):
+            HybridStorage.__instance = HybridStorage(init=True)
+        return HybridStorage.__instance
         
     def fill(self):
         pass
@@ -117,11 +123,11 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             traceback.print_exc()
             return None
 
-    def get_entry(self, model_id:str) -> dict:
-        return self.index_database.get_entry(model_id)
+    def get_entry(self, model_id:str, serialize:bool=False) -> dict:
+        return self.index_database.get_entry(model_id, serialize)
 
-    def get_entries(self, model:object) -> List[dict]:
-        return self.index_database.get_entries(model)
+    def get_entries(self, model:object, serialize:bool=False) -> List[dict]:
+        return self.index_database.get_entries(model, serialize)
 
     def modify_entry(self) -> bool:
         return True
