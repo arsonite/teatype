@@ -20,6 +20,7 @@ import time
 
 # From package imports
 from teatype.cli import BaseCLI, BaseIsRunningCLI
+from teatype.io import path
 from teatype.logging import err, hint, log, println, warn
 
 # From-as system imports
@@ -67,12 +68,8 @@ class BaseStopCLI(BaseCLI):
         """
         scripts = {}
 
-        # Determine the absolute path of the current script file based on the module name
-        current_file = os.path.abspath(self.__class__.__module__.replace('.', '/') + '.py')
         # Get the parent directory of the current script
-        current_directory = os.path.dirname(current_file)
-        # Define the path to the scripts directory
-        script_directory = os.path.join(current_directory, 'scripts')
+        script_directory = path.this_parent(skip_call_stack_steps=3)
         
         # Create a temporary directory within the scripts directory for renaming and importing modules
         with TempDir(directory_path=script_directory) as temp_dir:
@@ -97,9 +94,9 @@ class BaseStopCLI(BaseCLI):
                             try:
                                 # Copy the original file to the temporary directory with the new snake_case name
                                 shutil.copy2(original_filepath, temp_filepath)
-                            except Exception as e:
+                            except Exception as exc:
                                 # Log an error if the file copy fails
-                                err("An error occurred during file copy:", e)
+                                err(f'An error occurred during file copy: {exc}')
 
                             # Create a module spec from the temporary file location
                             spec = iutil.spec_from_file_location(formatted_module_name, temp_filepath)
@@ -108,8 +105,6 @@ class BaseStopCLI(BaseCLI):
                             # Execute the module to load its contents
                             spec.loader.exec_module(module)
                             
-                            print(formatted_module_name)
-
                             # Convert the snake_case module name to CamelCase for class identification
                             camel_case_name = ''.join(word.capitalize() for word in formatted_module_name.split('_'))
 
@@ -245,7 +240,6 @@ class BaseStopCLI(BaseCLI):
 
         # Execute the is_running to update the list of process PIDs
         self.process_pids = self.is_running.execute()
-        print(self.process_pids)
         if len(self.process_pids) == 0:
             # Inform the user if there are no more processes to stop
             log('No more processes alive.')

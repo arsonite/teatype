@@ -229,8 +229,9 @@ class BaseStartCLI(BaseCLI):
         
         # If the 'detached' flag is set, run the command in the background
         if self.get_flag('detached'):
+            path.create('./logs') # Create a logs directory if it does not exist
             # Append shell redirection to merge stderr with stdout
-            self.start_command += f' 2>&1 > ./logs/_{self.process_name} &'
+            self.start_command += f' > ./logs/_{self.process_name}.stdout 2>&1 &'
         
         env.load(silent_fail=silent_mode) # Load the environment variables
         
