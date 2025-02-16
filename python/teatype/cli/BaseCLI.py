@@ -123,10 +123,10 @@ class BaseCLI(ABC):
         
         if auto_parse:
             # Parse the command-line arguments and flags
-            self.parse_args()
+            self.parse()
 
             if auto_validate:
-                self.validate_args()
+                self.validate()
         
         if auto_execute:
             # This check is not really necessary, since hooks are present in code, but maybe using this
@@ -201,7 +201,7 @@ class BaseCLI(ABC):
 
     # TODO: Make positioning of arguments optional
     # TODO: Make flag assignment work with "="
-    def parse_args(self):
+    def parse(self):
         """
         Custom argument parsing logic to be independent from argparser for custom formatting reasons.
         
@@ -276,7 +276,7 @@ class BaseCLI(ABC):
         self._parsing_errors.append(error_message)
         
     # TODO: Reduce repetition and amount of loops, more efficient algorithm
-    def validate_args(self):
+    def validate(self, silent_fail:bool=False, skip_hooks:bool=False):
         """
         Pre-execution checks for required arguments and flags.
 
@@ -287,7 +287,7 @@ class BaseCLI(ABC):
         Returns:
             bool: True if all required arguments and flags are provided, False otherwise.
         """
-        def validate():
+        def _validate_args():
             """
             Validates the parsed command-line arguments and flags.
 
@@ -300,9 +300,10 @@ class BaseCLI(ABC):
             Raises:
                 SystemExit: Exits the program if any parsing errors are detected.
             """
-            # Hook for pre-validation logic
-            if hasattr(self, 'pre_validate') and callable(getattr(self, 'pre_validate')):
-                self.pre_validate()
+            if not skip_hooks:
+                # Hook for pre-validation logic
+                if hasattr(self, 'pre_validate') and callable(getattr(self, 'pre_validate')):
+                    self.pre_validate()
             
             # Check if the help flag ('-h' or '--help') is present in the parsed flags
             if '-h' in self.parsed_flags or '--help' in self.parsed_flags:
@@ -407,31 +408,33 @@ class BaseCLI(ABC):
                                         )
                             flag.value = parsed_flag_value # Assign the validated flag value
                             
-                # Hook for pre-validation logic
-                if hasattr(self, 'post_validate') and callable(getattr(self, 'post_validate')):
-                    self.post_validate()
+                if not skip_hooks:
+                    # Hook for pre-validation logic
+                    if hasattr(self, 'post_validate') and callable(getattr(self, 'post_validate')):
+                        self.post_validate()
 
-                amount_of__parsing_errors = len(self._parsing_errors) # Total number of errors found
-                if amount_of__parsing_errors > 0:
-                    print() # Print a newline for better readability
-                    err(f'({amount_of__parsing_errors}) Parsing errors occured:', use_prefix=False, verbose=False)
-                    for parsing_error in self._parsing_errors:
-                        print('  * ' + parsing_error) # List each parsing error
-                    if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
-                        self.print_usage() # Optionally display usage information on failure
-                    else:
-                        print()
-                    sys.exit(1) # Exit the program due to parsing errors
+                if not silent_fail:
+                    amount_of__parsing_errors = len(self._parsing_errors) # Total number of errors found
+                    if amount_of__parsing_errors > 0:
+                        print() # Print a newline for better readability
+                        err(f'({amount_of__parsing_errors}) Parsing errors occured:', use_prefix=False, verbose=False)
+                        for parsing_error in self._parsing_errors:
+                            print('  * ' + parsing_error) # List each parsing error
+                        if GLOBAL_CLI_CONFIG.USE_HELP_MESSAGE_ON_FAIL:
+                            self.print_usage() # Optionally display usage information on failure
+                        else:
+                            print()
+                        sys.exit(1) # Exit the program due to parsing errors
                 
         if GLOBAL_CLI_CONFIG.DEBUG_MODE:
             try:
-                validate()
+                _validate_args()
             except SystemExit:
                 pass # Allow SystemExit to pass silently in debug mode
             except:
                 err('An error occured during validation.', exit=True, traceback=True)
         else:
-            validate()
+            _validate_args()
     
     # TODO: Reduce code repetition, use more inline functions
     def format_str(self,

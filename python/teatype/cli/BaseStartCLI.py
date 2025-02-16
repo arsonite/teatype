@@ -32,7 +32,11 @@ from importlib import util as iutil
 from teatype.io import TemporaryDirectory as TempDir
 
 class BaseStartCLI(BaseCLI):
-    def __init__(self):
+    def __init__(self, 
+                 auto_init:bool=True,
+                 auto_parse:bool=True,
+                 auto_validate:bool=True,
+                 auto_execute:bool=True):
         # TODO: Put this into BaseCLI instead, but with call_stack=2
         # Skipping 1 step in the call stack to get the script path implementing this class
         self.parent_path = path.this_parent(reverse_depth=2, skip_call_stack_steps=1)
@@ -45,7 +49,10 @@ class BaseStartCLI(BaseCLI):
         else:
             self.module_config = None
         
-        super().__init__()
+        super().__init__(auto_init=auto_init,
+                         auto_parse=auto_parse,
+                         auto_validate=auto_validate,
+                         auto_execute=auto_execute)
     
     def meta(self):
         return {
@@ -53,6 +60,12 @@ class BaseStartCLI(BaseCLI):
             'shorthand': 's',
             'help': 'Start a process',
             'flags': [
+                {
+                    'short': 'a',
+                    'long': 'auto',
+                    'help': 'Start module with default configuration',
+                    'required': False
+                },
                 {
                     'short': 'd',
                     'long': 'detached',
@@ -115,9 +128,9 @@ class BaseStartCLI(BaseCLI):
                             try:
                                 # Copy the original file to the temporary directory with the new snake_case name
                                 shutil.copy2(original_filepath, temp_filepath)
-                            except Exception as e:
+                            except Exception as exc:
                                 # Log an error if the file copy fails
-                                err("An error occurred during file copy:", e)
+                                err('An error occurred during file copy: {exc}')
                                 
                             # Create a module spec from the temporary file location
                             spec = iutil.spec_from_file_location(formatted_module_name, temp_filepath)

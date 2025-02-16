@@ -120,7 +120,7 @@ class BaseStopCLI(BaseCLI):
                                 # Set the '--silent' flag to suppress verbose output
                                 self.is_running.set_flag('silent', True)
                                 # Validate the arguments provided to the script
-                                # self.is_running.validate_args()
+                                # self.is_running.validate()
                                 # Perform any necessary pre-execution setup
                                 self.is_running.pre_execute()
                                 # Execute the script and retrieve the list of process PIDs
