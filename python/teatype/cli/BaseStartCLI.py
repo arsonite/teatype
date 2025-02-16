@@ -46,16 +46,6 @@ class BaseStartCLI(BaseCLI):
             self.module_config = None
         
         super().__init__()
-        
-        # Verify that the 'start_command' attribute exists; if not, log an error and exit
-        if not hasattr(self, 'start_command'):
-            err('No "self.start_command" provided in source code. Please provide a command to start a process in the pre_execute function.',
-                exit=True)
-            
-        # TODO: Put this into config instead
-        if not hasattr(self, 'process_name'):
-            err('No "self.process_name" provided in source code. Please provide a process name to start in the pre_execute function.',
-                exit=True)
     
     def meta(self):
         return {
@@ -205,6 +195,16 @@ class BaseStartCLI(BaseCLI):
         4. Executes the start command, optionally in detached mode.
         5. Handles keyboard interrupts gracefully.
         """
+        # Verify that the 'start_command' attribute exists; if not, log an error and exit
+        if not hasattr(self, 'start_command'):
+            err('No "self.start_command" provided in source code. Please provide a command to start a process in the pre_execute function.',
+                exit=True)
+            
+        # TODO: Put this into config instead
+        if not hasattr(self, 'process_name'):
+            err('No "self.process_name" provided in source code. Please provide a process name to start in the pre_execute function.',
+                exit=True)
+            
         silent_mode = self.get_flag('silent')        
         if not silent_mode:
             # Notify user that auto configuration discovery is initiated

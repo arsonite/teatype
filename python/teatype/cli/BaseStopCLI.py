@@ -37,7 +37,6 @@ class BaseStopCLI(BaseCLI):
             'shorthand': 'sp',
             'help': 'Stop a process',
             'flags': [
-                # TODO: Implement silent flag
                 {
                     'short': 'f',
                     'long': 'force-signal',
@@ -58,7 +57,7 @@ class BaseStopCLI(BaseCLI):
                     'options': float,
                     'required': False
                 }
-            ],
+            ]
         }
     
     # TODO: Decouple this class from CheckIfRunning into BaseCLI to prevent DRY
