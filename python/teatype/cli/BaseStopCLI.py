@@ -67,7 +67,7 @@ class BaseStopCLI(BaseCLI):
         """
         scripts = {}
         # Get the parent directory of the current script
-        scripts_directory = path.this_parent(skip_call_stack_steps=3)
+        scripts_directory = path.caller_parent(skip_call_stacks=3)
         if hasattr(self, 'scripts_directory'):
             scripts_directory = self.scripts_directory
         # Create a temporary directory within the scripts directory for renaming and importing modules
