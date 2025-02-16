@@ -36,19 +36,24 @@ def caller(skip_call_stacks:int=None, stringify:bool=True) -> str:
         str: The caller's script path as a string if `stringify` is True.
         Path: The caller's script path as a Path object if `stringify` is False.
     """
-    if skip_call_stacks and skip_call_stacks < 1:
-        raise ValueError('skip_call_stacks must be greater than or equal to 1')
+    if skip_call_stacks != None:
+        if skip_call_stacks < 0 and skip_call_stacks != -1:
+            raise ValueError('skip_call_stacks must be greater than or equal to 1')
+    else:
+        skip_call_stacks = 0
     
     stack = inspect.stack() # Get the current call stack
+    if skip_call_stacks == -1:
+        skip_call_stacks = len(stack) - 1
+    
     for frame in stack:
         # Iterate through each frame in the call stack
         if frame.filename != __file__:
-            if skip_call_stacks:
-                if skip_call_stacks > 0:
-                    skip_call_stacks -= 1
-                    continue
             # Identify the first frame that is not this file, i.e., the caller
             caller_frame = frame
+            if skip_call_stacks > 0:
+                skip_call_stacks -= 1
+                continue
             break
     caller_path = Path(caller_frame.filename).resolve() # Resolve the absolute path of the caller's script
     return str(caller_path) if stringify else caller_path # Return the path as string or Path object based on `stringify`
