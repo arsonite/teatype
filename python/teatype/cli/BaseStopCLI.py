@@ -71,7 +71,6 @@ class BaseStopCLI(BaseCLI):
         scripts_directory = path.this_parent(skip_call_stack_steps=3)
         if hasattr(self, 'scripts_directory'):
             scripts_directory = self.scripts_directory
-        print(scripts_directory)
         # Create a temporary directory within the scripts directory for renaming and importing modules
         with TempDir(directory_path=scripts_directory) as temp_dir:
             try:
