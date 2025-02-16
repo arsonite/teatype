@@ -17,6 +17,9 @@ import signal
 import shutil
 import sys
 
+# From system imports
+from abc import abstractmethod
+
 # From package imports
 from teatype.cli import BaseCLI, BaseStopCLI
 from teatype.io import env, file, path, shell
@@ -43,6 +46,16 @@ class BaseStartCLI(BaseCLI):
             self.module_config = None
         
         super().__init__()
+        
+        # Verify that the 'start_command' attribute exists; if not, log an error and exit
+        if not hasattr(self, 'start_command'):
+            err('No "self.start_command" provided in source code. Please provide a command to start a process in the pre_execute function.',
+                exit=True)
+            
+        # TODO: Put this into config instead
+        if not hasattr(self, 'process_name'):
+            err('No "self.process_name" provided in source code. Please provide a process name to start in the pre_execute function.',
+                exit=True)
     
     def meta(self):
         return {
@@ -57,7 +70,7 @@ class BaseStartCLI(BaseCLI):
                     'required': False
                 },
                 {
-                    'short': 'i',
+                    'short': 'ir',
                     'long': 'ignore-running',
                     'help': 'Ignore if process is already running',
                     'required': False
@@ -70,7 +83,7 @@ class BaseStartCLI(BaseCLI):
                 },
                 {
                     'short': 't',
-                    'long': 'tail-logs',
+                    'long': 'tail',
                     'help': 'Tail logs of process',
                     'required': False
                 }
@@ -85,6 +98,7 @@ class BaseStartCLI(BaseCLI):
         scripts = {}
         # Get the parent directory of the current script
         scripts_directory = path.this_parent(skip_call_stack_steps=4)
+        target_script = 'stop'
         # Create a temporary directory within the scripts directory for renaming and importing modules
         with TempDir(directory_path=scripts_directory) as temp_dir:
             try:
@@ -100,7 +114,7 @@ class BaseStartCLI(BaseCLI):
                         # Convert filename from kebab-case to snake_case for consistent module naming
                         formatted_module_name = filename.replace('-', '_').replace('.py', '')
                         formatted_filename = formatted_module_name + '.py'
-                        if formatted_module_name != 'stop':
+                        if formatted_module_name != target_script:
                             continue
 
                         # Define full paths for the original and temporary files
@@ -149,10 +163,7 @@ class BaseStartCLI(BaseCLI):
                                                     auto_execute=False)
                                 stop.scripts_directory = scripts_directory
                                 # Set the '--silent' flag to suppress verbose output
-                                # stop.set_flag('silent', True)
-                                # TODO: Maybe implement some sort of proxy mode to prevent this or maybe a function variable
-                                # Validate the arguments provided to the script
-                                # stop.validate_args()
+                                stop.set_flag('silent', True)
                                 # Perform any necessary pre-execution setup
                                 stop.pre_execute()
                                 # Execute the script
@@ -161,7 +172,7 @@ class BaseStartCLI(BaseCLI):
                             if stop_script_found:
                                 break
                         except Exception as exc:
-                            if formatted_module_name == 'stop':
+                            if formatted_module_name == target_script:
                                 if not silent_mode:
                                     # Log an error if loading the script fails
                                     err(f'Error loading script "{filename}": {exc}, skipping ...',
@@ -182,7 +193,7 @@ class BaseStartCLI(BaseCLI):
     #########
     # Hooks #
     #########
-
+    
     def execute(self):
         """
         Executes the start command to initiate the process.
@@ -194,11 +205,6 @@ class BaseStartCLI(BaseCLI):
         4. Executes the start command, optionally in detached mode.
         5. Handles keyboard interrupts gracefully.
         """
-        # Verify that the 'start_command' attribute exists; if not, log an error and exit
-        if not hasattr(self, 'start_command'):
-            err('No "self.start_command" provided in source code. Please provide a command to start a process in the pre_execute function.',
-                exit=True)
-            
         silent_mode = self.get_flag('silent')        
         if not silent_mode:
             # Notify user that auto configuration discovery is initiated
@@ -211,19 +217,24 @@ class BaseStartCLI(BaseCLI):
             if not silent_mode:
                 # Log the successful application of the module configuration
                 log('Module configuration found. Applying configuration to "self.module_config".')
-        
-        self.load_compatible_scripts(silent_mode=silent_mode)
+                
+        ignore_running = self.get_flag('ignore-running')
+        if not ignore_running:
+            self.load_compatible_scripts(silent_mode=silent_mode)
+            
         # Auto-nativaging after loading compatible scripts, to not mess with the functionality of the algorithm
         # Determine the parent directory of the current script
-        parent_dir = path.this_parent(reverse_depth=2, skip_call_stack_steps=3)
+        parent_directory = path.this_parent(reverse_depth=2, skip_call_stack_steps=3)
         # Change the working directory to the parent directory
-        os.chdir(parent_dir)
+        os.chdir(parent_directory)
         
         # If the 'detached' flag is set, run the command in the background
-        if self.get_flag('detached'):
+        detached = self.get_flag('detached')
+        if detached:
             path.create('./logs') # Create a logs directory if it does not exist
             # Append shell redirection to merge stderr with stdout
-            self.start_command += f' > ./logs/_{self.process_name}.stdout 2>&1 &'
+            stdout_path = path.join('./logs', f'_{self.process_name}.stdout')
+            self.start_command += f' > {stdout_path} 2>&1 &'
         
         env.load(silent_fail=silent_mode) # Load the environment variables
         
@@ -316,5 +327,17 @@ class BaseStartCLI(BaseCLI):
                 if not silent_mode:
                     # Log an error if activation fails, providing the exception details
                     err('An error occurred while trying to activate the virtual environment:', e)
-                
-        signal_handler(signal.SIGSTOP, None) # Kill the process after successful activation
+        
+        if detached:
+            if self.get_flag('tail'):
+                shell(f'tail -f {stdout_path}')
+        else:
+            signal_handler(signal.SIGSTOP, None) # Kill the process after successful activation
+        
+    ####################
+    # Abstract methods #
+    ####################
+    
+    @abstractmethod
+    def pre_execute(self):
+        raise NotImplementedError('The "pre_execute" method must be implemented in the derived class.')
