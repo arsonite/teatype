@@ -83,32 +83,28 @@ class BaseStartCLI(BaseCLI):
         Discover and import all Python scripts in the `scripts/` directory, skipping __init__.py and non-Python files.
         """
         scripts = {}
-
-        # Determine the absolute path of the current script file based on the module name
-        current_file = os.path.abspath(self.__class__.__module__.replace('.', '/') + '.py')
         # Get the parent directory of the current script
-        current_directory = os.path.dirname(current_file)
-        # Define the path to the scripts directory
-        script_directory = os.path.join(current_directory, 'scripts')
-        
+        scripts_directory = path.this_parent(skip_call_stack_steps=4)
         # Create a temporary directory within the scripts directory for renaming and importing modules
-        with TempDir(directory_path=script_directory) as temp_dir:
+        with TempDir(directory_path=scripts_directory) as temp_dir:
             try:
                 stop_script_found = False
                 # Iterate over all files in the scripts directory
-                for filename in os.listdir(script_directory):
+                for filename in os.listdir(scripts_directory):
                     # Skip the __init__.py file and any __pycache__ directories
                     if filename != '__init__.py' and filename != '__pycache__':
                         # Check if the current filename is a directory; if so, skip it
-                        if os.path.isdir(os.path.join(script_directory, filename)):
+                        if os.path.isdir(os.path.join(scripts_directory, filename)):
                             continue
                         
                         # Convert filename from kebab-case to snake_case for consistent module naming
                         formatted_module_name = filename.replace('-', '_').replace('.py', '')
                         formatted_filename = formatted_module_name + '.py'
+                        if formatted_module_name != 'stop':
+                            continue
 
                         # Define full paths for the original and temporary files
-                        original_filepath = os.path.join(script_directory, filename)
+                        original_filepath = os.path.join(scripts_directory, filename)
                         temp_filepath = os.path.join(temp_dir, formatted_filename)
 
                         try:
@@ -123,9 +119,6 @@ class BaseStartCLI(BaseCLI):
                             spec = iutil.spec_from_file_location(formatted_module_name, temp_filepath)
                             # Create a new module based on the spec
                             module = iutil.module_from_spec(spec)
-                            if formatted_module_name != 'stop':
-                                continue
-                            
                             # Execute the module to populate its namespace (this does not instantiate Stop)
                             spec.loader.exec_module(module)
                             # Convert the snake_case module name to CamelCase for class identification
@@ -154,8 +147,9 @@ class BaseStartCLI(BaseCLI):
                                 # Instantiate the class without automatic validation or execution
                                 stop = script_class(auto_validate=False,
                                                     auto_execute=False)
+                                stop.scripts_directory = scripts_directory
                                 # Set the '--silent' flag to suppress verbose output
-                                stop.set_flag('silent', True)
+                                # stop.set_flag('silent', True)
                                 # TODO: Maybe implement some sort of proxy mode to prevent this or maybe a function variable
                                 # Validate the arguments provided to the script
                                 # stop.validate_args()
@@ -220,10 +214,8 @@ class BaseStartCLI(BaseCLI):
         
         self.load_compatible_scripts(silent_mode=silent_mode)
         # Auto-nativaging after loading compatible scripts, to not mess with the functionality of the algorithm
-        # Determine the directory of the current (inherited) script
-        script_dir = os.path.abspath(self.__class__.__module__.replace('.', '/') + '.py')
         # Determine the parent directory of the current script
-        parent_dir = os.path.dirname(script_dir)
+        parent_dir = path.this_parent(reverse_depth=2, skip_call_stack_steps=3)
         # Change the working directory to the parent directory
         os.chdir(parent_dir)
         

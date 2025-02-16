@@ -67,27 +67,30 @@ class BaseStopCLI(BaseCLI):
         Discover and import all Python scripts in the `scripts/` directory, skipping __init__.py and non-Python files.
         """
         scripts = {}
-
         # Get the parent directory of the current script
-        script_directory = path.this_parent(skip_call_stack_steps=3)
-        
+        scripts_directory = path.this_parent(skip_call_stack_steps=3)
+        if hasattr(self, 'scripts_directory'):
+            scripts_directory = self.scripts_directory
+        print(scripts_directory)
         # Create a temporary directory within the scripts directory for renaming and importing modules
-        with TempDir(directory_path=script_directory) as temp_dir:
+        with TempDir(directory_path=scripts_directory) as temp_dir:
             try:
                 # Iterate over all files in the scripts directory
-                for filename in os.listdir(script_directory):
+                for filename in os.listdir(scripts_directory):
                     # Skip the __init__.py file and any __pycache__ directories
                     if filename != '__init__.py' and filename != '__pycache__':
                         # Check if the current filename is a directory; if so, skip it
-                        if os.path.isdir(os.path.join(script_directory, filename)):
+                        if os.path.isdir(os.path.join(scripts_directory, filename)):
                             continue
                         
                         # Convert filename from kebab-case to snake_case for consistent module naming
                         formatted_module_name = filename.replace('-', '_').replace('.py', '')
                         formatted_filename = formatted_module_name + '.py'
+                        if formatted_module_name != 'is_running':
+                            continue
 
                         # Define full paths for the original and temporary files
-                        original_filepath = os.path.join(script_directory, filename)
+                        original_filepath = os.path.join(scripts_directory, filename)
                         temp_filepath = os.path.join(temp_dir, formatted_filename)
 
                         try:
