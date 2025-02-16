@@ -36,7 +36,7 @@ class BaseStopCLI(BaseCLI):
             'shorthand': 'sp',
             'help': 'Stop a process',
             'flags': [
-                # TODO: Implement hide-output flag
+                # TODO: Implement silent flag
                 {
                     'short': 'f',
                     'long': 'force-signal',
@@ -45,16 +45,16 @@ class BaseStopCLI(BaseCLI):
                     'required': False
                 },
                 {
-                    'short': 'h',
-                    'long': 'hide-output',
+                    'short': 's',
+                    'long': 'silent',
                     'help': 'Hide verbose output of script',
                     'required': False
                 },
                 {
-                    'short': 's',
+                    'short': 'sl',
                     'long': 'sleep',
                     'help': 'Sleep time between process checks',
-                    'options': [0.25, 0.5, 1, 2, 3],
+                    'options': float,
                     'required': False
                 }
             ],
@@ -107,6 +107,8 @@ class BaseStopCLI(BaseCLI):
                             module = iutil.module_from_spec(spec)
                             # Execute the module to load its contents
                             spec.loader.exec_module(module)
+                            
+                            print(formatted_module_name)
 
                             # Convert the snake_case module name to CamelCase for class identification
                             camel_case_name = ''.join(word.capitalize() for word in formatted_module_name.split('_'))
@@ -117,20 +119,21 @@ class BaseStopCLI(BaseCLI):
                             # Ensure the retrieved class exists, is a class type, and is a subclass of CheckIfRunning
                             if script_class and inspect.isclass(script_class) and issubclass(script_class, BaseIsRunningCLI):
                                 # Instantiate the class without automatic validation or execution
-                                self.check_if_running = script_class(auto_validate=False,
+                                self.is_running = script_class(auto_validate=False,
                                                                      auto_execute=False)
-                                # Set the '--hide-output' flag to suppress verbose output
-                                self.check_if_running.set_flag('hide-output', True)
+                                # Set the '--silent' flag to suppress verbose output
+                                self.is_running.set_flag('silent', True)
                                 # Validate the arguments provided to the script
-                                # self.check_if_running.validate_args()
+                                # self.is_running.validate_args()
                                 # Perform any necessary pre-execution setup
-                                self.check_if_running.pre_execute()
+                                self.is_running.pre_execute()
                                 # Execute the script and retrieve the list of process PIDs
-                                self.process_pids = self.check_if_running.execute()
+                                self.process_pids = self.is_running.execute()
 
-                        except Exception as e:
-                            # Log an error if loading the script fails
-                            err(f'Error loading script "{filename}": {e}')
+                        except Exception as exc:
+                            if formatted_module_name == 'is_running':
+                                # Log an error if loading the script fails
+                                err(f'Error loading script "{filename}": {exc}')
 
             finally:
                 # Ensure the temporary directory is removed from sys.path after import
@@ -174,16 +177,16 @@ class BaseStopCLI(BaseCLI):
         while self.is_process_running(pid):
             if attempts >= max_attempts:
                 # Warn if maximum attempts have been reached without success
-                warn(f"Failed to stop process (PID: {pid}) after {max_attempts} attempts with {signal_name}.")
+                warn(f'Failed to stop process (PID: {pid}) after {max_attempts} attempts with {signal_name}.')
                 return False
             # Log the attempt to stop the process
-            log(f"Attempt {attempts + 1} to stop process (PID: {pid}) with {signal_name}...")
+            log(f'Attempt {attempts + 1} to stop process (PID: {pid}) with {signal_name}...')
             try:
                 # Send the specified signal to the process
                 os.kill(pid, signal_type)
             except OSError as e:
                 # Log an error if sending the signal fails
-                err(f"Error sending signal {signal_name} to PID {pid}: {e}")
+                err(f'Error sending signal {signal_name} to PID {pid}: {e}')
                 return False
             attempts += 1
             # Wait for a short period before the next attempt
@@ -192,7 +195,7 @@ class BaseStopCLI(BaseCLI):
                 sleep = self.get_flag('sleep')
             time.sleep(sleep)
         # Log success if the process has been stopped
-        log(f"Process (PID: {pid}) stopped using {signal_name}.")
+        log(f'Process (PID: {pid}) stopped using {signal_name}.')
         return True
 
     def stop_process(self, pid):
@@ -240,8 +243,9 @@ class BaseStopCLI(BaseCLI):
         Recursively attempt to kill all processes in the process_pids list until no processes remain.
         """
 
-        # Execute the check_if_running to update the list of process PIDs
-        self.process_pids = self.check_if_running.execute()
+        # Execute the is_running to update the list of process PIDs
+        self.process_pids = self.is_running.execute()
+        print(self.process_pids)
         if len(self.process_pids) == 0:
             # Inform the user if there are no more processes to stop
             log('No more processes alive.')

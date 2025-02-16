@@ -123,6 +123,11 @@ class BaseStartCLI(BaseCLI):
                             spec = iutil.spec_from_file_location(formatted_module_name, temp_filepath)
                             # Create a new module based on the spec
                             module = iutil.module_from_spec(spec)
+                            if formatted_module_name != 'stop':
+                                continue
+                            
+                            # Execute the module to populate its namespace (this does not instantiate Stop)
+                            spec.loader.exec_module(module)
                             # Convert the snake_case module name to CamelCase for class identification
                             camel_case_name = ''.join(word.capitalize() for word in formatted_module_name.split('_'))
                             # Retrieve the class from the module by name
@@ -137,7 +142,7 @@ class BaseStartCLI(BaseCLI):
                             # Execute the module to load its contents
                             spec.loader.exec_module(module)
                             # Ensure the retrieved class exists, is a class type, and is a subclass of BaseStopCLI
-                            if camel_case_name == 'BaseStopCLI':
+                            if camel_case_name == 'Stop' or camel_case_name == 'BaseStopCLI':
                                 # Having to use "camel_case_name == 'BaseStopCLI'" even though issubclass(script_class, BaseStopCLI) should work
                                 # But after 30 minutes of debugging, I am tired of this stupid shit not working even though it should
                                 # And it works perfectly fine in the stop script with the check-running relation
@@ -149,8 +154,8 @@ class BaseStartCLI(BaseCLI):
                                 # Instantiate the class without automatic validation or execution
                                 stop = script_class(auto_validate=False,
                                                     auto_execute=False)
-                                # Set the '--hide-output' flag to suppress verbose output
-                                stop.set_flag('hide-output', True)
+                                # Set the '--silent' flag to suppress verbose output
+                                stop.set_flag('silent', True)
                                 # TODO: Maybe implement some sort of proxy mode to prevent this or maybe a function variable
                                 # Validate the arguments provided to the script
                                 # stop.validate_args()
@@ -161,12 +166,13 @@ class BaseStartCLI(BaseCLI):
                                 stop_script_found = True
                             if stop_script_found:
                                 break
-                        except Exception as e:
-                            if not silent_mode:
-                                # Log an error if loading the script fails
-                                err(f'Error loading script "{filename}": {e}, skipping ...',
-                                    use_prefix=False,
-                                    verbose=False)
+                        except Exception as exc:
+                            if formatted_module_name == 'stop':
+                                if not silent_mode:
+                                    # Log an error if loading the script fails
+                                    err(f'Error loading script "{filename}": {exc}, skipping ...',
+                                        use_prefix=False,
+                                        verbose=False)
                 if not stop_script_found:
                     if not silent_mode:
                         warn('No "stop" script found in scripts directory. Only limited functionality available.')
@@ -224,7 +230,7 @@ class BaseStartCLI(BaseCLI):
         # If the 'detached' flag is set, run the command in the background
         if self.get_flag('detached'):
             # Append shell redirection to merge stderr with stdout
-            self.start_command += ' > /dev/null 2>&1 &'
+            self.start_command += f' 2>&1 > ./logs/_{self.process_name} &'
         
         env.load(silent_fail=silent_mode) # Load the environment variables
         

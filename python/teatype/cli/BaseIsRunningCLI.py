@@ -25,8 +25,8 @@ class BaseIsRunningCLI(BaseCLI):
             'help': 'Check if a process is running',
             'flags': [
                 {
-                    'short': 'h',
-                    'long': 'hide-output',
+                    'short': 's',
+                    'long': 'silent',
                     'help': 'Hide verbose output of script',
                     'required': False
                 }
@@ -34,9 +34,9 @@ class BaseIsRunningCLI(BaseCLI):
         }
 
     def execute(self):
-        verbose = not self.get_flag('hide-output')
+        silent = self.get_flag('silent')
         
-        if verbose:
+        if not silent:
             println()
             
         if not hasattr(self, 'process_names'):
@@ -53,19 +53,18 @@ class BaseIsRunningCLI(BaseCLI):
                     if process_name in ' '.join(process.info['cmdline']):
                         process_pid = process.info['pid']
                         process_pids.append(process_pid)
-                        if verbose:
+                        if not silent:
                             log(f'Process "{process_name}" is running with PID "{process_pid}"')
                         found = True
-                        break
                 except (psutil.NoSuchProcess, psutil.AccessDenied, KeyError):
                     # Skip processes that we can't access or have disappeared
                     continue
             
             if not found:
-                if verbose:
+                if not silent:
                     log(f'Process "{process_name}" is not running')
                     
-        if verbose:
+        if not silent:
             println()
         
         return process_pids
