@@ -44,6 +44,7 @@ class IndexDatabase:
                 
     def create_entry(self, model:type, data:dict, overwrite_path:str=None) -> object|None:
         try:
+            print(data)
             with self._db_lock:
                 # TODO: Validation
                 model_instance = model(**data)
