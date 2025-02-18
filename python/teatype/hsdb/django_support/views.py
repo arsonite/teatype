@@ -73,7 +73,7 @@ class HSDBDjangoView(APIView):
                 case 'POST':
                     query_response = hybrid_storage.create_entry(self.hsdb_model, data)
                     if query_response is None:
-                        return ServerError(f'Entry already exists')
+                        return ServerError('Entry already exists')
                 # case 'PUT':
                 #     query_response = hybrid_storage.create_entry()
                 # case 'PATCH':
@@ -107,7 +107,11 @@ class HSDBDjangoView(APIView):
         return self._parse_name()
     
     def api_plural_name(self) -> str:
-        return self.api_name() + 's' if not self.api_name().endswith('s') else self.api_name() + 'es'
+        api_name = self.api_name()
+        if self.is_collection:
+            return api_name
+        return api_name + 's' if not api_name.endswith('s') else api_name
+        # return api_name + 's' if not api_name.endswith('s') else api_name + 'es'
     
     # TODO: consider api parents
     def api_path(self) -> str:
@@ -117,7 +121,7 @@ class HSDBDjangoView(APIView):
         parsed_name = self._parse_name()
         if self.is_collection:
             return f'/{parsed_name}'
-        return f'/{parsed_name}s/<str:{self.api_id()}>'
+        return f'/{self.api_plural_name()}/<str:{self.api_id()}>'
 
     def initial(self, request, *args, **kwargs) -> None:
         """

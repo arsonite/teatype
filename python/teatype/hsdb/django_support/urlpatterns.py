@@ -52,11 +52,10 @@ def parse_dynamic_routes(app_name:str, search_path:str, verbose:bool=False):
         if issubclass(cls, HSDBDjangoView):
             instance = cls()
             api_name = instance.api_name()
-            api_plural_name = instance.api_plural_name()
             api_path = instance.api_path()
             view_type = 'collection' if cls.is_collection else 'resource'
             
-            urlpatterns.append(path(api_path, cls.as_view(), name=api_plural_name))
+            urlpatterns.append(path(api_path, cls.as_view(), name=api_name))
             print(f'    Registered route: "{api_path}" for {view_type} "{api_name}"')
     print()
     return format_suffix_patterns(urlpatterns)
