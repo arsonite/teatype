@@ -21,6 +21,8 @@ class IndexDatabase:
     _compute_index_lock:threading.Lock
     _db:dict # For all raw data
     _db_lock:threading.Lock
+    _indexed_fields:dict # For all indexed fields for faster query lookups
+    _indexed_fields_lock:threading.Lock
     _model_index:dict # For all model references for faster model query lookups
     _model_index_lock:threading.Lock
     _relational_index:dict # For all relations between models parsed dynamically from the model definitions
@@ -35,6 +37,9 @@ class IndexDatabase:
         
         self._db = dict()
         self._db_lock = threading.Lock()
+        
+        self._indexed_fields = dict()
+        self._indexed_fields_lock = threading.Lock()
         
         self._model_index = dict()
         self._model_index_lock = threading.Lock()
@@ -144,23 +149,5 @@ class IndexDatabase:
                 return entry.serialize()
             return entry
         
-    def query(self, model:object, query:dict) -> List[object]:
-        filters = query.get('where', {})
-        order_by = query.get('order_by', None)
-        limit = query.get('limit', None)
-        results = []
-
-        for record_id, record_data in self._db.items():
-            if all(record_data.get(k) == v for k, v in filters.items()):
-                instance = model(**record_data)
-                results.append(instance)
-
-        if order_by:
-            field, _, direction = order_by.partition(" ")
-            reverse = direction.lower() == "desc"
-            results.sort(key=lambda x: getattr(x, field, None), reverse=reverse)
-
-        if isinstance(limit, int):
-            results = results[:limit]
-
-        return results
+    def query(self) -> None:
+        pass
