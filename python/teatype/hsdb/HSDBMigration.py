@@ -55,6 +55,7 @@ class HSDBMigration(ABC):
     _auto_creation_datetime:str|None # ISO-formatted string for auto creation time
     _from_to_string:str # String representation of the migration's origin and destination
     _hsdb_path:str='/var/lib/hsdb' # Default path on linux
+    _migrated_at:str # ISO-formatted string for migration time
     _migration_ancestor:int|None # The previous migration's reference, if any
     _migration_backup_path:str # Path to the backup of the migration
     _migration_data:dict # Holds the migration data
@@ -197,6 +198,7 @@ class HSDBMigration(ABC):
     
     def run(self):
         self._parsed_index_data = self._parse_index_files()
+        self._migrated_at = dt.now().isoformat()
         
         println()
         hint(f'Creating a local backup of the data before the {self._from_to_string} migration in the following path:')
