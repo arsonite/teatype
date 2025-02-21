@@ -18,15 +18,16 @@ from datetime import datetime as dt
 
 # TODO: Migrations always count one up in id dependent on app and model
 # TODO: Always create a snapshot of all models before launching index db and if there are changes, create automatic migrations
-# TODO: Always create a backup of all raw db entries before every migration (with optional include_files flag)
+# TODO: Always create a backup of all raw db entries before every migration (with optional include_non_index_files flag)
 class HSDBMigration(ABC):
-    _models_snapshot:dict
+    __models_snapshot:dict
+    __non_index_files_snapshot:dict|None
     app_name:str
-    auto_creation_datetime:str
-    include_files:bool
+    auto_creation_datetime:str|None
+    include_non_index_files:bool
     migration_id:int
     migration_name:str
-    migration_precursor:str
+    migration_precursor:str|None
     was_auto_created:bool
     
     def auto_create(self):
