@@ -23,6 +23,10 @@ class RawFileHandler:
             # root_data_path = env.get('CIRLOG_DATA_PATH')
             root_data_path = '/var/lib/cirlog'
             self.root_data_path = f'{root_data_path}/raw'
+            
+            # path.create(backups_path)
+            # path.create(migration_backups_path)
+            # path.create(migration_backup_path)
         
         path.create(self.root_data_path)
         
