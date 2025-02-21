@@ -11,7 +11,7 @@
 # all copies or substantial portions of the Software.
 
 # From system imports
-from abc import ABC
+from abc import ABC, abstractmethod
 
 # From-as system imports
 from datetime import datetime as dt
@@ -33,3 +33,11 @@ class HSDBMigration(ABC):
     def auto_create(self):
         self.auto_creation_datetime = str(dt.now().isoformat())
         self.was_auto_created = True
+    
+    ####################
+    # Abstract methods #
+    ####################
+    
+    @abstractmethod
+    def migrate(self):
+        raise NotImplementedError('"migrate()" method must be implemented in migration-subclass')
