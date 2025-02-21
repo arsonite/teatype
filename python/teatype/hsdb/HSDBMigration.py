@@ -24,6 +24,28 @@ from teatype.logging import err, hint, log, println, warn
 # From-as system imports
 from datetime import datetime as dt
 
+class _HSDBMigrationRejection:
+    migration:dict
+    reason:str
+    rejected_at:str
+    
+    def __init__(self, reason:str, migration:dict):
+        self.migration = migration
+        self.reason = reason
+        
+        self.rejected_at = dt.now().isoformat()
+        
+    def as_dict(self) -> dict:
+        return {
+            'migration': {
+                'app': self.migration['app'],
+                'id': self.migration['id'],
+                'name': self.migration['name']
+            },
+            'reason': self.reason,
+            'rejected_at': self.rejected_at
+        }
+
 # TODO: Migrations always count one up in id dependent on app and model
 # TODO: Always create a snapshot of all models before launching index db and if there are changes, create automatic migrations
 # TODO: Always create a backup of all raw db entries before every migration (with optional include_non_index_files flag)
@@ -128,11 +150,27 @@ class HSDBMigration(ABC):
         self._auto_creation_datetime = str(dt.now().isoformat())
         self.was_auto_created = True # Acknowledges auto-creation
         
-    # def add_to_migration_index(self, model:str, key:str):
-    #     """
-    #     Adds a key-value pair to the migration data.
-    #     """
-    #     self._migration_data['index'] = value
+    def add_to_migration_index(self, model:str, data:dict):
+        self._migration_data['index'][model].append(data)
+        
+    def add_to_migration_rawfiles(self, key:str, data:dict):
+        self._migration_data['rawfiles'][key].append(data)
+        
+    def reject_migration_index(self, model:str, data:dict, reason:str):
+        rejection = _HSDBMigrationRejection(reason, {
+            'app': self.app_name,
+            'id': self.migration_id,
+            'name': self.migration_name
+        })
+        self._rejectpile['index'][model].append({'data': data, 'rejection': rejection.as_dict()})
+        
+    def reject_migration_rawfiles(self, key:str, data:dict, reason:str):
+        rejection = _HSDBMigrationRejection(reason, {
+            'app': self.app_name,
+            'id': self.migration_id,
+            'name': self.migration_name
+        })
+        self._rejectpile['rawfiles'][key].append({'data': data, 'rejection': rejection.as_dict()})
 
     def overwrite_hsdb_path(self, hsdb_path:str):
         """
