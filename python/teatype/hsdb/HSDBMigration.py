@@ -40,6 +40,8 @@ class HSDBMigration(ABC):
     _parsed_index_data:dict # Holds the parsed index data
     _rawfiles_path:str # Path to the rawfiles directory
     _rejectpile_path:str # Path to the rejectpile directory
+    _rejectpile_index_path:str # Path to the rejectpile index directory
+    _rejectpile_rawfiles_path:str # Path to the rejectpile rawfiles directory
     _rejectpile:dict # Holds the rejectpile data
     app_name:str # Name of the application this migration is associated with
     include_non_index_files:bool # Indicates if non-index files should be part of migration steps
@@ -140,7 +142,10 @@ class HSDBMigration(ABC):
         
         self._index_path = path.join(hsdb_path, 'index') # Default index path
         self._rawfiles_path = path.join(hsdb_path, 'rawfiles') # Default rawfiles path
+        
         self._rejectpile_path = path.join(hsdb_path, 'rejectpile') # Default rejectpile path
+        self._rejectpile_index_path = path.join(self._rejectpile_path, 'index')
+        self._rejectpile_rawfiles_path = path.join(self._rejectpile_path, 'rawfiles')
         
         backups_path = path.join(hsdb_path, 'backups')
         migration_backups_path = path.join(backups_path, 'migrations')
@@ -162,7 +167,13 @@ class HSDBMigration(ABC):
         log('   ' + self._index_path)
         println()
         
-        self.migrate()
+        try:
+            self.migrate()
+            println()
+            log('Migration succeeded')
+            println()
+        except:
+            err('Migration failed: ', pad_after=1, exit=True, traceback=True)
     
     ####################
     # Abstract methods #
