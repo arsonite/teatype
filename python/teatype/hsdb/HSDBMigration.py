@@ -111,6 +111,8 @@ class HSDBMigration(ABC):
                 continue
             
             parsed_index_data[model_plural_name] = []
+            self._migration_data['index'][model_plural_name] = []
+            self._rejectpile['index'][model_plural_name] = []
             
             index_files = file.list(f'{self._index_path}/{model_plural_name}',
                                   walk=False)
