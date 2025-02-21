@@ -10,12 +10,16 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
+# System imports
+import json
+
 # From system imports
 from abc import ABC, abstractmethod
+from typing import List
 
 # From package imports
-from teatype.io import path
-from teatype.logging import hint, log, println
+from teatype.io import file, path
+from teatype.logging import err, hint, log, println, warn
 
 # From-as system imports
 from datetime import datetime as dt
@@ -31,28 +35,88 @@ class HSDBMigration(ABC):
     _hsdb_path:str='/var/lib/hsdb' # Default path on linux
     _migration_ancestor:int|None # The previous migration's reference, if any
     _migration_backup_path:str # Path to the backup of the migration
+    _migration_data:dict # Holds the migration data
     _migration_descendant:int # The next migration's reference, if any
+    _parsed_index_data:dict # Holds the parsed index data
     _rawfiles_path:str # Path to the rawfiles directory
     _rejectpile_path:str # Path to the rejectpile directory
+    _rejectpile:dict # Holds the rejectpile data
     app_name:str # Name of the application this migration is associated with
     include_non_index_files:bool # Indicates if non-index files should be part of migration steps
     migration_id:int # Numeric identifier to order migrations
     migration_name:str # Descriptive name for the migration
+    models:List[type] # List of models that are part of the migration
     was_auto_created:bool # Marks whether the migration was automatically created
-
+    
     def __init__(self, auto_migrate:bool=True):
         """
         Initializes the migration. If 'auto_migrate' is True, the 'migrate' method is called immediately.
         """
-        if auto_migrate:
-            self.run() # Proceed with migration if 'auto_migrate' is True
             
-        self.overwrite_hsdb_path(self._hsdb_path) # Overwrites the default HSDB path with the default value
-        
         # Default ancestor is the previous migration
         self._migration_ancestor = self.migration_id - 1 if self.migration_id != None else None 
         self._migration_descendant = self.migration_id + 1 # Default descendant is the next migration
-        self._from_to_string = f'{self._migration_ancestor}->{self._migration_descendant}' # Default migration string
+        self._from_to_string = f'{self.migration_id}->{self._migration_descendant}' # Default migration string
+        
+        self._migration_data = {
+            'index': {},
+            'rawfiles': {}
+        }
+        self._rejectpile = {
+            'index': {},
+            'rawfiles': {}
+        }
+        
+        self.overwrite_hsdb_path(self._hsdb_path) # Overwrites the default HSDB path with the default value
+        if auto_migrate:
+            self.run() # Proceed with migration if 'auto_migrate' is True
+        
+    def _parse_index_files(self) -> List[dict]:
+        import re
+        def _parse_name(raw_name:str, seperator:str='-'):
+            return re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
+        
+        print('Parsing index files from disk')
+        parsed_index_data = {}
+        parsing_errors_found = False
+        for model in self.models:
+            model_plural_name = _parse_name(model.__name__).replace('-model', '')
+            model_plural_name = model_plural_name + 's' if not model_plural_name.endswith('s') else model_plural_name + 'es'
+            model_path = f'{self._index_path}/{model_plural_name}'
+            if not path.exists(model_path):
+                continue
+            
+            parsed_index_data[model_plural_name] = []
+            
+            index_files = file.list(f'{self._index_path}/{model_plural_name}',
+                                  walk=False)
+            if len(index_files) == 0:
+                continue
+            
+            parsing_errors = []
+            for index_file in index_files:
+                try:
+                    index_data = file.read(index_file.path, force_format='json', silent_fail=True)
+                    if index_data is None or index_data == {} or index_data == []:
+                        parsing_errors.append('Empy: ' + index_file.name)
+                        continue
+                    parsed_index_data[model_plural_name].append(index_data)
+                except json.JSONDecodeError as jde:
+                    # TODO: More edge cases?
+                    if jde.msg == 'Expecting value' and jde.doc == '' and jde.pos == 0 and jde.lineno == 1 and jde.colno == 1:
+                        parsing_errors.append('Empty:   ' + index_file.name)
+                    else:
+                        parsing_errors.append('Corrupt: ' + index_file.name)
+                    if not parsing_errors_found:
+                        parsing_errors_found = True
+            print(f'    Found "{model_plural_name}" index files: {len(index_files)}')
+            amount_of_parsing_errors = len(parsing_errors)
+            if amount_of_parsing_errors > 0:
+                warn(f'    Found {amount_of_parsing_errors} parsing error{"s" if amount_of_parsing_errors > 1 else ""}:', use_prefix=False)
+                for parsing_error in parsing_errors:
+                    err(f'      {parsing_error}', use_prefix=False, verbose=False)
+                println()
+        return parsed_index_data
 
     def auto_create(self):
         """
@@ -61,6 +125,12 @@ class HSDBMigration(ABC):
         """
         self._auto_creation_datetime = str(dt.now().isoformat())
         self.was_auto_created = True # Acknowledges auto-creation
+        
+    # def add_to_migration_index(self, model:str, key:str):
+    #     """
+    #     Adds a key-value pair to the migration data.
+    #     """
+    #     self._migration_data['index'] = value
 
     def overwrite_hsdb_path(self, hsdb_path:str):
         """
@@ -81,6 +151,17 @@ class HSDBMigration(ABC):
     #########
     
     def run(self):
+        self._parsed_index_data = self._parse_index_files()
+        
+        println()
+        hint(f'Creating a local backup of the data before the {self._from_to_string} migration in the following path:')
+        log('   ' + self._migration_backup_path)
+        println()
+        
+        hint(f'Executing migration {self._from_to_string} for app "{self.app_name}" for data in the following path:')
+        log('   ' + self._index_path)
+        println()
+        
         self.migrate()
     
     ####################
@@ -89,11 +170,4 @@ class HSDBMigration(ABC):
     
     @abstractmethod
     def migrate(self):
-        hint(f'Creating a local backup of the data before the {self._from_to_string} migration in the following path:')
-        log('   ' + self._migration_backup_path)
-        println()
-        
-        hint(f'Executing migration {self._from_to_string} for app "{self.app_name}" for data in the following path:')
-        log('   ' + self._index_path)
-        println()
         raise NotImplementedError('"migrate()" method must be implemented in migration-subclass')
