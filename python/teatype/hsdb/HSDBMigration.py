@@ -46,7 +46,8 @@ class _HSDBMigrationRejection:
             'rejected_at': self.rejected_at
         }
 
-# TODO: Implmenent trap mechanism to revert migration if it fails
+# TODO: Implement migration protocol
+# TODO: Implement trap mechanism to revert migration if it fails
 # TODO: Migrations always count one up in id dependent on app and model
 # TODO: Always create a snapshot of all models before launching index db and if there are changes, create automatic migrations
 # TODO: Always create a backup of all raw db entries before every migration (with optional include_non_index_files flag)
