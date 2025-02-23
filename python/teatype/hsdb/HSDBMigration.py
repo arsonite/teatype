@@ -166,9 +166,7 @@ class HSDBMigration(ABC):
                 for parsing_error in parsing_errors:
                     self.reject_migration_index(parsing_error.entry_model,
                                                 {
-                                                    'data': {
-                                                        'id': parsing_error.entry_id
-                                                    }
+                                                    'id': parsing_error.entry_id
                                                 },
                                                 reason=f'index-{parsing_error.error}')
                     err(f'      {parsing_error.error}: {parsing_error.entry_id}', use_prefix=False, verbose=False)
