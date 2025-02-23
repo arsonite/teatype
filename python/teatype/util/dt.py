@@ -22,7 +22,7 @@ def set_global_tz(tz:str):
     global _GLOBAL_TZ
     _GLOBAL_TZ = tz
 
-def dt(continent:str=None, city:str=None, tz:str='UTC', format:str='%Y-%m-%d\'%H:%M:%S\'%Z', return_dt:bool=False):
+def dt(continent:str=None, city:str=None, tz:str='UTC', format:str='%Y-%m-%dT%H:%M:%SZ%Z', return_dt:bool=False):
     # If tz not provided, try to build it from continent/city
     if not tz and continent and city:
         tz = f'{continent}/{city}'
@@ -41,7 +41,7 @@ def dt(continent:str=None, city:str=None, tz:str='UTC', format:str='%Y-%m-%d\'%H
         return current_time
     return current_time.strftime(format)
 
-def parse_dt(dt_str:str, format:str='%Y-%m-%d\'%H:%M:%S\'%Z', continent:str=None, city:str=None, tz:str='UTC'):
+def parse_dt(dt_str:str, format:str='%Y-%m-%dT%H:%M:%SZ%Z', continent:str=None, city:str=None, tz:str='UTC'):
     if not tz and continent and city:
         tz = f'{continent}/{city}'
 

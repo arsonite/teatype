@@ -119,7 +119,7 @@ class HSDBMigration(ABC):
             self._rejectpile['index'][model_plural_name] = []
             
             index_files = file.list(f'{self._index_path}/{model_plural_name}',
-                                  walk=False)
+                                    walk=False)
             if len(index_files) == 0:
                 continue
             
