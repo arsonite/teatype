@@ -95,7 +95,7 @@ def change(path:str, stringify:bool=True) -> str:
     os.chdir(path) # Change the current working directory
     return str(Path.cwd()) if stringify else Path.cwd() # Return the new working directory as string or Path object
 
-def create(*args, stringify:bool=True) -> str:
+def create(*args, create_parents:bool=True, exists_ok:bool=True, stringify:bool=True) -> str:
     """
     Create a new folder and its parent directories if they do not exist.
     Ignore if the folder already exists.
@@ -109,7 +109,7 @@ def create(*args, stringify:bool=True) -> str:
         str: The new path as a string if stringify is True.
     """
     new_path = Path(*args) # Join the path components
-    new_path.mkdir(parents=True, exist_ok=True) # Create the new folder and its parents if they do not exist
+    new_path.mkdir(parents=create_parents, exist_ok=exists_ok) # Create the new folder and its parents if they do not exist
     return str(new_path) if stringify else new_path # Return the new path as string or Path object
 
 def exists(path:str) -> bool:

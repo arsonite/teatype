@@ -46,6 +46,7 @@ class _HSDBMigrationRejection:
             'rejected_at': self.rejected_at
         }
 
+# TODO: Implmenent trap mechanism to revert migration if it fails
 # TODO: Migrations always count one up in id dependent on app and model
 # TODO: Always create a snapshot of all models before launching index db and if there are changes, create automatic migrations
 # TODO: Always create a backup of all raw db entries before every migration (with optional include_non_index_files flag)
@@ -55,6 +56,7 @@ class HSDBMigration(ABC):
     _auto_creation_datetime:str|None # ISO-formatted string for auto creation time
     _from_to_string:str # String representation of the migration's origin and destination
     _hsdb_path:str='/var/lib/hsdb' # Default path on linux
+    _index_path:str # Path to the index directory
     _migrated_at:str # ISO-formatted string for migration time
     _migration_ancestor:int|None # The previous migration's reference, if any
     _migration_backup_path:str # Path to the backup of the migration
@@ -92,7 +94,8 @@ class HSDBMigration(ABC):
             'rawfiles': {}
         }
         
-        self.overwrite_hsdb_path(self._hsdb_path) # Overwrites the default HSDB path with the default value
+        # Overwrites the default HSDB path with the default value
+        self.overwrite_hsdb_path(self._hsdb_path) 
         if auto_migrate:
             self.run() # Proceed with migration if 'auto_migrate' is True
         
