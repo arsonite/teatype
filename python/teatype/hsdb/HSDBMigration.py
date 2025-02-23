@@ -165,9 +165,13 @@ class HSDBMigration(ABC):
                 warn(f'    Found {amount_of_parsing_errors} parsing error{"s" if amount_of_parsing_errors > 1 else ""}:', use_prefix=False)
                 for parsing_error in parsing_errors:
                     self.reject_migration_index(parsing_error.entry_model,
-                                                parsing_error.entry_id,
+                                                {
+                                                    'data': {
+                                                        'id': parsing_error.entry_id
+                                                    }
+                                                },
                                                 reason=f'index-{parsing_error.error}')
-                    err(f'      {parsing_error}', use_prefix=False, verbose=False)
+                    err(f'      {parsing_error.error}: {parsing_error.entry_id}', use_prefix=False, verbose=False)
                 println()
                 
         return parsed_index_data
