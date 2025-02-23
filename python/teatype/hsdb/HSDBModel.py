@@ -57,6 +57,8 @@ class HSDBModel(ABC):
     
     def __init__(self,
                  id:str=None,
+                 # TODO: Remove this stupid attribute
+                 name:str=None,
                  created_at:str=None,
                  updated_at:str=None,
                  overwrite_file_path:str=None):
