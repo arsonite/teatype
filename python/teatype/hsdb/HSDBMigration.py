@@ -45,6 +45,16 @@ class _HSDBMigrationRejection:
             'reason': self.reason,
             'rejected_at': self.rejected_at
         }
+        
+class _ParsingError:
+    entry_id:str
+    entry_model:str
+    error:str
+    
+    def __init__(self, entry_id:str, entry_model:str, error:str):
+        self.entry_id = entry_id
+        self.entry_model = entry_model
+        self.error = error
 
 # TODO: Implement migration protocol
 # TODO: Implement trap mechanism to revert migration if it fails
@@ -101,6 +111,7 @@ class HSDBMigration(ABC):
             self.run() # Proceed with migration if 'auto_migrate' is True
         
     def _parse_index_files(self) -> List[dict]:
+        
         import re
         def _parse_name(raw_name:str, seperator:str='-'):
             return re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
@@ -126,27 +137,39 @@ class HSDBMigration(ABC):
             
             parsing_errors = []
             for index_file in index_files:
+                index_id = index_file.name.replace('.json', '')
                 try:
                     index_data = file.read(index_file.path, force_format='json', silent_fail=True)
                     if index_data is None or index_data == {} or index_data == []:
-                        parsing_errors.append('Empy: ' + index_file.name)
+                        parsing_errors.append(_ParsingError(index_id,
+                                                            model_plural_name,
+                                                            'empty'))
                         continue
                     parsed_index_data[model_plural_name].append(index_data)
                 except json.JSONDecodeError as jde:
                     # TODO: More edge cases?
                     if jde.msg == 'Expecting value' and jde.doc == '' and jde.pos == 0 and jde.lineno == 1 and jde.colno == 1:
-                        parsing_errors.append('Empty:   ' + index_file.name)
+                        parsing_errors.append(_ParsingError(index_id,
+                                                            model_plural_name,
+                                                            'empty'))
                     else:
-                        parsing_errors.append('Corrupt: ' + index_file.name)
+                        parsing_errors.append(_ParsingError(index_id,
+                                                            model_plural_name,
+                                                            'corrupt'))
                     if not parsing_errors_found:
                         parsing_errors_found = True
+                        
             print(f'    Found "{model_plural_name}" index files: {len(index_files)}')
             amount_of_parsing_errors = len(parsing_errors)
             if amount_of_parsing_errors > 0:
                 warn(f'    Found {amount_of_parsing_errors} parsing error{"s" if amount_of_parsing_errors > 1 else ""}:', use_prefix=False)
                 for parsing_error in parsing_errors:
+                    self.reject_migration_index(parsing_error.entry_model,
+                                                parsing_error.entry_id,
+                                                reason=f'index-{parsing_error.error}')
                     err(f'      {parsing_error}', use_prefix=False, verbose=False)
                 println()
+                
         return parsed_index_data
 
     def auto_create(self):
