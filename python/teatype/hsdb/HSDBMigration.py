@@ -87,7 +87,10 @@ class HSDBMigration(ABC):
     models:List[type] # List of models that are part of the migration
     was_auto_created:bool # Marks whether the migration was automatically created
     
-    def __init__(self, auto_migrate:bool=True, cold_mode:bool=False, include_non_index_files:bool=False):
+    def __init__(self,
+                 auto_migrate:bool=True, 
+                 cold_mode:bool=False,
+                 include_non_index_files:bool=False) -> None:
         """
         Initializes the migration. If 'auto_migrate' is True, the 'migrate' method is called immediately.
         """
@@ -117,7 +120,7 @@ class HSDBMigration(ABC):
     def _parse_index_files(self) -> List[dict]:
         
         import re
-        def _parse_name(raw_name:str, seperator:str='-'):
+        def _parse_name(raw_name:str, seperator:str='-') -> None:
             return re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
         
         print('Parsing index files from disk')
@@ -176,7 +179,7 @@ class HSDBMigration(ABC):
                 
         return parsed_index_data
 
-    def auto_create(self):
+    def auto_create(self) -> None:
         """
         Sets '_auto_creation_datetime' to the current time in ISO format
         and marks the migration as automatically created.
@@ -184,13 +187,13 @@ class HSDBMigration(ABC):
         self._auto_creation_datetime = str(dt.now().isoformat())
         self.was_auto_created = True # Acknowledges auto-creation
         
-    def add_to_migration_index(self, model:str, data:dict):
+    def add_to_migration_index(self, model:str, data:dict) -> None:
         self._migration_data['index'][model].append(data)
         
-    def add_to_migration_rawfiles(self, key:str, data:dict):
+    def add_to_migration_rawfiles(self, key:str, data:dict) -> None:
         self._migration_data['rawfiles'][key].append(data)
         
-    def reject_migration_index(self, model:str, data:dict, reason:str):
+    def reject_migration_index(self, model:str, data:dict, reason:str) -> None:
         rejection = _HSDBMigrationRejection(reason, {
             'app': self.app_name,
             'id': self.migration_id,
@@ -198,7 +201,7 @@ class HSDBMigration(ABC):
         })
         self._rejectpile['index'][model].append({'data': data, 'rejection': rejection.as_dict()})
         
-    def reject_migration_rawfiles(self, key:str, data:dict, reason:str):
+    def reject_migration_rawfiles(self, key:str, data:dict, reason:str) -> None:
         rejection = _HSDBMigrationRejection(reason, {
             'app': self.app_name,
             'id': self.migration_id,
@@ -206,7 +209,7 @@ class HSDBMigration(ABC):
         })
         self._rejectpile['rawfiles'][key].append({'data': data, 'rejection': rejection.as_dict()})
 
-    def overwrite_hsdb_path(self, hsdb_path:str):
+    def overwrite_hsdb_path(self, hsdb_path:str) -> None:
         """
         Allows changing the default HSDB path to a custom path.
         """
@@ -223,7 +226,7 @@ class HSDBMigration(ABC):
         migration_backups_path = path.join(backups_path, 'migrations')
         self._migration_backup_path = path.join(migration_backups_path, self._from_to_string)
         
-    def migrate(self):
+    def migrate(self) -> None:
         if self.cold_mode:
             migration_dump_directory = path.join(self._hsdb_path, 'dumps', 'migrations')
             file.write(path.join(migration_dump_directory, f'{self._from_to_string}_migration_data.json'),
@@ -235,7 +238,7 @@ class HSDBMigration(ABC):
                        force_format='json',
                        prettify=True)
     
-    def run(self):
+    def run(self) -> None:
         self._parsed_index_data = self._parse_index_files()
         self._migrated_at = dt.now().isoformat()
         
@@ -249,37 +252,27 @@ class HSDBMigration(ABC):
         println()
         
         try:
-            was_gathering_successful = self.gather()
-            if was_gathering_successful:
-                println()
-                log('Gathering succeeded')
-                println()
-                
+            self.gather()
+            println()
+            log('Gathering succeeded')
+            println()
+            
+            try:
                 self.migrate()
-                
                 println()
                 log('Migration succeeded')
                 println()
+            except:
+                err('Migration failed: ', pad_after=1, exit=True, traceback=True)
         except:
-            err('Migration failed: ', pad_after=1, exit=True, traceback=True)
+            err('Gathering failed: ', pad_after=1, exit=True, traceback=True)
     
     #########
     # Hooks #
     #########
     
-    def gather(self) -> bool:
+    def gather(self) -> None:
         """
         Gathers data for the migration. This method should be implemented in the migration-subclass.
-        
-        Returns:
-            bool: True if gathering was successful, False otherwise.
         """
         raise NotImplementedError('"gather()" method must be implemented in migration-subclass')
-    
-    ####################
-    # Abstract methods #
-    ####################
-    
-    @abstractmethod
-    def migrate(self):
-        raise NotImplementedError('"migrate()" method must be implemented in migration-subclass')
