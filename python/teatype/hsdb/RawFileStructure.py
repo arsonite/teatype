@@ -23,7 +23,7 @@ __FS = {
             'migration': {},
             'rawfiles': {}
         },
-        'dummps': {},
+        'dumps': {},
         'exports': {},
         'index': {},
         'logs': {

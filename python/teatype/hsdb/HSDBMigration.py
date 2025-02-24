@@ -80,16 +80,20 @@ class HSDBMigration(ABC):
     _rejectpile_rawfiles_path:str # Path to the rejectpile rawfiles directory
     _rejectpile:dict # Holds the rejectpile data
     app_name:str # Name of the application this migration is associated with
+    cold_mode:bool #  Indicates if the migration is in cold mode (no applied changes)
     include_non_index_files:bool # Indicates if non-index files should be part of migration steps
     migration_id:int # Numeric identifier to order migrations
     migration_name:str # Descriptive name for the migration
     models:List[type] # List of models that are part of the migration
     was_auto_created:bool # Marks whether the migration was automatically created
     
-    def __init__(self, auto_migrate:bool=True):
+    def __init__(self, auto_migrate:bool=True, cold_mode:bool=False, include_non_index_files:bool=False):
         """
         Initializes the migration. If 'auto_migrate' is True, the 'migrate' method is called immediately.
         """
+        
+        self.cold_mode = cold_mode
+        self.include_non_index_files = include_non_index_files
             
         # Default ancestor is the previous migration
         self._migration_ancestor = self.migration_id - 1 if self.migration_id != None else None 
@@ -165,9 +169,7 @@ class HSDBMigration(ABC):
                 warn(f'    Found {amount_of_parsing_errors} parsing error{"s" if amount_of_parsing_errors > 1 else ""}:', use_prefix=False)
                 for parsing_error in parsing_errors:
                     self.reject_migration_index(parsing_error.entry_model,
-                                                {
-                                                    'id': parsing_error.entry_id
-                                                },
+                                                { 'id': parsing_error.entry_id },
                                                 reason=f'index-{parsing_error.error}')
                     err(f'      {parsing_error.error}: {parsing_error.entry_id}', use_prefix=False, verbose=False)
                 println()
@@ -220,6 +222,9 @@ class HSDBMigration(ABC):
         backups_path = path.join(hsdb_path, 'backups')
         migration_backups_path = path.join(backups_path, 'migrations')
         self._migration_backup_path = path.join(migration_backups_path, self._from_to_string)
+        
+    def migrate(self):
+        pass
     
     #########
     # Hooks #
@@ -239,10 +244,17 @@ class HSDBMigration(ABC):
         println()
         
         try:
-            self.migrate()
-            println()
-            log('Migration succeeded')
-            println()
+            was_gathering_successful = self.gather()
+            if was_gathering_successful:
+                println()
+                log('Gathering succeeded')
+                println()
+                
+                self.migrate()
+                
+                println()
+                log('Migration succeeded')
+                println()
         except:
             err('Migration failed: ', pad_after=1, exit=True, traceback=True)
     
