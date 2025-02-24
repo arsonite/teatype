@@ -10,6 +10,7 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
+from .dt import dt
 from .id import id
 from .implemented_trap import implemented_trap
 from .SingletonMeta import SingletonMeta

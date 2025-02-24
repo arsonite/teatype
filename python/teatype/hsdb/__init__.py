@@ -16,5 +16,6 @@ from .HSDBMigration import HSDBMigration
 from .HSDBAttribute import HSDBAttribute
 from .HSDBModel import HSDBModel
 from .IndexDatabase import IndexDatabase
+from .RawFileStructure import RawFileStructure
 from .RawFileHandler import RawFileHandler
 from .HybridStorage import HybridStorage

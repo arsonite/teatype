@@ -39,23 +39,25 @@ class HSDBModel(ABC):
     # plural_name=HSDBAttribute('plural_name', computed=True)
     # root_raw_path=HSDBAttribute('root_raw_path', computed=True)
     # updated_at=HSDBAttribute('updated_at', computed=True)
+    _overwrite_file_path:str
+    _overwrite_parsed_name:str
+    _overwrite_parsed_plural_name:str
+    _parsed_name:str
+    _parsed_plural_name:str
+    _plural_name:str
     app_name:str
     created_at:dt
     id:str
     is_fixture:bool=False
     migration_id:int
-    name:str
-    overwrite_file_path:str
-    overwrite_parsed_name:str
-    overwrite_parsed_plural_name:str
-    parsed_name:str
-    parsed_plural_name:str
-    plural_name:str
-    relation_updated_at:dt
+    relations:dict
+    synced:bool=False
+    synced_at:dt
     updated_at:dt
     
     def __init__(self,
                  id:str=None,
+                 # TODO: Remove this stupid attribute
                  name:str=None,
                  created_at:str=None,
                  updated_at:str=None,

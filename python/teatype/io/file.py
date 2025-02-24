@@ -315,7 +315,7 @@ def list(directory:str,
          walk:bool=True,
          depth:int=1,
          ignore_folders:List[str]=None,
-         only_include:List[str]=None,
+         only_include:List[str]=None, # TODO: Seperate include_extensions and include_regex
          trim_files:bool=True,
          stringify:bool=False) -> List[_File]:
     """
@@ -348,11 +348,6 @@ def list(directory:str,
             # Iterate over each entry in the current directory
             for entry in os.scandir(dir_path):
                 if entry.is_dir():
-                    if only_include:
-                        # Skip ffiles that do not have the specified extensions
-                        if not entry.name.endswith(tuple(only_include)):
-                            continue
-                        
                     if ignore_folders:
                         # Skip folders that are in the ignore list
                         if entry.name in ignore_folders:
@@ -362,6 +357,10 @@ def list(directory:str,
                     # Recursively walk through the subdirectory, increasing the depth
                     walk_directory(entry.path, current_depth + 1)
                 else:
+                    if only_include:
+                        # Skip ffiles that do not have the specified extensions
+                        if not entry.name.endswith(tuple(only_include)):
+                            continue
                     # Append directory details to the results list
                     results.append(_File(entry.path, trimmed=trim_files, nested_depth=current_depth))
         if walk:
@@ -383,7 +382,7 @@ def list(directory:str,
         # Re-raise the exception to allow further handling upstream
         raise exc
 
-def move(source:str, destination:str, create_parent_directories:bool=True, overwrite:bool=True) -> bool:
+def move(source:str, destination:str, create_parents:bool=True, overwrite:bool=True) -> bool:
     """
     Move a file from the source path to the destination path.
 
@@ -407,6 +406,11 @@ def move(source:str, destination:str, create_parent_directories:bool=True, overw
                 # Log an error message if the destination file already exists
                 err(f'File "{destination}" already exists. Call with "overwrite=True" to replace it.')
                 return False
+            
+        if create_parents:
+            # Create parent directories if they do not exist
+            parent_path = ''.join(subpath + '/' for subpath in destination.split('/')[:-1])
+            path_functions.create(parent_path)
             
         shutil.move(source, destination)
         return True

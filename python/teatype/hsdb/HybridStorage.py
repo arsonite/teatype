@@ -65,6 +65,9 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
         
     def fill(self):
         pass
+    
+    # def register_model(self, model:object):
+    #     self.index_database.models.append(model)
             
     def install_fixtures(self, fixtures:List[dict]):
         for fixture in fixtures:
