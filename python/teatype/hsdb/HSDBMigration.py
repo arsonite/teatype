@@ -94,14 +94,18 @@ class HSDBMigration(ABC):
                  auto_migrate:bool=True, 
                  cold_mode:bool=False,
                  include_non_index_files:bool=False,
-                 max_workers:int=__MAX_AMOUNT_OF_WORKERS) -> None:
+                 max_workers:int=None) -> None:
         """
         Initializes the migration. If 'auto_migrate' is True, the 'migrate' method is called immediately.
         """
         
         self.cold_mode = cold_mode
         self.include_non_index_files = include_non_index_files
-        self._workers = max_workers
+        
+        if max_workers is None:
+            self._workers = __MAX_AMOUNT_OF_WORKERS
+        else:
+            self._workers = max_workers
             
         # Default ancestor is the previous migration
         self._migration_ancestor = self.migration_id - 1 if self.migration_id != None else None 
