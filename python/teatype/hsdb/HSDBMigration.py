@@ -228,15 +228,21 @@ class HSDBMigration(ABC):
         
     def migrate(self) -> None:
         if self.cold_mode:
+            println()
+            hint('Cold mode is active, no changes will be applied.')
             migration_dump_directory = path.join(self._hsdb_path, 'dumps', 'migrations')
             file.write(path.join(migration_dump_directory, f'{self._from_to_string}_migration_data.json'),
                        self._migration_data,
                        force_format='json',
                        prettify=True)
+            log('   Dumped migration data to disk')
             file.write(path.join(migration_dump_directory, f'{self._from_to_string}_rejectpile.json'),
                        self._rejectpile,
                        force_format='json',
                        prettify=True)
+            log('   Dumped rejectpile data to disk')
+            log('   Check path for dumped data:')
+            log(f'      {migration_dump_directory}')
     
     def run(self) -> None:
         self._parsed_index_data = self._parse_index_files()
@@ -254,8 +260,8 @@ class HSDBMigration(ABC):
         try:
             self.gather()
             println()
-            log('Gathering succeeded')
-            println()
+            log('Gathering succeeded')        
+
             
             try:
                 self.migrate()
