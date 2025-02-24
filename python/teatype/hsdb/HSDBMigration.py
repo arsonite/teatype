@@ -224,11 +224,16 @@ class HSDBMigration(ABC):
         self._migration_backup_path = path.join(migration_backups_path, self._from_to_string)
         
     def migrate(self):
-        pass
-    
-    #########
-    # Hooks #
-    #########
+        if self.cold_mode:
+            migration_dump_directory = path.join(self._hsdb_path, 'dumps', 'migrations')
+            file.write(path.join(migration_dump_directory, f'{self._from_to_string}_migration_data.json'),
+                       self._migration_data,
+                       force_format='json',
+                       prettify=True)
+            file.write(path.join(migration_dump_directory, f'{self._from_to_string}_rejectpile.json'),
+                       self._rejectpile,
+                       force_format='json',
+                       prettify=True)
     
     def run(self):
         self._parsed_index_data = self._parse_index_files()
@@ -257,6 +262,19 @@ class HSDBMigration(ABC):
                 println()
         except:
             err('Migration failed: ', pad_after=1, exit=True, traceback=True)
+    
+    #########
+    # Hooks #
+    #########
+    
+    def gather(self) -> bool:
+        """
+        Gathers data for the migration. This method should be implemented in the migration-subclass.
+        
+        Returns:
+            bool: True if gathering was successful, False otherwise.
+        """
+        raise NotImplementedError('"gather()" method must be implemented in migration-subclass')
     
     ####################
     # Abstract methods #
