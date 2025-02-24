@@ -24,6 +24,8 @@ from teatype.logging import err, hint, log, println, warn
 # From-as system imports
 from datetime import datetime as dt
 
+__MAX_AMOUNT_OF_WORKERS = 8
+
 class _HSDBMigrationRejection:
     migration:dict
     reason:str
@@ -79,6 +81,7 @@ class HSDBMigration(ABC):
     _rejectpile_index_path:str # Path to the rejectpile index directory
     _rejectpile_rawfiles_path:str # Path to the rejectpile rawfiles directory
     _rejectpile:dict # Holds the rejectpile data
+    _workers:int # Number of workers to use for migration
     app_name:str # Name of the application this migration is associated with
     cold_mode:bool #  Indicates if the migration is in cold mode (no applied changes)
     include_non_index_files:bool # Indicates if non-index files should be part of migration steps
@@ -90,13 +93,15 @@ class HSDBMigration(ABC):
     def __init__(self,
                  auto_migrate:bool=True, 
                  cold_mode:bool=False,
-                 include_non_index_files:bool=False) -> None:
+                 include_non_index_files:bool=False,
+                 max_workers:int=__MAX_AMOUNT_OF_WORKERS) -> None:
         """
         Initializes the migration. If 'auto_migrate' is True, the 'migrate' method is called immediately.
         """
         
         self.cold_mode = cold_mode
         self.include_non_index_files = include_non_index_files
+        self._workers = max_workers
             
         # Default ancestor is the previous migration
         self._migration_ancestor = self.migration_id - 1 if self.migration_id != None else None 
