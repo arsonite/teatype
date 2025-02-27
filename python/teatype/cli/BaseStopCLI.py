@@ -153,7 +153,10 @@ class BaseStopCLI(BaseCLI):
             # Sending signal 0 does not kill the process but checks its existence
             os.kill(pid, 0)
             return True
-        except OSError:
+        except OSError as e:
+            # Permission error, request sudo access
+            if e.errno == 1:
+                err('OS denied permission access for process. Please run the script with sudo.', pad_after=1, exit=True, verbose=False)
             return False
 
     def attempt_stop(self, pid, signal_type, max_attempts, signal_name):

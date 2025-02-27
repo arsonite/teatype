@@ -49,6 +49,9 @@ class BaseIsRunningCLI(BaseCLI):
             found = False
             for process in psutil.process_iter(['pid', 'name', 'cmdline']):
                 try:
+                    if process.info['cmdline'] is None:
+                        continue
+                    
                     # Check if process_name appears in the full command line
                     if process_name in ' '.join(process.info['cmdline']):
                         process_pid = process.info['pid']
@@ -59,6 +62,11 @@ class BaseIsRunningCLI(BaseCLI):
                 except (psutil.NoSuchProcess, psutil.AccessDenied, KeyError):
                     # Skip processes that we can't access or have disappeared
                     continue
+                except:
+                    print(process.info['cmdline'])
+                    err(f'An error occurred while checking if process "{process_name}" is running',
+                        exit=True,
+                        traceback=True)
             
             if not found:
                 if not silent:
