@@ -20,7 +20,8 @@ from multiprocessing import Queue
 from typing import List
 
 # From package imports
-from teatype.hsdb import IndexDatabase, hsdb_util, RawFileHandler
+from teatype.hsdb import IndexDatabase, RawFileHandler
+from teatype.hsdb.util import parse_fixtures, parse_index_files
 from teatype.io import env, file, path
 from teatype.logging import err, hint, log, println, warn
 from teatype.util import SingletonMeta
@@ -36,25 +37,24 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
     operations_queue:Queue
     raw_file_handler:RawFileHandler
 
-    def __init__(self, init:bool=False, models:List[type]=None, overwrite_root_path:str=None):
+    def __init__(self, init:bool=False, models:List[type]=None, root_path:str=None):
         if not init:
             return
         
         # Only initialize once
         if not getattr(self, '_initialized', False):
             # Prevent re-initialization
+            
+            # Set the root data path
+            if root_path is None:
+                root_path = env.get('HSDB_ROOT_PATH')
+            
             self.coroutines = []
             self.index_database = IndexDatabase(models=models)
-
-            # Set the root data path
-            if overwrite_root_path:
-                root_path = overwrite_root_path
-            else:
-                root_path = env.get('HSDB_ROOT_PATH')
-
             self.raw_file_handler = RawFileHandler(root_path=root_path)
-
+            
             self._initialized = True # Mark as initialized
+            
             self.__instance = self # Set the instance
             
             log('HybridStorage finished initialization')
@@ -73,8 +73,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             
     def install_fixtures(self, fixtures_path:str=None):
         # TODO: Get default path if fixtures_path is None
-        fixtures:List[dict] = hsdb_util.parse_fixtures(self.hybrid_storage,
-                                                       fixtures_path=fixtures_path)
+        fixtures:List[dict] = parse_fixtures(fixtures_path=fixtures_path)
         for fixture in fixtures:
             model_name = fixture.get('model')
             
@@ -102,7 +101,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 self.create_entry(matched_model, {'id': id, **data})
                 
     def install_index_files(self):
-        parsed_raw_data:List[dict] = hsdb_util.parse_index_files(hybrid_storage_instance=self)
+        parsed_raw_data:List[dict] = parse_index_files(hybrid_storage_instance=self)
         for raw_data in parsed_raw_data:
             model_name = raw_data.get('model_meta').get('model_name')
             matched_model = next((cls for cls in self.index_database.models if cls.__name__ == model_name), None)

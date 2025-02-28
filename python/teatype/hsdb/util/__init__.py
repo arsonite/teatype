@@ -10,14 +10,7 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# WARNING: Do not change the order of the imports, it will break the code
-from .HSDBRelation import HSDBRelation
-from .HSDBMigration import HSDBMigration
-from .HSDBAttribute import HSDBAttribute
-from .HSDBModel import HSDBModel
-from .IndexDatabase import IndexDatabase
-from .RawFileStructure import RawFileStructure
-from .RawFileHandler import RawFileHandler
-from .HybridStorage import HybridStorage
+from .parse_fixtures import parse_fixtures
+from .parse_index_files import parse_index_files
 
-from . import util as hsdb_util
+__all__ = ['parse_fixtures', 'parse_index_files']

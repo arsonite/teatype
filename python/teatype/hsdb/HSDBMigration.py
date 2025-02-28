@@ -21,7 +21,6 @@ from typing import List
 # From package imports
 from teatype.io import file, path
 from teatype.logging import err, hint, log, println, warn
-from teatype.hsdb import HybridStorage
 
 # From-as system imports
 from datetime import datetime as dt
@@ -183,7 +182,9 @@ class HSDBMigration(ABC):
             log(f'      {migration_dump_directory}')
     
     def run(self) -> None:
-        self._parsed_index_data = HybridStorage._parse_index_files()
+        # Importing here to avoid circular imports
+        from teatype.hsdb import hsdb_util
+        self._parsed_index_data = hsdb_util.parse_index_files(migrator=self)
         self._migrated_at = dt.now().isoformat()
         
         println()

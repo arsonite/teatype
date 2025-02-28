@@ -47,7 +47,7 @@ class IndexDatabase:
         self._relational_index = dict()
         self._relational_index_lock = threading.Lock()
                 
-    def create_entry(self, model:type, data:dict, overwrite_path:str=None) -> object|None:
+    def create_entry(self, model:type, data:dict, root_path:str=None) -> object|None:
         try:
             with self._db_lock:
                 # TODO: Validation
@@ -61,7 +61,7 @@ class IndexDatabase:
                 if model_id in self._db:
                     return None
                 
-                # Model.create(overwrite_path, model_instance)
+                # Model.create(root_path, model_instance)
                 # TODO: Quick and dirty hack, need to refactor this with proper attributes
                 # need for algorithm to be implemented with the model callhandlers
                 match model_name:

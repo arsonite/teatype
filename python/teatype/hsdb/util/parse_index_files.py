@@ -31,26 +31,42 @@ class _ParsingError:
         self.entry_model = entry_model
         self.error = error
 
-def parse_index_files(hybrid_storage_instance:object, migrator:object=None) -> List[dict]:
+# TODO: Implement a better solution for this - only use one instance, check via type which class it is
+def parse_index_files(hybrid_storage_instance:object=None, migrator:object=None) -> List[dict]:
+    if hybrid_storage_instance is None and migrator is None:
+        raise ValueError('At least one of the parameters should be provided')
+    
+    if hybrid_storage_instance is not None and migrator is not None:
+        raise ValueError('Only one of the parameters should be provided')
+    
     # TODO: Create package function
     def _parse_name(raw_name:str, seperator:str='-') -> None:
         return re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
     
+    # Parsing variables from the two different sources
+    if hybrid_storage_instance:
+        models = hybrid_storage_instance.index_database.models
+        index_path = hybrid_storage_instance.raw_file_handler.fs.hsdb.index.path
+    else:
+        models = migrator.models
+        index_path = migrator._index_path
+    
     print('Parsing index files from disk')
     parsed_index_data = {}
     parsing_errors_found = False
-    for model in hybrid_storage_instance.models:
+    for model in models:
         model_plural_name = _parse_name(model.__name__).replace('-model', '')
         model_plural_name = model_plural_name + 's' if not model_plural_name.endswith('s') else model_plural_name + 'es'
-        model_path = f'{hybrid_storage_instance._index_path}/{model_plural_name}'
+        model_path = f'{index_path}/{model_plural_name}'
         if not path.exists(model_path):
             continue
         
         parsed_index_data[model_plural_name] = []
-        hybrid_storage_instance._migration_data['index'][model_plural_name] = []
-        hybrid_storage_instance._rejectpile['index'][model_plural_name] = []
+        if migrator:
+            migrator._migration_data['index'][model_plural_name] = []
+            migrator._rejectpile['index'][model_plural_name] = []
         
-        index_files = file.list(f'{hybrid_storage_instance._index_path}/{model_plural_name}',
+        index_files = file.list(f'{index_path}/{model_plural_name}',
                                 walk=False)
         if len(index_files) == 0:
             continue
@@ -86,9 +102,9 @@ def parse_index_files(hybrid_storage_instance:object, migrator:object=None) -> L
             for parsing_error in parsing_errors:
                 # TODO: Implement a better solution for this - seperate method in HSDBMigration
                 if migrator:
-                    hybrid_storage_instance.reject_migration_index(parsing_error.entry_model,
-                                                                { 'id': parsing_error.entry_id },
-                                                                reason=f'index-{parsing_error.error}')
+                    migrator.reject_migration_index(parsing_error.entry_model,
+                                                    { 'id': parsing_error.entry_id },
+                                                    reason=f'index-{parsing_error.error}')
                 err(f'      {parsing_error.error}: {parsing_error.entry_id}', use_prefix=False, verbose=False)
             println()
             
