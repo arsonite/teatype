@@ -57,7 +57,9 @@ def register_middleware(app, base_path:str, version:int=None) -> None:
                 app.add_middleware(attr)
                 print(f'Registered middleware: {attr_name} from {module_name}')
 
-def register_routes(app, base_path:str, root_prefix:str, version:int=None) -> None:
+def register_routes(app, base_path:str,
+                    root_prefix:str=None,
+                    version:int=None) -> None:
     """
     Dynamically imports and registers routers from all Python modules in the versioned `.routes` directory.
     """
@@ -91,5 +93,8 @@ def register_routes(app, base_path:str, root_prefix:str, version:int=None) -> No
             # Check if the module contains a 'router' attribute and if it's a valid APIRouter
             # if router and isinstance(router, dict) and "include_router" in router:
             # Register the router with the app
-            app.include_router(router, prefix=root_prefix)
+            if root_prefix is None:
+                app.include_router(router)
+            else:
+                app.include_router(router, prefix=root_prefix)
             print(f'Registered routes from {module_name}')
