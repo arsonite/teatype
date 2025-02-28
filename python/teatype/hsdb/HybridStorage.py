@@ -11,16 +11,18 @@
 # all copies or substantial portions of the Software.
 
 # System imports
+import json
+import re
 import threading
 
 # From system imports
+from multiprocessing import Queue
 from typing import List
 
 # From package imports
-from multiprocessing import Queue
 from teatype.hsdb import IndexDatabase, RawFileHandler
-from teatype.io import env
-from teatype.logging import log
+from teatype.io import env, file, path
+from teatype.logging import err, hint, log, println, warn
 from teatype.util import SingletonMeta
 
 # TODO: Implement Coroutine and Operation (Atomic)
@@ -34,7 +36,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
     operations_queue:Queue
     raw_file_handler:RawFileHandler
 
-    def __init__(self, init:bool=False, models:List[type]=None, overwrite_root_data_path:str=None):
+    def __init__(self, init:bool=False, models:List[type]=None, overwrite_root_path:str=None):
         if not init:
             return
         
@@ -45,12 +47,12 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             self.index_database = IndexDatabase(models=models)
 
             # Set the root data path
-            if overwrite_root_data_path:
-                root_data_path = overwrite_root_data_path
+            if overwrite_root_path:
+                root_path = overwrite_root_path
             else:
-                root_data_path = env.get('HSDB_ROOT_PATH')
+                root_path = env.get('HSDB_ROOT_PATH')
 
-            self.raw_file_handler = RawFileHandler(root_data_path=root_data_path)
+            self.raw_file_handler = RawFileHandler(root_path=root_path)
 
             self._initialized = True # Mark as initialized
             self.__instance = self # Set the instance
@@ -62,9 +64,9 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
         if not hasattr(HybridStorage, '__instance'):
             HybridStorage.__instance = HybridStorage(init=True)
         return HybridStorage.__instance
-        
-    def fill(self):
-        pass
+    
+    # def fill(self):
+    #     pass
     
     # def register_model(self, model:object):
     #     self.index_database.models.append(model)

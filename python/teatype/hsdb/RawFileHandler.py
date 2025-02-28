@@ -12,28 +12,29 @@
 
 # From package imports
 from teatype.io import env, file, path
+from teatype.hsdb import RawFileStructure
+
+_DEFAULT_ROOT_PATH = '/var/lib/hsdb'
 
 class RawFileHandler:
-    root_data_path:str
+    _raw_file_structure:RawFileStructure
+    _root_path:str
     
-    def __init__(self, root_data_path):
-        if root_data_path:
-            self.root_data_path = root_data_path
-        else:
-            # root_data_path = env.get('CIRLOG_DATA_PATH')
-            root_data_path = '/var/lib/cirlog'
-            self.root_data_path = f'{root_data_path}/raw'
+    def __init__(self, root_path:str=None):
+        if root_path is None:
+            root_path = _DEFAULT_ROOT_PATH
+        self._root_path = root_path
             
-            # path.create(backups_path)
-            # path.create(migration_backups_path)
-            # path.create(migration_backup_path)
+        self._raw_file_structure = RawFileStructure(root_path)
         
-        path.create(self.root_data_path)
+    @property
+    def fs(self):
+        return self._raw_file_structure.get_fs()
         
     # TODO: If new attributes surface (migrations), apply them to old files (backup before)
-    def create_entry(self, model_instance:object, overwrite_path:str) -> str:
+    def create_entry(self, model_instance:object, overwrite_path:str, compress:bool=False) -> str:
         try:
-            absolute_file_path = path.join(self.root_data_path, model_instance.file_path)
+            absolute_file_path = path.join(self._root_path, model_instance.file_path)
             if path.exists(absolute_file_path):
                 return 'File already exists'
         
@@ -42,7 +43,7 @@ class RawFileHandler:
             file.write(absolute_file_path,
                        model_instance.serialize(),
                        force_format='json',
-                       prettify=True,
+                       prettify=not compress,
                        create_parents=True)
             return absolute_file_path
         except Exception as exc:

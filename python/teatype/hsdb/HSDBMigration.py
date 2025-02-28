@@ -12,6 +12,7 @@
 
 # System imports
 import json
+import re
 
 # From system imports
 from abc import ABC, abstractmethod
@@ -20,6 +21,7 @@ from typing import List
 # From package imports
 from teatype.io import file, path
 from teatype.logging import err, hint, log, println, warn
+from teatype.hsdb import HybridStorage
 
 # From-as system imports
 from datetime import datetime as dt
@@ -47,16 +49,6 @@ class _HSDBMigrationRejection:
             'reason': self.reason,
             'rejected_at': self.rejected_at
         }
-        
-class _ParsingError:
-    entry_id:str
-    entry_model:str
-    error:str
-    
-    def __init__(self, entry_id:str, entry_model:str, error:str):
-        self.entry_id = entry_id
-        self.entry_model = entry_model
-        self.error = error
 
 # TODO: Implement migration protocol
 # TODO: Implement trap mechanism to revert migration if it fails
@@ -98,7 +90,6 @@ class HSDBMigration(ABC):
         """
         Initializes the migration. If 'auto_migrate' is True, the 'migrate' method is called immediately.
         """
-        
         self.cold_mode = cold_mode
         self.include_non_index_files = include_non_index_files
         
@@ -125,68 +116,6 @@ class HSDBMigration(ABC):
         self.overwrite_hsdb_path(self._hsdb_path) 
         if auto_migrate:
             self.run() # Proceed with migration if 'auto_migrate' is True
-        
-    def _parse_index_files(self) -> List[dict]:
-        
-        import re
-        def _parse_name(raw_name:str, seperator:str='-') -> None:
-            return re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
-        
-        print('Parsing index files from disk')
-        parsed_index_data = {}
-        parsing_errors_found = False
-        for model in self.models:
-            model_plural_name = _parse_name(model.__name__).replace('-model', '')
-            model_plural_name = model_plural_name + 's' if not model_plural_name.endswith('s') else model_plural_name + 'es'
-            model_path = f'{self._index_path}/{model_plural_name}'
-            if not path.exists(model_path):
-                continue
-            
-            parsed_index_data[model_plural_name] = []
-            self._migration_data['index'][model_plural_name] = []
-            self._rejectpile['index'][model_plural_name] = []
-            
-            index_files = file.list(f'{self._index_path}/{model_plural_name}',
-                                    walk=False)
-            if len(index_files) == 0:
-                continue
-            
-            parsing_errors = []
-            for index_file in index_files:
-                index_id = index_file.name.replace('.json', '')
-                try:
-                    index_data = file.read(index_file.path, force_format='json', silent_fail=True)
-                    if index_data is None or index_data == {} or index_data == []:
-                        parsing_errors.append(_ParsingError(index_id,
-                                                            model_plural_name,
-                                                            'empty'))
-                        continue
-                    parsed_index_data[model_plural_name].append(index_data)
-                except json.JSONDecodeError as jde:
-                    # TODO: More edge cases?
-                    if jde.msg == 'Expecting value' and jde.doc == '' and jde.pos == 0 and jde.lineno == 1 and jde.colno == 1:
-                        parsing_errors.append(_ParsingError(index_id,
-                                                            model_plural_name,
-                                                            'empty'))
-                    else:
-                        parsing_errors.append(_ParsingError(index_id,
-                                                            model_plural_name,
-                                                            'corrupt'))
-                    if not parsing_errors_found:
-                        parsing_errors_found = True
-                        
-            print(f'    Found "{model_plural_name}" index files: {len(index_files)}')
-            amount_of_parsing_errors = len(parsing_errors)
-            if amount_of_parsing_errors > 0:
-                warn(f'    Found {amount_of_parsing_errors} parsing error{"s" if amount_of_parsing_errors > 1 else ""}:', use_prefix=False)
-                for parsing_error in parsing_errors:
-                    self.reject_migration_index(parsing_error.entry_model,
-                                                { 'id': parsing_error.entry_id },
-                                                reason=f'index-{parsing_error.error}')
-                    err(f'      {parsing_error.error}: {parsing_error.entry_id}', use_prefix=False, verbose=False)
-                println()
-                
-        return parsed_index_data
 
     def auto_create(self) -> None:
         """
@@ -254,7 +183,7 @@ class HSDBMigration(ABC):
             log(f'      {migration_dump_directory}')
     
     def run(self) -> None:
-        self._parsed_index_data = self._parse_index_files()
+        self._parsed_index_data = HybridStorage._parse_index_files()
         self._migrated_at = dt.now().isoformat()
         
         println()
