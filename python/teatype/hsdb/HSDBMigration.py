@@ -19,6 +19,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 # From package imports
+from teatype.hsdb.util import parse_index_files
 from teatype.io import file, path
 from teatype.logging import err, hint, log, println, warn
 
@@ -49,6 +50,7 @@ class _HSDBMigrationRejection:
             'rejected_at': self.rejected_at
         }
 
+# TODO: Only list number of errors, write errors into logfile
 # TODO: Implement migration protocol
 # TODO: Implement trap mechanism to revert migration if it fails
 # TODO: Migrations always count one up in id dependent on app and model
@@ -62,7 +64,7 @@ class HSDBMigration(ABC):
     _hsdb_path:str='/var/lib/hsdb' # Default path on linux
     _index_path:str # Path to the index directory
     _migrated_at:str # ISO-formatted string for migration time
-    _migration_ancestor:int|None # The previous migration's reference, if any
+    _migration_ancestor:int # The previous migration's reference, if any
     _migration_backup_path:str # Path to the backup of the migration
     _migration_data:dict # Holds the migration data
     _migration_descendant:int # The next migration's reference, if any
@@ -98,9 +100,9 @@ class HSDBMigration(ABC):
             self._workers = max_workers
             
         # Default ancestor is the previous migration
-        self._migration_ancestor = self.migration_id - 1 if self.migration_id != None else None 
+        self._migration_ancestor = self.migration_id - 1
         self._migration_descendant = self.migration_id + 1 # Default descendant is the next migration
-        self._from_to_string = f'{self.migration_id}->{self._migration_descendant}' # Default migration string
+        self._from_to_string = f'{self._migration_ancestor}->{self.migration_id}' # Default migration string
         
         self._migration_data = {
             'index': {},
@@ -182,9 +184,7 @@ class HSDBMigration(ABC):
             log(f'      {migration_dump_directory}')
     
     def run(self) -> None:
-        # Importing here to avoid circular imports
-        from teatype.hsdb import hsdb_util
-        self._parsed_index_data = hsdb_util.parse_index_files(migrator=self)
+        self._parsed_index_data = parse_index_files(migrator=self)
         self._migrated_at = dt.now().isoformat()
         
         println()

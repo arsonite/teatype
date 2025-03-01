@@ -14,17 +14,10 @@
 from teatype.io import env, file, path
 from teatype.hsdb import RawFileStructure
 
-_DEFAULT_ROOT_PATH = '/var/lib/hsdb'
-
 class RawFileHandler:
     _raw_file_structure:RawFileStructure
-    _root_path:str
     
     def __init__(self, root_path:str=None):
-        if root_path is None:
-            root_path = _DEFAULT_ROOT_PATH
-        self._root_path = root_path
-            
         self._raw_file_structure = RawFileStructure(root_path)
         
     @property
@@ -34,17 +27,17 @@ class RawFileHandler:
     # TODO: If new attributes surface (migrations), apply them to old files (backup before)
     def create_entry(self, model_instance:object, overwrite_path:str, compress:bool=False) -> str:
         try:
-            absolute_file_path = path.join(self._root_path, model_instance.file_path)
-            if path.exists(absolute_file_path):
+            absolute_path = path.join(self.fs.hsdb.index.path, model_instance.path)
+            if path.exists(absolute_path):
                 return 'File already exists'
         
             # TODO: If model folder does not exist, create it and put model_meta.json into it
             # TODO: Create variable in path.create for exists ok
-            file.write(absolute_file_path,
+            file.write(absolute_path,
                        model_instance.serialize(),
                        force_format='json',
                        prettify=not compress,
                        create_parents=True)
-            return absolute_file_path
+            return absolute_path
         except Exception as exc:
             raise Exception(f'Could not create raw file entry: {exc}')

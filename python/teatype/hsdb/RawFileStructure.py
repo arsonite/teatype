@@ -1,7 +1,7 @@
 # Copyright (C) 2024-2025 Burak Günaydin
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
+# of this software and associated documentation files (the 'Software'), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
@@ -16,6 +16,7 @@ import copy
 # From package imports
 from teatype.io import path
 
+_DEFAULT_ROOT_PATH = '/var/lib/hsdb'
 _FS = {
     'hsdb': {
         'backups': {
@@ -49,7 +50,7 @@ class _FSProxy:
     _root_path:str
     _struct:dict
     
-    def __init__(self, structure, root_path, current_path=""):
+    def __init__(self, structure, root_path, current_path=''):
         self._structure = structure
         self._root_path = root_path
         self._current_path = path.join(root_path, current_path) if current_path else root_path

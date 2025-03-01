@@ -31,6 +31,7 @@ from teatype.logging import err, warn
 # From-as local imports
 from teatype.io import path as path_functions
 
+# TODO: Implement with context handling
 class _File:
     def __init__(self, path:str, content:any=None, trimmed:bool=False, nested_depth:int=None):
         """
@@ -504,7 +505,6 @@ def read(file:_File|PosixPath|str,
                                         child_dict[child.tag] = child_converted
                                 result['children'] = child_dict
                             return result
-                        
                         content = xmlToDict(raw_xml_root)['children']
                     elif file_extension == '.ini' or file_extension == '.cfg' or force_format == 'ini' or force_format == 'cfg':
                         # Initialize ConfigParser and read INI configuration
@@ -565,7 +565,7 @@ def read(file:_File|PosixPath|str,
             err(f'Error reading file "{path_string}": {exc}')
         raise exc
 
-def write(path:str, data:any, force_format:str=None, prettify:bool=False, create_parents:bool=False) -> bool:
+def write(path:str, data:any, force_format:str=None, prettify:bool=False, create_parents:bool=True) -> bool:
     """
     Write data to a file at the specified path.
 
@@ -580,7 +580,7 @@ def write(path:str, data:any, force_format:str=None, prettify:bool=False, create
         data (any): The data to write to the file.
         force_format (str, optional): The format to force when writing data. Defaults to None.
         prettify (bool, optional): Whether to prettify the output. Defaults to False.
-        create_parents (bool, optional): Whether to create parent directories if they do not exist. Defaults to False.
+        create_parents (bool, optional): Whether to create parent directories if they do not exist. Defaults to True.
         
     Returns:
         bool: True if the operation was successful, False otherwise.

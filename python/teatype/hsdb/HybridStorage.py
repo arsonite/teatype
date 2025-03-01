@@ -101,15 +101,15 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 self.create_entry(matched_model, {'id': id, **data})
                 
     def install_index_files(self):
-        parsed_raw_data:List[dict] = parse_index_files(hybrid_storage_instance=self)
-        for raw_data in parsed_raw_data:
-            model_name = raw_data.get('model_meta').get('model_name')
+        parsed_index_files:List[dict] = parse_index_files(hybrid_storage_instance=self)
+        for index_file in parsed_index_files:
+            model_name = index_file.get('model_meta').get('model_name')
             matched_model = next((cls for cls in self.index_database.models if cls.__name__ == model_name), None)
             if matched_model is None:
                 raise ValueError(f'Model {model_name} not found in models')
             
-            id = raw_data.get('id')
-            data = raw_data.get('data')
+            id = index_file.get('id')
+            data = index_file.get('data')
             
             if self.get_entry(id):
                 continue
