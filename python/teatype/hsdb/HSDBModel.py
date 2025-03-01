@@ -47,11 +47,16 @@ class HSDBModel(ABC):
     _plural_name:str
     _relations:dict
     
+    migrated_at:dt
+    migration_app_name:str
+    migration_id:int
+    migration_name:str
+    
     app_name:str
     created_at:dt
     id:str
     is_fixture:bool=False
-    migration_id:int
+    model_name:str
     synced_at:dt
     updated_at:dt
     was_synced:bool=False
@@ -62,16 +67,15 @@ class HSDBModel(ABC):
                  updated_at:str=None,
                  overwrite_path:str=None):
         # TODO: Turn into util function
-        
         if id is not None:
             self.id = id
         else:
             self.id = generate_id()
             
         # TODO: Remove model name for redunancy when using a model index
-        self._model_name = type(self).__name__ 
-        self._name = parse_name(self._model_name, remove='-model', plural=False)
-        self._plural_name = parse_name(self._model_name, remove='-model', plural=True)
+        self.model_name = type(self).__name__ 
+        self._name = parse_name(self.model_name, remove='-model', plural=False)
+        self._plural_name = parse_name(self.model_name, remove='-model', plural=True)
         
         if overwrite_path:
             self.path = overwrite_path
@@ -88,48 +92,44 @@ class HSDBModel(ABC):
         
         # TODO: Make this dynamic
         self.app_name = 'raw'
-        self.migration_id = 0
-            
-    # TODO: Figure out how to do this
-    #     self._establishRelations()
-    
-    # # TODO: Implement
-    # def _establishRelations(self):
-    #     pass
-    
-    def serialize(self, json_dump:bool=False) -> dict|str:
-        serialized_data = self.serializer()
-        data_key = self._name + '_data'
-            
+        self.migration_id = 1
+        
+    def loads(self, data:dict):
+        pass
+
+    def serialize(self,
+                  include_migration:bool=True,
+                  include_model:bool=True,
+                  json_dump:bool=False,
+                  use_data_key:bool=False) -> dict|str:
+        serializer = self.serializer()
+        serialized_data = dict()
+        
         base_data = {
             'created_at': str(self.created_at),
             'id': self.id,
             'updated_at': str(self.updated_at)
-        }
-        # TODO: Make this optional instead of baked into base model?
-        if hasattr(self, 'name'):
-            base_data[data_key]['name'] = self._name
-        migration_data = {
-            'app_name': self.app_name,
-            'migration_id': self.migration_id,
-            'migration_precursor': self.migration_precursor,
-        }   
-        model_data = {
-            'app_name': self.app_name,
-            '_model_name': self._model_name,
-        }
-        relational_data = {}
-        serialized_data = {
-            data_key: {
-                **base_data,
-                **serialized_data
-            },
-            migration_data: migration_data,
-            model_data: model_data,
-            relational_data: relational_data,
-        }
+        } 
+        serialized_data['base_data'] = base_data
+        
+        data_key = self._name + '_data' if use_data_key else 'data'
+        serialized_data[data_key] = serializer
+        
+        if include_migration:
+            migration_data = {
+                'app_name': self.app_name,
+                'migration_id': self.migration_id,
+            }  
+            serialized_data['migration_data'] = migration_data
             
-        return full_data if not json_dump else json.dumps(full_data)
+        if include_model:
+            model_data = {
+                'app_name': self.app_name,
+                'model_name': self.model_name,
+            }
+            serialized_data['model_data'] = model_data
+        
+        return serialized_data if not json_dump else json.dumps(serialized_data, indent=4)
     
     def snapshot(self) -> dict:
         snapshot_dict = {}

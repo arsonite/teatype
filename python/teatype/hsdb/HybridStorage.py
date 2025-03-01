@@ -14,6 +14,7 @@
 import json
 import re
 import threading
+import traceback
 
 # From system imports
 from multiprocessing import Queue
@@ -34,6 +35,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
     coroutines_queue:Queue
     fixtures:dict
     index_database:IndexDatabase
+    migrations:dict
     operations_queue:Queue
     raw_file_handler:RawFileHandler
 
@@ -50,11 +52,15 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 root_path = env.get('HSDB_ROOT_PATH')
             
             self.coroutines = []
+            self.coroutines_queue = Queue()
+            self.fixtures = dict
+            self.migrations = dict
+            self.operations_queue = Queue()
+            
             self.index_database = IndexDatabase(models=models)
             self.raw_file_handler = RawFileHandler(root_path=root_path)
             
             self._initialized = True # Mark as initialized
-            
             self.__instance = self # Set the instance
             
             log('HybridStorage finished initialization')
@@ -94,7 +100,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 try:
                     del data['de_DE']
                     del data['en_EN']
-                    del data['model_meta']
+                    del data['model_data']
                 except:
                     pass
                     
@@ -102,19 +108,23 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 
     def install_index_files(self):
         parsed_index_files:List[dict] = parse_index_files(hybrid_storage_instance=self)
-        for index_file in parsed_index_files:
-            model_name = index_file.get('model_meta').get('model_name')
+        for index_key in parsed_index_files:
+            try:
+                model_name = parsed_index_files[model_name][0].get('model_data').get('model_name')
+            except:
+                continue
+            
             matched_model = next((cls for cls in self.index_database.models if cls.__name__ == model_name), None)
             if matched_model is None:
                 raise ValueError(f'Model {model_name} not found in models')
-            
-            id = index_file.get('id')
-            data = index_file.get('data')
-            
-            if self.get_entry(id):
-                continue
                 
-            self.create_entry(matched_model, {'id': id, **data})
+            for index_file in parsed_index_files[index_key]:
+                id = index_file.get('base_data').get('id')
+                if self.get_entry(id):
+                    continue
+                    
+                data = index_file.get('data')
+                self.create_entry(matched_model, {'id': id, **data})
 
     def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> dict|None:
         try:
@@ -126,9 +136,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             # TODO: If file save fails, delete entry from db
             # TODO: Implement implemented trap cleanup handlers in models
             return model_instance.serialize()
-        except Exception as exc:
-            import traceback
-            traceback.print_exc()
+        except:
             return None
 
     def get_entry(self, model_id:str, serialize:bool=False) -> dict:
