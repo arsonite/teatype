@@ -19,5 +19,3 @@ from .IndexDatabase import IndexDatabase
 from .RawFileStructure import RawFileStructure
 from .RawFileHandler import RawFileHandler
 from .HybridStorage import HybridStorage
-
-from . import util as hsdb_util

@@ -10,8 +10,22 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-from .parse_fixtures import parse_fixtures
-from .parse_index_files import parse_index_files
-from .parse_name import parse_name
+# System imports
+import re
 
-__all__ = ['parse_fixtures', 'parse_index_files', 'parse_name']
+# From system imports
+from typing import Union
+
+def parse_name(raw_name:str,
+               plural:bool=False,
+               remove:str=None,
+               replace:Union[str,str]=None,
+               seperator:str='-') -> str:
+    parsed_name = re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
+    if remove:
+        parsed_name = parsed_name.replace(remove, '')
+    if replace:
+        parsed_name = parsed_name.replace(replace[0], replace[1])
+    if plural:
+        parsed_name = parsed_name + 's' if not parsed_name.endswith('s') else parsed_name + 'es'
+    return parsed_name

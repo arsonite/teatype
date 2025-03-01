@@ -12,7 +12,6 @@
 
 # System imports
 import json
-import re
 
 # From system imports
 from abc import ABC, abstractmethod
@@ -20,6 +19,7 @@ from abc import ABC, abstractmethod
 # From package imports
 from teatype.hsdb import HSDBAttribute
 from teatype.io import env
+from teatype.util import parse_name
 
 # From-as system imports
 from datetime import datetime as dt
@@ -63,8 +63,6 @@ class HSDBModel(ABC):
                  updated_at:str=None,
                  overwrite_file_path:str=None):
         # TODO: Turn into util function
-        def _parse_name(raw_name:str, seperator:str='-', plural:bool=False):
-            return re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
         
         if id is not None:
             self.id = id
@@ -77,7 +75,7 @@ class HSDBModel(ABC):
         # TODO: Remove model name for redunancy when using a model index
         self.model_name = type(self).__name__ 
         # TODO: Turn into util function
-        self.parsed_name = _parse_name(self.model_name).replace('-model', '')
+        self.parsed_name = parse_name(self.model_name).replace('-model', '')
         self.parsed_plural_name = self.parsed_name + 's' if not self.parsed_name.endswith('s') else self.parsed_name + 'es'
         
         if overwrite_file_path:

@@ -20,6 +20,7 @@ from typing import List
 # From package imports
 from teatype.io import file, path
 from teatype.logging import err, hint, println, warn
+from teatype.hsdb.util import parse_name
 
 class _ParsingError:
     entry_id:str
@@ -39,10 +40,6 @@ def parse_index_files(hybrid_storage_instance:object=None, migrator:object=None)
     if hybrid_storage_instance is not None and migrator is not None:
         raise ValueError('Only one of the parameters should be provided')
     
-    # TODO: Create package function
-    def _parse_name(raw_name:str, seperator:str='-') -> None:
-        return re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
-    
     # Parsing variables from the two different sources
     if hybrid_storage_instance:
         models = hybrid_storage_instance.index_database.models
@@ -55,8 +52,7 @@ def parse_index_files(hybrid_storage_instance:object=None, migrator:object=None)
     parsed_index_data = {}
     parsing_errors_found = False
     for model in models:
-        model_plural_name = _parse_name(model.__name__).replace('-model', '')
-        model_plural_name = model_plural_name + 's' if not model_plural_name.endswith('s') else model_plural_name + 'es'
+        model_plural_name = parse_name(model.__name__, plural=True, remove='model')
         model_path = f'{index_path}/{model_plural_name}'
         if not path.exists(model_path):
             continue
