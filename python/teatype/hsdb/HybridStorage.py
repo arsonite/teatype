@@ -88,32 +88,27 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 raise ValueError(f'Model {model_name} not found in models')
             
             for entry in fixture.get('fixtures'):
-                id = entry.get('id')
                 data = entry.get('data')
-                if data.get('de_DE'):
-                    name = data['de_DE']['name']
-                elif data.get('en_EN'):
-                    name = data['en_EN']['name']
+                if 'de_DE' in data.get('name'):
+                    name = data['name']['de_DE']
+                elif 'en_EN' in data.get('name'):
+                    name = data['name']['en_EN']
                 else:
                     name = data.get('name')
                 data.update({'name': name})
                 try:
-                    del data['de_DE']
-                    del data['en_EN']
-                    del data['model_data']
+                    del data['name']['de_DE']
+                    del data['name']['en_EN']
+                    # del data['model_data']
                 except:
                     pass
                     
-                self.create_entry(matched_model, {'id': id, **data})
+                self.parse_entry(matched_model, entry)
                 
     def install_index_files(self):
         parsed_index_files:List[dict] = parse_index_files(hybrid_storage_instance=self)
         for index_key in parsed_index_files:
-            try:
-                model_name = parsed_index_files[model_name][0].get('model_data').get('model_name')
-            except:
-                continue
-            
+            model_name = parsed_index_files[index_key][0].get('model_data').get('model_name')
             matched_model = next((cls for cls in self.index_database.models if cls.__name__ == model_name), None)
             if matched_model is None:
                 raise ValueError(f'Model {model_name} not found in models')
@@ -122,9 +117,8 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 id = index_file.get('base_data').get('id')
                 if self.get_entry(id):
                     continue
-                    
-                data = index_file.get('data')
-                self.create_entry(matched_model, {'id': id, **data})
+                
+                self.parse_entry(matched_model, index_file)
 
     def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> dict|None:
         try:
@@ -138,6 +132,9 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             return model_instance.serialize()
         except:
             return None
+        
+    def parse_entry(self, model:object, data:dict) -> dict|None:
+        self.index_database.parse_entry(model, data)
 
     def get_entry(self, model_id:str, serialize:bool=False) -> dict:
         return self.index_database.get_entry(model_id, serialize)

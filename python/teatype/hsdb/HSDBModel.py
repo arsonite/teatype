@@ -93,24 +93,29 @@ class HSDBModel(ABC):
         # TODO: Make this dynamic
         self.app_name = 'raw'
         self.migration_id = 1
-        
-    def loads(self, data:dict):
+    
+    @staticmethod
+    def loads(self, dict_data:dict):
         pass
 
     def serialize(self,
+                  fuse_data:bool=False,
                   include_migration:bool=True,
                   include_model:bool=True,
                   json_dump:bool=False,
                   use_data_key:bool=False) -> dict|str:
         serializer = self.serializer()
         serialized_data = dict()
-        
-        base_data = {
-            'created_at': str(self.created_at),
-            'id': self.id,
-            'updated_at': str(self.updated_at)
-        } 
-        serialized_data['base_data'] = base_data
+            
+        if fuse_data:
+            return {**base_data, **serializer}
+        else:
+            base_data = {
+                'created_at': str(self.created_at),
+                'id': self.id,
+                'updated_at': str(self.updated_at)
+            } 
+            serialized_data['base_data'] = base_data
         
         data_key = self._name + '_data' if use_data_key else 'data'
         serialized_data[data_key] = serializer
