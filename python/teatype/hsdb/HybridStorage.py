@@ -103,7 +103,7 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 except:
                     pass
                     
-                self.parse_entry(matched_model, entry)
+                self.create_entry(matched_model, entry, parse=True, write=True)
                 
     def install_index_files(self):
         parsed_index_files:List[dict] = parse_index_files(hybrid_storage_instance=self)
@@ -118,23 +118,31 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
                 if self.get_entry(id):
                     continue
                 
-                self.parse_entry(matched_model, index_file)
+                self.create_entry(matched_model, index_file, parse=True, write=False)
 
-    def create_entry(self, model:object, data:dict, overwrite_path:str=None) -> dict|None:
+    def create_entry(self,
+                     model:object,
+                     data:dict,
+                     parse:bool=False,
+                     write:bool=True,
+                     overwrite_path:str=None) -> dict|None:
         try:
-            model_instance = self.index_database.create_entry(model, data, overwrite_path)
+            # TODO: Implement implemented trap cleanup handlers in models
+            model_instance = self.index_database.create_entry(model, data, parse)
             if model_instance is None:
                 return None
             
-            file_path = self.raw_file_handler.create_entry(model_instance, overwrite_path)
-            # TODO: If file save fails, delete entry from db
-            # TODO: Implement implemented trap cleanup handlers in models
+            if write:            
+                try:
+                    file_path = self.raw_file_handler.create_entry(model_instance, overwrite_path)
+                    # if not file.exists(file_path):
+                    #     model_instance.delete()
+                except:
+                    # model_instance.delete()
+                    pass
             return model_instance.serialize()
         except:
             return None
-        
-    def parse_entry(self, model:object, data:dict) -> dict|None:
-        self.index_database.parse_entry(model, data)
 
     def get_entry(self, model_id:str, serialize:bool=False) -> dict:
         return self.index_database.get_entry(model_id, serialize)
@@ -143,6 +151,8 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
         return self.index_database.get_entries(model, serialize)
 
     def modify_entry(self) -> bool:
+        # TODO: Make backup of data before modifications
+        #       Delete backup when write was succesful
         return True
 
     def delete_entry(self) -> bool:

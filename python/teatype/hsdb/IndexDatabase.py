@@ -47,9 +47,14 @@ class IndexDatabase:
         self._relational_index = dict()
         self._relational_index_lock = threading.Lock()
                 
-    def create_entry(self, model:type, data:dict, root_path:str=None) -> object|None:
+    def create_entry(self, model:type, data:dict, parse:bool=False) -> object|None:
         try:
             with self._db_lock:
+                if parse:
+                    data = {
+                        **data.get('base_data'),
+                        **data.get('data')
+                    }
                 # TODO: Validation
                 model_instance = model(**data)
                 model_name = model_instance.model_name
@@ -97,81 +102,6 @@ class IndexDatabase:
                             return None
                     # case 'LabelModel':
                     #     pass
-                    case 'ManufacturerModel':
-                        existing_match = next(
-                            (
-                                obj
-                                for obj in self._db.values()
-                                if getattr(obj, 'model_name', None) == 'ManufacturerModel'
-                                and getattr(obj, 'name', None) == data.get('name')
-                            ),
-                            None,
-                        )
-                        if existing_match:
-                            return None
-                    case 'SurgeryTypeModel':
-                        existing_match = next(
-                            (
-                                obj
-                                for obj in self._db.values()
-                                if getattr(obj, 'model_name', None) == 'SurgeryTypeModel'
-                                and getattr(obj, 'name', None) == data.get('name')
-                            ),
-                            None,
-                        )
-                        if existing_match:
-                            return None
-                        
-                self._db[model_id] = model_instance
-                return model_instance
-        except:
-            import traceback
-            traceback.print_exc()
-            return None
-        
-    def parse_entry(self, model:type, data:dict) -> object|None:
-        try:
-            with self._db_lock:
-                data = {
-                    **data.get('base_data'),
-                    **data.get('data')
-                }
-                model_instance = model(**data)
-                model_name = model_instance.model_name
-                with self._model_index_lock:
-                    if model_name not in self._model_index:
-                        self._model_index[model_name] = {}
-                        
-                model_id = model_instance.id
-                if model_id in self._db:
-                    return None
-                
-                match model_name:
-                    case 'InstrumentModel':
-                        existing_match = next(
-                            (
-                                obj
-                                for obj in self._db.values()
-                                if getattr(obj, 'model_name', None) == 'InstrumentModel'
-                                and getattr(obj, 'article_number', None) == data.get('article_number')
-                                and getattr(obj, 'manufacturer', None) == data.get('manufacturer')
-                            ),
-                            None,
-                        )
-                        if existing_match:
-                            return None
-                    case 'InstrumentTypeModel':
-                        existing_match = next(
-                            (
-                                obj
-                                for obj in self._db.values()
-                                if getattr(obj, 'model_name', None) == 'InstrumentTypeModel'
-                                and getattr(obj, 'name', None) == data.get('name')
-                            ),
-                            None,
-                        )
-                        if existing_match:
-                            return None
                     case 'ManufacturerModel':
                         existing_match = next(
                             (
