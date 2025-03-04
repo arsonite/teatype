@@ -17,6 +17,8 @@ import threading
 from typing import List
 
 class IndexDatabase:
+    _cache_register:dict # For all cache values
+    _cache_register_lock:threading.Lock
     _compute_index:dict # For all compute values for easy modification
     _compute_index_lock:threading.Lock
     _db:dict # For all raw data
@@ -31,6 +33,9 @@ class IndexDatabase:
     
     def __init__(self, models:List[type]):
         self.models = models
+        
+        self._cache_register = dict()
+        self._cache_register_lock = threading.Lock()
         
         self._compute_index = dict()
         self._compute_index_lock = threading.Lock()
