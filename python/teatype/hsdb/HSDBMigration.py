@@ -55,10 +55,10 @@ class _HSDBMigrationRejection:
 # TODO: Implement trap mechanism to revert migration if it fails
 # TODO: Migrations always count one up in id dependent on app and model
 # TODO: Always create a snapshot of all models before launching index db and if there are changes, create automatic migrations
-# TODO: Always create a backup of all raw db entries before every migration (with optional include_non_index_files flag)
+# TODO: Always create a backup of all raw db entries before every migration (with optional include_rawfiles flag)
 class HSDBMigration(ABC):
     __models_snapshot:dict # Holds snapshot data for models that get migrated
-    __non_index_files_snapshot:dict|None # Optionally holds snapshot data for non-index files
+    __rawfiles_snapshot:dict|None # Optionally holds snapshot data for non-index files
     _auto_creation_datetime:str|None # ISO-formatted string for auto creation time
     _from_to_string:str # String representation of the migration's origin and destination
     _hsdb_path:str='/var/lib/hsdb' # Default path on linux
@@ -77,7 +77,7 @@ class HSDBMigration(ABC):
     _workers:int # Number of workers to use for migration
     app_name:str # Name of the application this migration is associated with
     cold_mode:bool #  Indicates if the migration is in cold mode (no applied changes)
-    include_non_index_files:bool # Indicates if non-index files should be part of migration steps
+    include_rawfiles:bool # Indicates if non-index files should be part of migration steps
     migration_id:int # Numeric identifier to order migrations
     migration_name:str # Descriptive name for the migration
     models:List[type] # List of models that are part of the migration
@@ -86,13 +86,13 @@ class HSDBMigration(ABC):
     def __init__(self,
                  auto_migrate:bool=True, 
                  cold_mode:bool=False,
-                 include_non_index_files:bool=False,
+                 include_rawfiles:bool=False,
                  max_workers:int=None) -> None:
         """
         Initializes the migration. If 'auto_migrate' is True, the 'migrate' method is called immediately.
         """
         self.cold_mode = cold_mode
-        self.include_non_index_files = include_non_index_files
+        self.include_rawfiles = include_rawfiles
         
         if max_workers is None:
             self._workers = __MAX_AMOUNT_OF_WORKERS
@@ -166,22 +166,27 @@ class HSDBMigration(ABC):
         self._migration_backup_path = path.join(migration_backups_path, self._from_to_string)
         
     def migrate(self) -> None:
-        if self.cold_mode:
-            println()
-            hint('Cold mode is active, no changes will be applied.')
-            migration_dump_directory = path.join(self._hsdb_path, 'dumps', 'migrations')
-            file.write(path.join(migration_dump_directory, f'{self._from_to_string}_migration_data.json'),
-                       self._migration_data,
-                       force_format='json',
-                       prettify=True)
-            log('   Dumped migration data to disk')
-            file.write(path.join(migration_dump_directory, f'{self._from_to_string}_rejectpile.json'),
-                       self._rejectpile,
-                       force_format='json',
-                       prettify=True)
-            log('   Dumped rejectpile data to disk')
-            log('   Check path for dumped data:')
-            log(f'      {migration_dump_directory}')
+        println()
+        log('Final summary (index):')
+        for migration_data_key in self._migration_data['index']:
+            print(f'    Migrated {migration_data_key}: {len(self._migration_data["index"][migration_data_key])}')
+            for migration_entry in self._migration_data['index'][migration_data_key]:
+                migration_entry_path = path.join(self._index_path, migration_data_key, migration_entry['base_data']['id'] + '.json')
+                file.write(migration_entry_path,
+                            migration_entry,
+                            force_format='json',
+                            prettify=True)
+        println()
+        for rejectpile_key in self._rejectpile['index']:
+            print(f'    Rejected {rejectpile_key}: {len(self._rejectpile["index"][rejectpile_key])}')
+            for rejectpile_entry in self._rejectpile['index'][rejectpile_key]:
+                id = rejectpile_entry['data']['base_data']['id']
+                rejectpile_source_path = path.join(self._index_path, rejectpile_key, id + '.json')
+                rejectpile_target_path = path.join(self._rejectpile_index_path, rejectpile_key, id + '.json')
+                file.move(rejectpile_source_path, rejectpile_target_path)
+        println()
+        
+        # TODO: Write migration for rawfiles data
     
     def run(self) -> None:
         self._parsed_index_data = parse_index_files(migrator=self)
@@ -200,10 +205,26 @@ class HSDBMigration(ABC):
             self.gather()
             println()
             log('Gathering succeeded')        
-
             
             try:
-                self.migrate()
+                if self.cold_mode:
+                    println()
+                    hint('Cold mode is active, no changes will be applied.')
+                    migration_dump_directory = path.join(self._hsdb_path, 'dumps', 'migrations')
+                    file.write(path.join(migration_dump_directory, f'{self._from_to_string}_migration_data.json'),
+                            self._migration_data,
+                            force_format='json',
+                            prettify=True)
+                    log('   Dumped migration data to disk')
+                    file.write(path.join(migration_dump_directory, f'{self._from_to_string}_rejectpile.json'),
+                            self._rejectpile,
+                            force_format='json',
+                            prettify=True)
+                    log('   Dumped rejectpile data to disk')
+                    log('   Check path for dumped data:')
+                    log(f'      {migration_dump_directory}')
+                else:
+                    self.migrate()
                 println()
                 log('Migration succeeded')
                 println()

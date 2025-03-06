@@ -313,8 +313,8 @@ def exists(path:PosixPath|str, return_file:bool=False, trim_file:bool=False) -> 
     return file_exists
     
 def list(directory:str,
-         walk:bool=True,
-         depth:int=1,
+         walk:bool=False,
+         depth:int=None,
          ignore_folders:List[str]=None,
          only_include:List[str]=None, # TODO: Seperate include_extensions and include_regex
          trim_files:bool=True,
@@ -335,7 +335,7 @@ def list(directory:str,
     """
     try:
         # Check if a depth greater than 1 is specified without enabling recursive walking
-        if depth > 1 and walk == False:
+        if depth is not None and depth > 1 and walk == False:
             warn('Cannot specify depth without walking through subdirectories. Ignoring depth parameter.')
         
         # Initialize an empty list to store the results of files and directories
@@ -343,9 +343,10 @@ def list(directory:str,
         
         # Define an inner function to handle recursive directory walking
         def walk_directory(dir_path, current_depth):
-            # Terminate recursion if the current depth exceeds the specified maximum depth
-            if current_depth > depth:
-                return
+            if depth is not None:
+                # Terminate recursion if the current depth exceeds the specified maximum depth
+                if current_depth > depth:
+                    return
             # Iterate over each entry in the current directory
             for entry in os.scandir(dir_path):
                 if entry.is_dir():
