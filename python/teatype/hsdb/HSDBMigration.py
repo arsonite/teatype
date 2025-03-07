@@ -50,6 +50,7 @@ class _HSDBMigrationRejection:
             'rejected_at': self.rejected_at
         }
 
+# TODO: Split between migration number and migration id that gets automatically generated from app, name and number (number still increments)
 # TODO: Only list number of errors, write errors into logfile
 # TODO: Implement migration protocol
 # TODO: Implement trap mechanism to revert migration if it fails

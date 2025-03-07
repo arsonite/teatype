@@ -30,6 +30,8 @@ from teatype.util import id as generate_id
 # TODO: Add attribute supports
 # TODO: Add language supports
 class HSDBModel(ABC):
+    # TODO: Implement these as computed properties
+    # _app_name:str
     _overwrite_path:str
     _overwrite_name:str
     _overwrite_plural_name:str
@@ -43,22 +45,14 @@ class HSDBModel(ABC):
     # migration_id:int
     # migration_name:str
     
-    app_name=HSDBAttribute(editable=False, type=str)
-    created_at=HSDBAttribute(computed=True, type=dt)
-    id=HSDBAttribute(computed=True, unique=True, type=str)
-    is_fixture=HSDBAttribute(editable=False, type=bool)
-    migration_id=HSDBAttribute(editable=False, type=int)
-    synced_at=HSDBAttribute(computed=True, type=dt)
-    updated_at=HSDBAttribute(computed=True, type=dt)
-    was_synced=HSDBAttribute(editable=False, type=bool)
-    app_name:str
-    created_at:dt
-    id:str
-    is_fixture:bool=False
-    model_name:str
-    synced_at:dt
-    updated_at:dt
-    was_synced:bool=False
+    app_name     = HSDBAttribute[str](editable=False) # TODO: Maybe make this as a computed python property?
+    created_at   = HSDBAttribute[dt](computed=True)
+    id           = HSDBAttribute[str](computed=True, unique=True)
+    is_fixture   = HSDBAttribute[bool](computed=True) # TODO: Maybe make this as a computed python property?
+    migration_id = HSDBAttribute[int](computed=True) # TODO: Maybe make this as a computed python property?
+    synced_at    = HSDBAttribute[dt](computed=True)
+    updated_at   = HSDBAttribute[dt](computed=True)
+    was_synced   = HSDBAttribute[bool](computed=True)
     
     def __init__(self,
                  data:dict,
@@ -67,13 +61,21 @@ class HSDBModel(ABC):
         # create an instance copy, assign its key to the variable name,
         # and, if the field is provided in the data dict, set its value.
         # Necessary to avoid sharing the same attribute instance across all instances.
-        for attr_name, attr in self.__class__.__dict__.items():
+        for attribute_name, attribute in self.__class__.__dict__.items():
+            if isinstance(attribute, HSDBAttribute):
+                instance_attribute = copy.copy(attribute)
+                instance_attribute.key = attribute_name
+                if attribute_name in data:
+                    if instance_attribute.computed:
+                        raise ValueError(f'{attribute_name} is computed and cannot be set')
+                    instance_attribute.value = data[attribute_name]
+                setattr(self, attribute_name, instance_attribute)
+                
+        # Validation after initialization
+        for attribute_name, attr in self.__class__.__dict__.items():
             if isinstance(attr, HSDBAttribute):
-                instance_attr = copy.copy(attr)
-                instance_attr.key = attr_name
-                if attr_name in data:
-                    instance_attr.value = data[attr_name]
-                setattr(self, attr_name, instance_attr)
+                if attr.required and not attr.value:
+                    raise ValueError(f'{attribute_name} is required')
                 
         return # TODO: Temporary
             
@@ -118,6 +120,8 @@ class HSDBModel(ABC):
                   json_dump:bool=False,
                   use_data_key:bool=False) -> dict|str:
         serializer = self.serializer()
+        return serializer
+    
         serialized_data = dict()
             
         if fuse_data:
@@ -230,9 +234,9 @@ class HSDBModel(ABC):
     def serializer(self) -> dict:
         # If this method is not overridden, collect all HSDBAttribute fields.
         serialized = {}
-        for attr_name, attr in self.__dict__.items():
+        for attribute_name, attr in self.__dict__.items():
             if isinstance(attr, HSDBAttribute):
-                serialized[attr_name] = attr.value
+                serialized[attribute_name] = attr.value
         return serialized
 
 # -------- Sample usage --------
@@ -246,7 +250,7 @@ if __name__ == '__main__':
         # school = HSDBAttribute(type=HSDBRelation)
 
     # Create model instances
-    student_A = Student({'age': 25, 'height': 160, 'name': 'jennifer'})
+    student_A = Student({'age': 25.0, 'height': 160, 'name': 'jennifer'})
     # e.g. {
     #     "base_data": {
     #         "created_at": "2025-01-01T00:00:00",
