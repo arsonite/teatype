@@ -12,8 +12,11 @@
 
 # WARNING: Do not change the order of the imports, it will break the code
 from .HSDBRelation import HSDBRelation
-from .HSDBMigration import HSDBMigration
+# from .HSDBMigration import HSDBMigration
+from .HSDBValueWrapper import HSDBValueWrapper
 from .HSDBAttribute import HSDBAttribute
+from .HSDBMeta import HSDBMeta
+from .HSDBMigration import HSDBMigration
 from .HSDBModel import HSDBModel
 from .IndexDatabase import IndexDatabase
 from .RawFileStructure import RawFileStructure

@@ -17,15 +17,28 @@ import sys
 from typing import Generic, Type, TypeVar
 
 # From package imports
-from teatype.hsdb import HSDBRelation
+from teatype.hsdb import HSDBRelation, HSDBValueWrapper
 from teatype.util import dt
 
 # Type alias for attribute types
 T = TypeVar('T')
 
 # Supported attribute types
+_AVAILABLE_FIELDS = [
+    'computed',
+    'description',
+    'editable',
+    'indexed',
+    'max_size',
+    'relation',
+    'required',
+    'searchable',
+    'type',
+    'unique'
+]
 _SUPPORTED_TYPES = [bool, dt, float, int, str]
 
+# TODO: Try to do automatic type checking and assignment in ValueWrapper as well
 # TODO: Implement support for dicts and lists (potentially dangerous though)
 class HSDBAttribute(Generic[T]):
     __init=False
@@ -52,6 +65,9 @@ class HSDBAttribute(Generic[T]):
                  required:bool=False,
                  searchable:bool=False,
                  unique:bool=False):
+        # Manual type checking to complement static type checking
+        if type not in _SUPPORTED_TYPES:
+            raise ValueError(f'Unsupported type: {type.__name__}, supported types are: {_SUPPORTED_TYPES}')
         if not isinstance(computed, bool):
             raise ValueError('computed must be a boolean')
         if not isinstance(description, str) and description != None:
@@ -84,8 +100,16 @@ class HSDBAttribute(Generic[T]):
         self.type = type # This sets the actual type based on the generic argument
         self.unique = unique
         
+        self._cached_value = None # Cache for the field value
         self._key = None # internal storage for key
+        self._wrapper = None #
         self._value = None # internal storage for value
+        
+        self.name = None # Will be assigned dynamically by __set_name__
+        
+    def __set_name__(self, owner, name):
+        """Automatically assigns the field name when the class is created."""
+        self.name = name
         
     def __repr__(self):
         return f'HSDBAttribute(key={self.key}, value={self.value}, type={self.type.__name__})'
@@ -99,28 +123,17 @@ class HSDBAttribute(Generic[T]):
         """
         self.value = value
         
-    def __getattr__(self, name: str):
-        """
-        Intercepts attribute access and returns the value.
-        This is called when an attribute (like created_at) is accessed.
-        """
-        if name == 'value':
-            return self._value
-        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
-        
+    ##############
+    # Properties #
+    ##############
+    
     @property
     def cls(self):
-        """
-        Dynamically return the class of the attributelass__
-        """
         return self.__class__
     
     @property
     def instance(self):
-        """
-        Dynamically return the instance of the attribute
-        """
-        return self
+        return self.__instance
 
     @property
     def key(self):
@@ -129,6 +142,28 @@ class HSDBAttribute(Generic[T]):
     @property
     def value(self):
         return self._value
+        
+    ######################
+    # Descriptor Methods #
+    ######################
+
+    def __get__(self, instance, owner):
+        if self._wrapper is None: # Lazy loading of the wrapper
+            value = instance.__dict__.get(self.name)
+            self._wrapper = HSDBValueWrapper(value, self)
+        return self._wrapper
+
+    def __set__(self, instance, value):
+        # Set the value and cache it
+        instance.__dict__[self.name] = value
+        self._wrapper = None # Invalidate the cached wrapper
+
+    def __set_name__(self, owner, name):
+        self.name = name # Store the field name for later use in the instance
+        
+    ##################
+    # Setter Methods #
+    ##################
 
     @key.setter
     def key(self, new_key:str):
@@ -164,15 +199,15 @@ class HSDBAttribute(Generic[T]):
     # Class methods #
     #################
     
-    # @classmethod
-    # def __class_getitem__(cls, item: Type[T]) -> Type['HSDBAttribute']:
-    #     """
-    #     This method is used to handle generic types for HSDBAttribute.
-    #     It ensures that the class can be correctly instantiated with the
-    #     proper type (e.g., HSDBAttribute[str]).
-    #     """
-    #     # Ensure item is a valid type
-    #     if item not in _SUPPORTED_TYPES:
-    #         raise ValueError(f'Unsupported type: {item.__name__}, supported types are: {_SUPPORTED_TYPES}')
-    #     # Return the class type with the parameter
-    #     return cls
+    @classmethod
+    def __class_getitem__(cls, item: Type[T]) -> Type['HSDBAttribute']:
+        """
+        This method is used to handle generic types for HSDBAttribute.
+        It ensures that the class can be correctly instantiated with the
+        proper type (e.g., HSDBAttribute[str]).
+        """
+        # Ensure item is a valid type
+        if item not in _SUPPORTED_TYPES:
+            raise ValueError(f'Unsupported type: {item.__name__}, supported types are: {_SUPPORTED_TYPES}')
+        # Return the class type with the parameter
+        return cls
