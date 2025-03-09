@@ -72,7 +72,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
             self._cache_attributes()
 
         # DEPRECATED: Do I even need this anymore?
-            # self._values = {} # Store actual field values
+            # self._fields = {} # Store actual field values
             # for field_name, field in self.__class__.__dict__.items():
             #     if isinstance(field, HSDBAttribute):
             #         if field.required and field_name not in data:
@@ -101,17 +101,26 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
             #     setattr(self, attribute_name, instance_attribute) # Set the attribute to the instance
         
         # Create a dict to hold instance-specific field values
-        self._values = {}
+        self._fields = {}
         for attribute_name, attribute in self._attribute_cache[self.__class__].items():
+            # Dynamically create the instance attribute
+            instance_attribute = HSDBAttribute(
+                attribute.type, 
+                **{key: value for key, value in vars(attribute).items() if key not in [
+                    'name', 'type', '_cached_value', '_key', '_value', '_wrapper']} # Exclude these keys
+            )
+            instance_attribute.key = attribute_name
             if attribute_name in data:
                 # Validate type before assignment
                 if not isinstance(data[attribute_name], attribute.type):
                     raise ValueError(f'Field "{attribute_name}" must be of type {attribute.type.__name__}')
                 if attribute.computed:
                     raise ValueError(f'{attribute_name} is computed and cannot be set')
-                self._values[attribute_name] = data[attribute_name]
-            else:
-                self._values[attribute_name] = None
+                attribute_value = data.get(attribute_name)
+                instance_attribute = attribute_value
+                
+            # Create a deepcopy of the attribute and assign the value
+            self._fields[attribute_name] = instance_attribute
             
         # Model name and pluralization
         self._model_name = type(self).__name__ 
@@ -124,12 +133,11 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 if attr.required and not attr.value:
                     raise ValueError(f'Model "{self._model_name}" init error: attribute "{attribute_name}" is required')
             
-        self.id = generate_id(truncate=5)
-        # self.id = generate_id()
+        self.id.__computational_override__(generate_id(truncate=5))
         
         current_time = dt.now()
-        self.created_at = current_time
-        self.updated_at = current_time
+        self.created_at.__computational_override__(current_time)
+        self.updated_at.__computational_override__(current_time)
             
         if overwrite_path:
             self._path = overwrite_path
@@ -140,22 +148,22 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         # self.migration_id = 1
         
     def __getattribute__(self, name):
-        # If the field name is in our field cache, return the value from _values
+        # If the field name is in our field cache, return the value from _fields
         _cache = object.__getattribute__(self, '_attribute_cache')
         cls = type(self)
         if cls in _cache and name in _cache[cls]:
-            return object.__getattribute__(self, '_values').get(name)
+            return object.__getattribute__(self, '_fields').get(name)
         return object.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
         _cache = self.__class__._attribute_cache.get(self.__class__, {})
         if name in _cache:
             attribute = _cache[name]
-            if attribute.computed and self._values.get(name) is not None:
+            if attribute.computed and self._fields.get(name) is not None:
                 raise ValueError(f'Attribute "{name}" is computed and cannot be set manually')
             if not isinstance(value, attribute.type):
                 raise ValueError(f'Field "{name}" must be of type {attribute.type.__name__}')
-            self.__dict__.setdefault('_values', {})[name] = value
+            self.__dict__.setdefault('_fields', {})[name] = value
         else:
             super().__setattr__(name, value)
     
@@ -309,7 +317,8 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         If this method is overridden, collect all fields that are not computed.
         """
         serialized = {}
-        for attribute_name, attribute in self.__dict__.items():
+        for attribute_name, attribute in self._fields.items():
+            # print(attribute_name, attribute)
             # Skip non-HSDBAttribute fields
             try:
                 instance_attribute = getattr(self, attribute_name)
@@ -340,6 +349,11 @@ if __name__ == '__main__':
 
     # Create model instances
     student_A = StudentModel({'age': 25, 'height': 160, 'name': 'jennifer jones'})
+    print(student_A)
+    print(student_A.id)
+    print(student_A.id.required)
+    print(student_A.name)
+    print(student_A.required)
     student_B = StudentModel({'age': 18, 'height': 185, 'name': 'bob barker'})
     student_C = StudentModel({'age': 21, 'height': 173, 'name': 'alice anderson'})
     
@@ -348,13 +362,13 @@ if __name__ == '__main__':
     
     # Simulate a simple in-memory db:
     db = {
-        student_A.id: student_A,
-        student_B.id: student_B,
-        student_C.id: student_C,
-        school_A.id: school_A,
-        school_B.id: school_B
+        student_A.id: student_A.serialize(),
+        student_B.id: student_B.serialize(),
+        student_C.id: student_C.serialize(),
+        school_A.id: school_A.serialize(),
+        school_B.id: school_B.serialize(),
     }
-    pprint(db)
+    # pprint(db)
     
     sys.exit(0) # Execution delimiter
 

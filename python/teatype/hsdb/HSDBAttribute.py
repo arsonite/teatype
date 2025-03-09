@@ -41,7 +41,6 @@ _SUPPORTED_TYPES = [bool, dt, float, int, str]
 # TODO: Try to do automatic type checking and assignment in ValueWrapper as well
 # TODO: Implement support for dicts and lists (potentially dangerous though)
 class HSDBAttribute(Generic[T]):
-    __init=False
     computed:bool         # Whether the attribute is computed, more of a flavour attribute, laxily enforced
     description:str       # Description of the attribute
     editable:bool         # Whether the attribute can be edited, automatically set to False if computed
@@ -49,7 +48,7 @@ class HSDBAttribute(Generic[T]):
     key:str               # The attribute key
     max_size:int          # Maximum size of the attribute value (only relevant for strings)
     relation:HSDBRelation # Relation object if attribute is a relation
-    required:bool         # Whether the attribute is required
+    required:bool         # Whether the attribute is required, automatically set to True if computed
     searchable:bool       # Whether the attribute is searchable
     type:Type[T]          # holds an actual Python type, e.g. str, int, etc.
     unique:bool           # Whether the attribute value must be unique
@@ -95,7 +94,7 @@ class HSDBAttribute(Generic[T]):
         self.indexed = indexed
         self.max_size = max_size
         self.relation = relation
-        self.required = required
+        self.required = True if computed else required
         self.searchable = searchable
         self.type = type # This sets the actual type based on the generic argument
         self.unique = unique
