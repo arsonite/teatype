@@ -17,10 +17,13 @@ class HSDBRelation:
     _name:str
     _primary_keys:List[str]
     _relation_type:str
+    _relational_key:str
     _secondary_keys:List[str]
     
-    def __init__(self, name:str, primary_keys:List[str], secondary_keys:List[str]):
+    def __init__(self, name:str, primary_keys:List[str], secondary_keys:List[str], relational_key:str='id') -> None:
         self._name = name
+        self._relational_key = relational_key
+        
         self.setPrimaryKeys(primary_keys)
         self.setSecondaryKeys(secondary_keys)
     

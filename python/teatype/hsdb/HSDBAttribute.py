@@ -28,6 +28,7 @@ _SUPPORTED_TYPES = [bool, dt, float, int, str]
 
 # TODO: Implement support for dicts and lists (potentially dangerous though)
 class HSDBAttribute(Generic[T]):
+    __init=False
     computed:bool         # Whether the attribute is computed, more of a flavour attribute, laxily enforced
     description:str       # Description of the attribute
     editable:bool         # Whether the attribute can be edited, automatically set to False if computed
@@ -37,7 +38,7 @@ class HSDBAttribute(Generic[T]):
     relation:HSDBRelation # Relation object if attribute is a relation
     required:bool         # Whether the attribute is required
     searchable:bool       # Whether the attribute is searchable
-    type:T                # holds an actual Python type, e.g. str, int, etc.
+    type:Type[T]          # holds an actual Python type, e.g. str, int, etc.
     unique:bool           # Whether the attribute value must be unique
 
     def __init__(self,
@@ -51,19 +52,6 @@ class HSDBAttribute(Generic[T]):
                  required:bool=False,
                  searchable:bool=False,
                  unique:bool=False):
-        self.computed = computed
-        self.description = description
-        self.editable = False if computed else editable
-        self.indexed = indexed
-        self.max_size = max_size
-        self.relation = relation
-        self.required = required
-        self.searchable = searchable
-        self.type = type
-        self.unique = unique
-        
-        if type not in _SUPPORTED_TYPES:
-            raise ValueError(f'Unsupported type: {type.__name__}, supported types are: {_SUPPORTED_TYPES}')
         if not isinstance(computed, bool):
             raise ValueError('computed must be a boolean')
         if not isinstance(description, str) and description != None:
@@ -84,7 +72,18 @@ class HSDBAttribute(Generic[T]):
             raise ValueError('unique must be a boolean')
         if max_size < 0:
             raise ValueError('max_size must be a positive integer')
-
+        
+        self.computed = computed
+        self.description = description
+        self.editable = False if computed else editable
+        self.indexed = indexed
+        self.max_size = max_size
+        self.relation = relation
+        self.required = required
+        self.searchable = searchable
+        self.type = type # This sets the actual type based on the generic argument
+        self.unique = unique
+        
         self._key = None # internal storage for key
         self._value = None # internal storage for value
         
@@ -99,6 +98,29 @@ class HSDBAttribute(Generic[T]):
         whoever is calling this method knows what they are doing.
         """
         self.value = value
+        
+    def __getattr__(self, name: str):
+        """
+        Intercepts attribute access and returns the value.
+        This is called when an attribute (like created_at) is accessed.
+        """
+        if name == 'value':
+            return self._value
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+        
+    @property
+    def cls(self):
+        """
+        Dynamically return the class of the attributelass__
+        """
+        return self.__class__
+    
+    @property
+    def instance(self):
+        """
+        Dynamically return the instance of the attribute
+        """
+        return self
 
     @property
     def key(self):
@@ -114,7 +136,7 @@ class HSDBAttribute(Generic[T]):
             raise ValueError('key is already set')
         if not isinstance(new_key, str) or not new_key:
             raise ValueError('key must be a non-empty string')
-        self._value = new_key
+        self._key = new_key
 
     @value.setter
     def value(self, new_value:any):
@@ -142,6 +164,15 @@ class HSDBAttribute(Generic[T]):
     # Class methods #
     #################
     
-    @classmethod
-    def __class_getitem__(cls, item: Type[T]):
-        return cls
+    # @classmethod
+    # def __class_getitem__(cls, item: Type[T]) -> Type['HSDBAttribute']:
+    #     """
+    #     This method is used to handle generic types for HSDBAttribute.
+    #     It ensures that the class can be correctly instantiated with the
+    #     proper type (e.g., HSDBAttribute[str]).
+    #     """
+    #     # Ensure item is a valid type
+    #     if item not in _SUPPORTED_TYPES:
+    #         raise ValueError(f'Unsupported type: {item.__name__}, supported types are: {_SUPPORTED_TYPES}')
+    #     # Return the class type with the parameter
+    #     return cls
