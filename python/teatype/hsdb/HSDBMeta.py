@@ -21,18 +21,17 @@ class HSDBMeta(ABCMeta):
     Metaclass to collect HSDBAttributes from the class definition.
     """
     def __new__(cls, name, bases, dct):
-        for attr_name, attr_value in dct.items():
-            if isinstance(attr_value, HSDBAttribute):
-                attr_value.__set_name__(None, attr_name) # Assign field name
-        return super().__new__(cls, name, bases, dct)
+        # for attr_name, attr_value in dct.items():
+        #     if isinstance(attr_value, HSDBAttribute):
+        #         attr_value.__set_name__(None, attr_name) # Assign field name
+        # return super().__new__(cls, name, bases, dct)
     
     # DEPRECATED: Old implementation where fields were stored in seperately
-        # def __new__(cls, name, bases, dct):
-        #     fields = {}
-        #     for attr_name, attr_value in dct.items():
-        #         if isinstance(attr_value, HSDBAttribute):
-        #             attr_value.name = attr_name
-        #             fields[attr_name] = attr_value
+        fields = {}
+        for attr_name, attr_value in dct.items():
+            if isinstance(attr_value, HSDBAttribute):
+                attr_value.name = attr_name
+                fields[attr_name] = attr_value
 
-        #     dct['_fields'] = fields
-        #     return super().__new__(cls, name, bases, dct)
+        dct['_fields'] = fields
+        return super().__new__(cls, name, bases, dct)

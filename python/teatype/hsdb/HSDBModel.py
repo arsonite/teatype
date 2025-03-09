@@ -117,9 +117,10 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 if attribute.computed:
                     raise ValueError(f'{attribute_name} is computed and cannot be set')
                 attribute_value = data.get(attribute_name)
-                instance_attribute = attribute_value
+                instance_attribute.value = attribute_value
                 
             # Create a deepcopy of the attribute and assign the value
+                # setattr(self, attribute_name, instance_attribute)
             self._fields[attribute_name] = instance_attribute
             
         # Model name and pluralization
@@ -128,16 +129,16 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         self._plural_name = parse_name(self._model_name, remove='-model', plural=True)
 
         # Validation after initialization
-        for attribute_name, attr in self.__dict__.items():
-            if isinstance(attr, HSDBAttribute):
-                if attr.required and not attr.value:
-                    raise ValueError(f'Model "{self._model_name}" init error: attribute "{attribute_name}" is required')
+        # for attribute_name, attr in self.__dict__.items():
+        #     if isinstance(attr, HSDBAttribute):
+        #         if attr.required and not attr.value:
+        #             raise ValueError(f'Model "{self._model_name}" init error: attribute "{attribute_name}" is required')
             
-        self.id.__computational_override__(generate_id(truncate=5))
+        # self.id = generate_id(truncate=5)
         
-        current_time = dt.now()
-        self.created_at.__computational_override__(current_time)
-        self.updated_at.__computational_override__(current_time)
+        # current_time = dt.now()
+        # self.created_at = current_time
+        # self.updated_at = current_time
             
         if overwrite_path:
             self._path = overwrite_path
@@ -350,10 +351,10 @@ if __name__ == '__main__':
     # Create model instances
     student_A = StudentModel({'age': 25, 'height': 160, 'name': 'jennifer jones'})
     print(student_A)
+    print(student_A.name)
+    print(student_A.name.required)
     print(student_A.id)
     print(student_A.id.required)
-    print(student_A.name)
-    print(student_A.required)
     student_B = StudentModel({'age': 18, 'height': 185, 'name': 'bob barker'})
     student_C = StudentModel({'age': 21, 'height': 173, 'name': 'alice anderson'})
     
