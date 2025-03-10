@@ -20,6 +20,15 @@ class HSDBRelation:
     _relational_key:str
     _secondary_keys:List[str]
     
+    class OneToOne:
+        pass
+    
+    class OneToMany:
+        pass
+    
+    class ManyToMany:
+        pass
+    
     def __init__(self, name:str, primary_keys:List[str], secondary_keys:List[str], relational_key:str='id') -> None:
         self._name = name
         self._relational_key = relational_key

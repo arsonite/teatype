@@ -14,9 +14,10 @@ class HSDBQuery:
     def __init__(self, model_class):
         # model_class is used later to help interpret attribute types and relations
         self.model_class = model_class
+        
+        self.current_attribute = None
         self.conditions = []  # list of (attribute_path, operator, value)
         self.sort_key = None
-        self.current_attribute = None
 
     def __repr__(self):
         return f"<HSDBQuery conditions={self.conditions} sort_by={self.sort_key}>"

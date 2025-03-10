@@ -17,6 +17,7 @@ from .HSDBValueWrapper import HSDBValueWrapper
 from .HSDBAttribute import HSDBAttribute
 from .HSDBMeta import HSDBMeta
 from .HSDBMigration import HSDBMigration
+from .HSDBQuery import HSDBQuery
 from .HSDBModel import HSDBModel
 from .IndexDatabase import IndexDatabase
 from .RawFileStructure import RawFileStructure

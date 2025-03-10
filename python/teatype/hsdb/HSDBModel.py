@@ -1,4 +1,3 @@
-
 # Copyright (C) 2024-2025 Burak Günaydin
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,11 +21,10 @@ from abc import ABC, ABCMeta, abstractmethod
 from teatype.hsdb import HSDBAttribute, HSDBMeta, HSDBQuery
 from teatype.hsdb.util import parse_name
 from teatype.io import env
-from teatype.util import dt
+from teatype.util import dt, staticproperty
 
 # From-as package imports
 from teatype.util import id as generate_id
-
 
 # TODO: Try optimizing some questionable parts of the code
 # TODO: Implement additional HSDBField as descriptor to allow direct access of attributes without specifying .value
@@ -61,6 +59,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     
     def __init__(self,
                  data:dict,
+                 include_base_attributes:bool=True,
                  overwrite_path:str=None):
         # For every class variable that is an HSDBAttribute,
         # create an instance deepcopy, assign its key to the variable name,
@@ -212,8 +211,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 continue
         return serialized
         
-    @property
-    @staticmethod
+    @staticproperty
     def query(self):
         # Always return a new query builder instance when query is accessed.
         return HSDBQuery(self.__class__)
@@ -279,59 +277,6 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     # Static methods #
     ##################
     
-    # TODO: Put this into IndexDatabase instead
-    @staticmethod
-    def execute_query(query:HSDBQuery, db_entries:dict):
-        """
-        Execute a query representation on an in-memory db.
-
-        Parameters:
-        query: HSDBQuery instance with conditions and sort_key.
-        db_entries: dict with {identifier: data} where data is a dict of attributes.
-                    Nested attributes (for relations) are obtained via lookup.
-                    For example, a student record may store just the school id.
-
-        Returns:
-        List of identifiers that match the query.
-        """
-        def get_nested_value(data, attr_path):
-            parts = attr_path.split('.')
-            value = data
-            for part in parts:
-                if not isinstance(value, dict):
-                    # Look up the referenced record in the db_entries using string key.
-                    ref = str(value)
-                    if ref in db_entries and isinstance(db_entries[ref], dict):
-                        value = db_entries[ref]
-                    else:
-                        # If reference not found, return None.
-                        return None
-                value = value.get(part)
-            return value
-
-        def condition_matches(data, condition):
-            attr, op, expected = condition
-            actual = get_nested_value(data, attr)
-            if op == '==':
-                return actual == expected
-            elif op == '<':
-                return actual is not None and actual < expected
-            elif op == '>':
-                return actual is not None and actual > expected
-            else:
-                raise ValueError(f"Unsupported operator {op}")
-
-        # First filter using conditions.
-        results = []
-        for identifier, data in db_entries.items():
-            if all(condition_matches(data, cond) for cond in query.conditions):
-                results.append((identifier, data))
-        # Sort the results if needed.
-        if query.sort_key:
-            results.sort(key=lambda item: get_nested_value(item[1], query.sort_key))
-        # Return list of identifiers.
-        return [item[0] for item in results]
-    
     @staticmethod
     def load(self, dict_data:dict):
         pass
@@ -340,6 +285,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
 if __name__ == '__main__':
     import sys
     from pprint import pprint
+    from pympler import asizeof
 
     # Assume these are your models derived from BaseModel.
     class StudentModel(HSDBModel):
@@ -351,6 +297,67 @@ if __name__ == '__main__':
     class SchoolModel(HSDBModel):
         address = HSDBAttribute(str, required=True)
         name    = HSDBAttribute(str, required=True)
+        
+    # TODO: Put this into IndexDatabase instead
+    def execute_query(db:dict, query:HSDBQuery, return_ids:bool=False):
+        """
+        Execute a query representation on an in-memory db.
+
+        Parameters:
+        db: dict with {identifier: data} where data is a dict of attributes.
+                    Nested attributes (for relations) are obtained via lookup.
+                    For example, a student record may store just the school id.
+        query: HSDBQuery instance with conditions and sort_key.
+        return_ids: If True, return only the identifiers. If False, return the data.
+
+        Returns:
+        List of identifiers that match the query if return_ids is True.
+        List of data that match the query if return_ids is False.
+        """
+        def get_nested_value(data, attribute_path):
+            parts = attribute_path.split('.')
+            value = data
+            for part in parts:
+                if not isinstance(value, dict):
+                    # Look up the referenced record in the db using string key.
+                    reference = str(value)
+                    if reference in db and isinstance(db[reference], dict):
+                        value = db[reference]
+                    else:
+                        # If reference not found, return None.
+                        return None
+                value = value.get(part)
+            return value
+
+        def condition_matches(data, condition):
+            attribute, operator, expected = condition
+            actual_attribute = get_nested_value(data, attribute)
+            actual_value = actual_attribute._value
+            if operator == '==':
+                return actual_value == expected
+            elif operator == '<':
+                return actual_value is not None and actual_value < expected
+            elif operator == '>':
+                return actual_value is not None and actual_value > expected
+            else:
+                raise ValueError(f'Unsupported operator {operator}')
+
+        # First filter using conditions.
+        results = []
+        for identifier, data in db.items():
+            print(data)
+            if data.get('model_name') != query.model_class:
+                continue
+            if all(condition_matches(data, condition) for condition in query.conditions):
+                if return_ids:
+                    results.append(identifier)
+                else:
+                    results.append(data)
+        # Sort the results if needed.
+        if query.sort_key:
+            results.sort(key=lambda item: get_nested_value(item[1], query.sort_key))
+        # Return list of identifiers.
+        return [item[0] for item in results]
 
     # Create model instances
     student_A = StudentModel({'age': 25, 'height': 160, 'name': 'jennifer jones'})
@@ -362,29 +369,36 @@ if __name__ == '__main__':
     
     # Simulate a simple in-memory db:
     db = dict()
-    db.update({student_A.id: StudentModel.serialize(student_A)})
-    db.update({student_B.id: StudentModel.serialize(student_B)})
-    db.update({student_C.id: StudentModel.serialize(student_C)})
-    db.update({school_A.id: SchoolModel.serialize(school_A)})
-    db.update({school_B.id: SchoolModel.serialize(school_B)})
+    # db.update({student_A.id: StudentModel.serialize(student_A)})
+    # db.update({student_B.id: StudentModel.serialize(student_B)})
+    # db.update({student_C.id: StudentModel.serialize(student_C)})
+    # db.update({school_A.id: SchoolModel.serialize(school_A)})
+    # db.update({school_B.id: SchoolModel.serialize(school_B)})
+    db.update({student_A.id: student_A})
+    # db.update({student_B.id: student_B})
+    # db.update({student_C.id: student_C})
+    # db.update({school_A.id:school_A})
+    # db.update({school_B.id:school_B})
+    
+    for i in range(100000):
+        db.update({f'{i}': StudentModel({'age': i, 'height': 160, 'name': f'jennifer jones {i}'})})
+    
+    print('db size in bytes:', asizeof.asizeof(db) / 1024 / 1024, 'MB')
     # pprint(db)
     
     # Create a query chain that does not execute immediately.
-    print(StudentModel.query)
-    query = StudentModel.query.all().sort_by('age').filter_by('name').where('height').greater_than(150)
+    query1 = StudentModel.query.all().sort_by('age').filter_by('name').where('height').greater_than(150)
     # query is now a representation like:
-    print(query) # e.g. <HSDBQuery conditions=[('name', '==', ...?), ('height', '>', 150)] sort_by=age>
-    
+    print(query1) # e.g. <HSDBQuery conditions=[('name', '==', ...?), ('height', '>', 150)] sort_by=age>
+    # Execute query
+    matching_ids = execute_query(db, query1)
+    print('Matches:', matching_ids)
     print()
     
     # Create a query with chained where's for bonus usage:
-    query_obj = (
-        m.query
-         .where("name").equals("jennifer")
-         .where("age").less_than(20)
-         .where("school.name").equals("Howard High")
+    single_query = (
+        StudentModel.query
+         .where('name').equals('jennifer')
+         .where('age').less_than(20)
+        #  .where('school.name').equals('Howard High')
     )
-    
-    # Execute
-    matching_ids = execute_query(query_obj, db)
-    print("Matching ids:", matching_ids)
