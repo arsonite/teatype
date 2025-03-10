@@ -113,14 +113,30 @@ class HSDBAttribute(Generic[T]):
     def __repr__(self):
         return f'HSDBAttribute(key={self.key}, value={self.value}, type={self.type.__name__})'
     
-    def __computational_override__(self, value:any):
-        """
-        This method is used to override the value of a computed attribute.
-        Do not use this method unless you know what you are doing.
-        It has not validation checks and assumes that the value is of the correct type and 
-        whoever is calling this method knows what they are doing.
-        """
-        self.value = value
+    def _validate_key(self, key):
+        if self._key is not None:
+            raise ValueError('key is already set')
+        if not isinstance(key, str) or not key:
+            raise ValueError('key must be a non-empty string')
+        
+    def _validate_value(self, value):
+        # Check that value is of the expected type
+        if not isinstance(value, self.type):
+            raise ValueError(
+                f'Value for attribute "{self.key}" must be of type {self.type.__name__}'
+            )
+
+        # Additional check: if value is a string, enforce max_size if applicable.
+        if self.type is str and len(value) > self.max_size:
+            raise ValueError(
+                f'Value for attribute "{self.key}" exceeds maximum size ({self.max_size})'
+            )
+     
+        if self.computed:
+            raise ValueError(f'Attribute "{self.key}" is computed and cannot be set manually')
+            
+        if not self.editable:
+            raise ValueError(f'Attribute "{self.key}" is not editable after it has been set once')
         
     ##############
     # Properties #
@@ -148,17 +164,20 @@ class HSDBAttribute(Generic[T]):
 
     def __get__(self, instance, owner):
         if self._wrapper is None: # Lazy loading of the wrapper
-            value = instance.__dict__.get(self.name)
-            self._wrapper = HSDBValueWrapper(value, self)
+            value = instance.__dict__['_fields'].get(self.key)
+            self._wrapper = HSDBValueWrapper(value.value, self)
         return self._wrapper
 
     def __set__(self, instance, value):
         # Set the value and cache it
-        instance.__dict__[self.name] = value
+        # TODO: Fix validation
+        # self._validate_value(value)
+        # instance.__dict__[self.name] = value
         self._wrapper = None # Invalidate the cached wrapper
 
     def __set_name__(self, owner, name):
         self.name = name # Store the field name for later use in the instance
+        self._key = name # Set the key to the field name by default
         
     ##################
     # Setter Methods #
@@ -166,32 +185,12 @@ class HSDBAttribute(Generic[T]):
 
     @key.setter
     def key(self, new_key:str):
-        if self._key is not None:
-            raise ValueError('key is already set')
-        if not isinstance(new_key, str) or not new_key:
-            raise ValueError('key must be a non-empty string')
+        self._validate_key(new_key)
         self._key = new_key
 
     @value.setter
     def value(self, new_value:any):
-        # Check that new_value is of the expected type
-        if not isinstance(new_value, self.type):
-            raise ValueError(
-                f'Value for attribute "{self.key}" must be of type {self.type.__name__}'
-            )
-
-        # Additional check: if value is a string, enforce max_size if applicable.
-        if self.type is str and len(new_value) > self.max_size:
-            raise ValueError(
-                f'Value for attribute "{self.key}" exceeds maximum size ({self.max_size})'
-            )
-            
-        if not self.editable and self._value is not None:
-            raise ValueError(f'Attribute "{self.key}" is not editable after it has been set once')
-        
-        if self.computed and self._value is not None:
-            raise ValueError(f'Attribute "{self.key}" is computed and cannot be set manually')
-        
+        # self._validate_value(new_value)
         self._value = new_value
         
     #################

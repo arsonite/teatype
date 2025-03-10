@@ -119,9 +119,8 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 attribute_value = data.get(attribute_name)
                 instance_attribute.value = attribute_value
                 
-            # Create a deepcopy of the attribute and assign the value
-                # setattr(self, attribute_name, instance_attribute)
-            self._fields[attribute_name] = instance_attribute
+                setattr(self, attribute_name, attribute_value)
+                # self._fields[attribute_name] = instance_attribute
             
         # Model name and pluralization
         self._model_name = type(self).__name__ 
@@ -129,16 +128,18 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         self._plural_name = parse_name(self._model_name, remove='-model', plural=True)
 
         # Validation after initialization
-        # for attribute_name, attr in self.__dict__.items():
-        #     if isinstance(attr, HSDBAttribute):
-        #         if attr.required and not attr.value:
-        #             raise ValueError(f'Model "{self._model_name}" init error: attribute "{attribute_name}" is required')
-            
-        # self.id = generate_id(truncate=5)
+        for attribute_name, attr in self.__dict__.items():
+            if isinstance(attr, HSDBAttribute):
+                if attr.required and not attr.value:
+                    raise ValueError(f'Model "{self._model_name}" init error: attribute "{attribute_name}" is required')
         
-        # current_time = dt.now()
-        # self.created_at = current_time
-        # self.updated_at = current_time
+        # TODO: Find a more elegant solution than this ugly a** hack
+        # self.id.instance.__computational_override__(generate_id(truncate=5))
+        self.id = generate_id(truncate=10)
+        
+        current_time = dt.now()
+        self.created_at = current_time
+        self.updated_at = current_time
             
         if overwrite_path:
             self._path = overwrite_path
@@ -147,24 +148,34 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         # TODO: Make this dynamic
         # self.app_name = 'raw'
         # self.migration_id = 1
-        
+    
+    # TODO: Get cache working again
     def __getattribute__(self, name):
         # If the field name is in our field cache, return the value from _fields
         _cache = object.__getattribute__(self, '_attribute_cache')
         cls = type(self)
         if cls in _cache and name in _cache[cls]:
-            return object.__getattribute__(self, '_fields').get(name)
+            return object.__getattribute__(self, '_fields').get(name).__get__(self, self.__class__)
         return object.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
         _cache = self.__class__._attribute_cache.get(self.__class__, {})
         if name in _cache:
             attribute = _cache[name]
-            if attribute.computed and self._fields.get(name) is not None:
-                raise ValueError(f'Attribute "{name}" is computed and cannot be set manually')
-            if not isinstance(value, attribute.type):
-                raise ValueError(f'Field "{name}" must be of type {attribute.type.__name__}')
-            self.__dict__.setdefault('_fields', {})[name] = value
+            # TODO: Fix validation
+            # if attribute.computed and self._fields.get(name) is not None:
+            #     raise ValueError(f'Attribute "{name}" is computed and cannot be set manually')
+            # if not isinstance(value, attribute.type):
+            #     raise ValueError(f'Field "{name}" must be of type {attribute.type.__name__}')
+            # attribute.__set__(self, value)
+            instance_attribute = HSDBAttribute(
+                attribute.type, 
+                **{key: value for key, value in vars(attribute).items() if key not in [
+                    'name', 'type', '_cached_value', '_key', '_value', '_wrapper']} # Exclude these keys
+            )
+            instance_attribute.key = attribute.name
+            instance_attribute.value = value
+            self.__dict__.setdefault('_fields', {})[name] = instance_attribute
         else:
             super().__setattr__(name, value)
     
@@ -184,6 +195,22 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 if isinstance(attribute, HSDBAttribute):
                     seen.add(attribute_name)
                     self._attribute_cache[self.__class__][attribute_name] = attribute
+                    
+    @property
+    def serializer(self) -> dict:
+        """
+        If this method is not overridden, collect all HSDBAttribute fields.
+        If this method is overridden, collect all fields that are not computed.
+        """
+        serialized = dict()
+        for attribute_name in self.__dict__['_fields']:
+            # Skip non-HSDBAttribute fields
+            try:
+                if attribute_name in self._fields:
+                    serialized[attribute_name] = getattr(self, attribute_name)
+            except Exception as exc:
+                continue
+        return serialized
         
     @property
     @staticmethod
@@ -193,14 +220,16 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     
     # TODO: Optimization
     # TODO: Group data with key and base data into index data
-    def serialize(self,
+    @staticmethod
+    def serialize(object:object,
                   fuse_data:bool=False,
                   include_migration:bool=True,
                   include_model:bool=True,
                   json_dump:bool=False,
+                  strip_attributes:bool=False,
                   use_data_key:bool=False) -> dict|str:
-        serializer = self.serializer()
-        return serializer
+        serialized_data = object.serializer
+        return serialized_data
     
         serialized_data = dict()
             
@@ -306,31 +335,6 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     @staticmethod
     def load(self, dict_data:dict):
         pass
-    
-    #########
-    # Hooks #
-    #########
-    
-    # TODO: Optimization !!!!!!
-    def serializer(self) -> dict:
-        """
-        If this method is not overridden, collect all HSDBAttribute fields.
-        If this method is overridden, collect all fields that are not computed.
-        """
-        serialized = {}
-        for attribute_name, attribute in self._fields.items():
-            # print(attribute_name, attribute)
-            # Skip non-HSDBAttribute fields
-            try:
-                instance_attribute = getattr(self, attribute_name)
-                if instance_attribute.cls == HSDBAttribute:
-                    try:
-                        serialized[attribute_name] = instance_attribute._value.value
-                    except:
-                        serialized[attribute_name] = instance_attribute._value
-            except:
-                continue
-        return serialized
 
 # Sample usage
 if __name__ == '__main__':
@@ -350,11 +354,6 @@ if __name__ == '__main__':
 
     # Create model instances
     student_A = StudentModel({'age': 25, 'height': 160, 'name': 'jennifer jones'})
-    print(student_A)
-    print(student_A.name)
-    print(student_A.name.required)
-    print(student_A.id)
-    print(student_A.id.required)
     student_B = StudentModel({'age': 18, 'height': 185, 'name': 'bob barker'})
     student_C = StudentModel({'age': 21, 'height': 173, 'name': 'alice anderson'})
     
@@ -362,19 +361,17 @@ if __name__ == '__main__':
     school_B = SchoolModel({'address': 'Howard Avenue 12', 'name': 'Howard High'})
     
     # Simulate a simple in-memory db:
-    db = {
-        student_A.id: student_A.serialize(),
-        student_B.id: student_B.serialize(),
-        student_C.id: student_C.serialize(),
-        school_A.id: school_A.serialize(),
-        school_B.id: school_B.serialize(),
-    }
+    db = dict()
+    db.update({student_A.id: StudentModel.serialize(student_A)})
+    db.update({student_B.id: StudentModel.serialize(student_B)})
+    db.update({student_C.id: StudentModel.serialize(student_C)})
+    db.update({school_A.id: SchoolModel.serialize(school_A)})
+    db.update({school_B.id: SchoolModel.serialize(school_B)})
     # pprint(db)
     
-    sys.exit(0) # Execution delimiter
-
     # Create a query chain that does not execute immediately.
-    query = Student.query.all().sort_by('age').filter_by('name').where('height').greater_than(150)
+    print(StudentModel.query)
+    query = StudentModel.query.all().sort_by('age').filter_by('name').where('height').greater_than(150)
     # query is now a representation like:
     print(query) # e.g. <HSDBQuery conditions=[('name', '==', ...?), ('height', '>', 150)] sort_by=age>
     

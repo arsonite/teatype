@@ -34,6 +34,7 @@ class HSDBValueWrapper:
                 'description': self._field.description,
                 'editable': self._field.editable,
                 'indexed': self._field.indexed,
+                'instance': self._field,
                 'max_size': self._field.max_size,
                 'relation': self._field.relation,
                 'required': self._field.required,
@@ -68,6 +69,11 @@ class HSDBValueWrapper:
     def indexed(self):
         metadata = self._load_metadata()
         return metadata['indexed']
+    
+    @property
+    def instance(self):
+        metadata = self._load_metadata()
+        return metadata['instance']
     
     @property
     def max_size(self):
