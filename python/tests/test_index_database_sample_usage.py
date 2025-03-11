@@ -152,18 +152,16 @@ def test_create_students_parallel(number_of_students,
     index_database._db.update(students)
     stopwatch()
     
-    total_generated_students = len(index_database._db.keys())
+    total_database_entries = len(index_database._db.keys())
     println()
-    print(f'Total generated students: {total_generated_students}')
+    print(f'Total generated students: {total_database_entries}')
     
     # Create a query chain that does not execute immediately.
-    query1 = StudentModel.query.all().sort_by('age').filter_by('name').where('height').greater_than(150)
+    # query1 = StudentModel.query.where('height').greater_than(150).filter_by('name').sort_by('age')
+    queryset = StudentModel.query.where('height').greater_than(150)
     # query is now a representation like:
-    print(query1) # e.g. <HSDBQuery conditions=[('name', '==', ...?), ('height', '>', 150)] sort_by=age>
+    print(queryset) # e.g. <HSDBQuery conditions=[('name', '==', ...?), ('height', '>', 150)] sort_by=age>
     # Execute query
-    matching_ids = index_database.execute_query(query1)
-    print('Matches:', matching_ids)
-    print()
     
     # Create a query with chained where's for bonus usage:
     single_query = (
