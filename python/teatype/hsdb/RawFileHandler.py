@@ -12,7 +12,7 @@
 
 # From package imports
 from teatype.io import env, file, path
-from teatype.hsdb import RawFileStructure
+from teatype.hsdb import HSDBModel, RawFileStructure
 
 class RawFileHandler:
     _raw_file_structure:RawFileStructure
@@ -25,16 +25,21 @@ class RawFileHandler:
         return self._raw_file_structure.get_fs()
         
     # TODO: If new attributes surface (migrations), apply them to old files (backup before)
-    def create_entry(self, model_instance:object, overwrite_path:str, compress:bool=False) -> str:
+    def create_entry(self,
+                     model_instance:HSDBModel,
+                     overwrite_path:str,
+                     compress:bool=False,
+                     include_relational_data:bool=False) -> str:
         try:
             absolute_path = path.join(self.fs.hsdb.index.path, model_instance.path)
             if path.exists(absolute_path):
                 return 'File already exists'
-        
+
+            ModelClass = model_instance.cls
             # TODO: If model folder does not exist, create it and put model_meta.json into it
             # TODO: Create variable in path.create for exists ok
             file.write(absolute_path,
-                       model_instance.serialize(),
+                       ModelClass.serialize(model_instance),
                        force_format='json',
                        prettify=not compress,
                        create_parents=True)

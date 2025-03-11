@@ -11,7 +11,7 @@
 # all copies or substantial portions of the Software.
 
 from .dt import dt
-from .id import id
+from .generate_id import generate_id
 from .implemented_trap import implemented_trap
 from .SingletonMeta import SingletonMeta
 from .staticproperty import staticproperty
