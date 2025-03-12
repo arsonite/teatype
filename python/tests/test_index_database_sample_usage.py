@@ -23,7 +23,7 @@ from pprint import pprint
 
 # From package imports
 from teatype.hsdb import HSDBAttribute, HSDBModel, HybridStorage
-from teatype.logging import hint, println
+from teatype.logging import hint, log, println
 from teatype.util import generate_id, stopwatch
 
 ##################
@@ -50,6 +50,7 @@ def create_student(i:int, random_first_names, random_sur_names, random_schools):
     """
     Creates a student object with random attributes.
     """
+    random.seed()
     student = StudentModel({
         'age': random.randint(13, 23),
         'height': random.randint(140, 200),
@@ -57,6 +58,16 @@ def create_student(i:int, random_first_names, random_sur_names, random_schools):
         'school': random.choice([random_school.id for random_school in random_schools])
     })
     return student.id, student
+
+def create_students_sequentially(number_of_students, random_first_names, random_sur_names, random_schools):
+    """
+    Creates students sequentially.
+    """
+    students = {}
+    for i in range(number_of_students):
+        student = create_student(i, random_first_names, random_sur_names, random_schools)
+        students[student[0]] = student[1]
+    return students
 
 def create_students_parallel(number_of_students, random_first_names, random_sur_names, random_schools):
     """
@@ -109,14 +120,18 @@ def random_schools():
     ]
 
 @pytest.fixture
-def hybrid_storage():
-    return HybridStorage(cold_mode=True)
+def hybrid_storage(random_schools):
+    hybrid_storage = HybridStorage(cold_mode=True)
+    for school in random_schools:
+        hybrid_storage.index_database._db.update({school.id: school})
+    return hybrid_storage
 
 ##########
 # PyTest #
 ##########
 
-@pytest.mark.parametrize('number_of_students', [1111])
+@pytest.mark.skip
+@pytest.mark.parametrize('number_of_students', [1, 10, 100, 1000, 10000])
 def test_create_students_parallel(number_of_students,
                                   random_first_names,
                                   random_sur_names,
@@ -125,12 +140,9 @@ def test_create_students_parallel(number_of_students,
     """
     Test student creation in parallel and database update.
     """
-    println()
+    log('--------------------')
     
     db = hybrid_storage.index_database._db
-    for school in random_schools:
-        db.update({school.id: school})
-    
     if number_of_students == 1:
         stopwatch('Creating student')
         student = create_student(0, random_first_names, random_sur_names, random_schools)
@@ -155,15 +167,56 @@ def test_create_students_parallel(number_of_students,
     
     total_database_entries = len(db.keys())
     println()
-    print(f'Total generated students: {total_database_entries}')
+    log(f'Total generated students: {total_database_entries}')
+    
+    log('--------------------')
+
+@pytest.mark.parametrize('number_of_students, generate_in_parallel, measure_memory_footprint', [
+    (12345, False, False),
+])
+def test_queries(number_of_students,
+                 generate_in_parallel,
+                 measure_memory_footprint,
+                 
+                 random_first_names,
+                 random_sur_names,
+                 random_schools,
+                 hybrid_storage):
+    log('--------------------')
+
+    stopwatch('Seeding DB data')
+    db = hybrid_storage.index_database._db
+    if generate_in_parallel:
+        students = create_students_parallel(number_of_students, random_first_names, random_sur_names, random_schools)
+    else:
+        students = create_students_sequentially(number_of_students, random_first_names, random_sur_names, random_schools)
+    db.update(students)
+    total_database_entries = len(db.keys())
+    stopwatch()
+    log(f'Total data: {total_database_entries}')
+    if measure_memory_footprint:
+        stopwatch('Measuring memory footprint')
+        log(hybrid_storage.index_database.memory_footprint)
+        stopwatch()
+    println()
     
     # Create a query chain that does not execute immediately.
-    # query1 = StudentModel.query.where('height').greater_than(150).filter_by('name').sort_by('age')
-    queryset = StudentModel.query.where('height').greater_than(150)
-    # query is now a representation like:
-    print(queryset) # e.g. <HSDBQuery conditions=[('name', '==', ...?), ('height', '>', 150)] sort_by=age>
-    # Execute query
-    queryset.collect()
+    log('Test queries:')
+    println()
+    
+    queryset = StudentModel.query.w('height').lt(150).measure_time().collect()
+    log(f'Found {len(queryset)} hits')
+    println()
+    
+    queryset = StudentModel.query.w('height').lt(150).w('age').lt(14).measure_time().collect()
+    log(f'Found {len(queryset)} hits')
+    println()
+    
+    queryset = StudentModel.query.w('height').lt(150).w('age').lt(14).sort_by('name').measure_time().collect()
+    log(f'Found {len(queryset)} hits')
+    println()
+    
+    # query2 = StudentModel.query.where('height').greater_than(150).filter_by('name').sort_by('age')
     
     # Create a query with chained where's for bonus usage:
     single_query = (
@@ -172,3 +225,5 @@ def test_create_students_parallel(number_of_students,
         .where('age').less_than(20)
         #  .where('school.name').equals('Howard High')
     )
+    
+    log('--------------------')

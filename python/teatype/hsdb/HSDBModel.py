@@ -188,7 +188,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     @staticproperty
     def query(self):
         # Always return a new query builder instance when query is accessed.
-        return HSDBQuery(self.__class__)
+        return HSDBQuery(self)
     
     # TODO: Optimization
     # TODO: Group data with key and base data into index data

@@ -22,7 +22,7 @@ from teatype.enum import EscapeColor
 from teatype.hsdb import IndexDatabase, RawFileHandler
 from teatype.hsdb.util import parse_fixtures, parse_index_files
 from teatype.io import env
-from teatype.logging import err, hint, log, println, warn
+from teatype.logging import err, hint, log, println, success, warn
 from teatype.util import SingletonMeta
 
 # TODO: Implement Coroutine and Operation (Atomic)
@@ -77,17 +77,20 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
             self.__instance = self # Set the instance for Singleton
             
             if not cold_mode:
-                log('HybridStorage finished initialization') # Log the initialization
+                success(f'HybridStorage finished initialization') # sucess the initialization
             else:
-                warn(f'HybridStorage initialized in {EscapeColor.CYAN}cold mode{EscapeColor.RESET}')
+                success(f'HybridStorage initialized in {EscapeColor.CYAN}cold mode{EscapeColor.RESET}')
     
     @staticmethod
     def instance() -> 'HybridStorage':
         """
         Return or create the HybridStorage singleton instance.
         """
+        print('instance()')
         if not hasattr(HybridStorage, '__instance'):
+            print('instance()')
             HybridStorage.__instance = HybridStorage() # Create a default instance if none exists
+        print('instance()')
         return HybridStorage.__instance
     
     # def fill(self):

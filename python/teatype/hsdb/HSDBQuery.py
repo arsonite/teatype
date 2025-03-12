@@ -11,10 +11,12 @@
 # all copies or substantial portions of the Software.
 
 # From system imports
+from functools import reduce
 from typing import List, Union
 
 # From package imports
 from teatype.hsdb import HybridStorage
+from teatype.util import stopwatch
 
 _EXECUTION_HOOKS = ['__iter__', '__len__', '__getitem__', 'all', 'collect', 'first', 'last', 'set']
 _OPERATOR_VERBS = [('eq', 'equals'),
@@ -30,9 +32,10 @@ class HSDBQuery:
     _filter_key:str
     _index_db_reference:object # IndexDatabase, avoiding import loop
     _index_id:str
+    _measure_time:bool
     _paginate:Union[int, int]
     _return_ids:bool
-    _sort_by:str
+    _sort_key:str
     _sort_order:str
     already_executed:bool
     model:type # HSDBModel class, avoiding import loop
@@ -48,17 +51,21 @@ class HSDBQuery:
         self._filter_key = None
         self._index_db_reference = HybridStorage().index_database._db
         self._index_id = None
+        self._measure_time = False
         self._paginate = None
         self._return_ids = False
-        self._sort_by = None
+        self._sort_key = None
         self._sort_order = None
 
     def __repr__(self):
         return f'<HSDBQuery ' \
                f'conditions={self._conditions} ' \
                f'filter_key={self._filter_key} ' \
-               f'sort_by={self._sort_by}({self._sort_order}) ' \
+               f'sort_by={self._sort_key}({self._sort_order}) ' \
                 '/>'
+                
+    def __str__(self):
+        return self.__repr__()
 
     def _add_condition(self, op, value):
         if self._current_attribute is None:
@@ -88,19 +95,41 @@ class HSDBQuery:
         List of entry that match the query if self._return_ids is False.
         """
         def __get_nested_value(entry, attribute_path):
+            """
+            Retrieve the value of a nested attribute path in the entry.
+
+            This method now handles nested class attributes and avoids repeated class lookups
+            by utilizing the attribute index.
+            """
+            # parts = attribute_path.split('.')
+            # value = entry
+            # for part in parts:
+            #     # TODO: Implement key lookup through pointer reference.
+            #     if not isinstance(value, dict):
+            #         # Look up the referenced record in the db using string key.
+            #         reference = str(value)
+            #         if reference in self._index_db_reference and isinstance(self._index_db_reference[reference], dict):
+            #             value = self._index_db_reference[reference]
+            #         else:
+            #             # If reference not found, return None.
+            #             return None
+            #     value = getattr(value, part)
+            # return value
+        
             parts = attribute_path.split('.')
-            value = entry
-            for part in parts:
-                if not isinstance(value, dict):
-                    # Look up the referenced record in the db using string key.
-                    reference = str(value)
-                    if reference in self._index_db_reference and isinstance(self._index_db_reference[reference], dict):
-                        value = self._index_db_reference[reference]
-                    else:
-                        # If reference not found, return None.
-                        return None
-                value = value.get(part)
-            return value
+            # Use a reduce to iterate over the attribute parts
+            def lookup_value(accumulated_value, part):
+                if isinstance(accumulated_value, dict):
+                    # If it's a dict, look up the value by key
+                    return accumulated_value.get(part, None)
+                elif hasattr(accumulated_value, part):
+                    # If it's an object, use getattr to get the attribute
+                    return getattr(accumulated_value, part, None)
+                else:
+                    return None
+
+            # Initial value is the entry object itself (which may be a dictionary or class instance)
+            return reduce(lookup_value, parts, entry)
 
         def __condition_matches(entry, condition):
             attribute, operator, expected = condition
@@ -116,32 +145,38 @@ class HSDBQuery:
                 raise ValueError(f'Unsupported operator {operator}')
             
         self._block_executed_query()
+        
+        if self._measure_time:
+            stopwatch(str(self))
 
         # First filter using conditions.
         entries = []
         for id, entry in self._index_db_reference.items():
-            if entry.model_name != self.model_class:
+            if entry.cls != self.model:
                 continue
-            
-            if all(__condition_matches(entry, condition) for condition in self.conditions):
-                if self.return_ids:
+            if all(__condition_matches(entry, condition) for condition in self._conditions):
+                if self._return_ids:
                     entries.append(id)
                 else:
                     entries.append(entry)
+                    
         # Sort the entries if needed.
-        if self.sort_key:
-            entries.sort(key=lambda entry: __get_nested_value(entry[1], self.sort_key))
-        if self.filter_key:
-            entries = [entry for entry in entries if __get_nested_value(entry[1], self.filter_key)]
+        if self._sort_key:
+            entries.sort(key=lambda entry: __get_nested_value(entry[1], self._sort_key))
+        if self._filter_key:
+            entries = [entry for entry in entries if __get_nested_value(entry[1], self._filter_key)]
             
+        if self._measure_time:
+            stopwatch()
+        
         self.already_executed = True
         
         # Return list of ids.
-        return [entry[0] for entry in entries]
+        return entries
     
     def sort_by(self, attribute_name:str, sort_order:str='asc'):
         self._block_executed_query(include_pending_condition=True)
-        self._sort_by = attribute_name
+        self._sort_key = attribute_name
         self._sort_order = sort_order
         return self
 
@@ -151,6 +186,15 @@ class HSDBQuery:
         # When the query is executed, only records with this attribute will be returned 
         # as dictionaries containing just that attribute.
         self._filter_key = attribute_name
+        return self
+    
+    #####################
+    # Runtime modifiers #
+    #####################
+    
+    def measure_time(self):
+        self._block_executed_query()
+        self._measure_time = True
         return self
     
     def return_ids(self):

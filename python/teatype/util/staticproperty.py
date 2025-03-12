@@ -22,4 +22,6 @@ class staticproperty(property):
         # __get__ on the static method binds it to 'owner' with no instance (None), yielding a callable.
         # Finally, the callable is immediately invoked with self (the staticproperty instance)
         # as its argument, allowing the getter to operate in a context where it can reference the property itself.
-        return staticmethod(self.fget).__get__(None, owner)(self)
+        # Bnding the owner to the static method allows the static method to access the class it belongs to, not the 
+        # function that utilizes its decorator
+        return staticmethod(self.fget).__get__(None, owner)(owner)

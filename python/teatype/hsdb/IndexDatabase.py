@@ -20,20 +20,21 @@ from typing import List
 from pympler import asizeof
 
 class _MemoryFootprint:
-    def __init__(self, index_database:object):
-        self.size_in_bytes = asizeof.asizeof(self._db)
-        self.size_in_kilo_bytes = self.size_in_bytes / 1024
-        self.size_in_mega_bytes = self.size_in_kilo_bytes / 1024
-        print('index db memory footprint:', round(asizeof.asizeof(self._db / 1024 / 1024), 2), 'MB')
+    def __init__(self, index_db:'IndexDatabase'):
+        self.size_in_bytes = asizeof.asizeof(index_db)
+        self.size_in_kilo_bytes = round(self.size_in_bytes / 1024, 2)
+        self.size_in_mega_bytes = round(self.size_in_kilo_bytes / 1024, 2)
         
-    def print(self):
-        print('Index db memory footprint:')
-        print('     size in bytes:', self.size_in_bytes)
-        print('     size in kilo bytes:', self.size_in_kilo_bytes)
-        print('     size in mega bytes:', self.size_in_mega_bytes)
+    def __repr__(self):
+        return f'Index db memory footprint: {self.size_in_bytes} bytes, ' \
+               f'{self.size_in_kilo_bytes} KB, '\
+               f'{self.size_in_mega_bytes} MB'
+        
+    def __str__(self):
+        return self.__repr__()
         
 class IndexDatabase:
-    _cache_register:dict # For all cache values
+    _cache_register:dict # For all dynamic query cache values
     _cache_register_lock:threading.Lock
     _compute_index:dict # For all compute values for easy modification
     _compute_index_lock:threading.Lock
@@ -97,7 +98,7 @@ class IndexDatabase:
     ##############
         
     @property
-    def memory_footprint(self) -> _MemoryFootprint:
+    def memory_footprint(self) -> '_MemoryFootprint':
         return _MemoryFootprint(self)
         
     ##################
