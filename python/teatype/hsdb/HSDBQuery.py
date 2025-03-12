@@ -94,28 +94,13 @@ class HSDBQuery:
         List of identifiers that match the query if self._return_ids is True.
         List of entry that match the query if self._return_ids is False.
         """
-        def __get_nested_value(entry, attribute_path):
+        def __get_nested_value(entry, attribute_path:str) -> any:
             """
             Retrieve the value of a nested attribute path in the entry.
 
             This method now handles nested class attributes and avoids repeated class lookups
             by utilizing the attribute index.
             """
-            # parts = attribute_path.split('.')
-            # value = entry
-            # for part in parts:
-            #     # TODO: Implement key lookup through pointer reference.
-            #     if not isinstance(value, dict):
-            #         # Look up the referenced record in the db using string key.
-            #         reference = str(value)
-            #         if reference in self._index_db_reference and isinstance(self._index_db_reference[reference], dict):
-            #             value = self._index_db_reference[reference]
-            #         else:
-            #             # If reference not found, return None.
-            #             return None
-            #     value = getattr(value, part)
-            # return value
-        
             parts = attribute_path.split('.')
             # Use a reduce to iterate over the attribute parts
             def lookup_value(accumulated_value, part):
@@ -127,7 +112,6 @@ class HSDBQuery:
                     return getattr(accumulated_value, part, None)
                 else:
                     return None
-
             # Initial value is the entry object itself (which may be a dictionary or class instance)
             return reduce(lookup_value, parts, entry)
 
@@ -159,12 +143,14 @@ class HSDBQuery:
                     entries.append(id)
                 else:
                     entries.append(entry)
-                    
+
+        # TODO: Add support for nested values in sorting and filtering
         # Sort the entries if needed.
         if self._sort_key:
-            entries.sort(key=lambda entry: __get_nested_value(entry[1], self._sort_key))
+            entries.sort(key=lambda entry: getattr(entry, self._sort_key)._value, reverse=self._sort_order == 'desc')
+            
         if self._filter_key:
-            entries = [entry for entry in entries if __get_nested_value(entry[1], self._filter_key)]
+            entries = [getattr(entry, self._filter_key) for entry in entries]
             
         if self._measure_time:
             stopwatch()

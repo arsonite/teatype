@@ -55,7 +55,8 @@ def create_student(i:int, random_first_names, random_sur_names, random_schools):
         'age': random.randint(13, 23),
         'height': random.randint(140, 200),
         'name': f'{random.choice(random_first_names)} {random.choice(random_sur_names)}',
-        'school': random.choice([random_school.id for random_school in random_schools])
+        # 'school': random.choice([random_school.id for random_school in random_schools])
+        'school': random.choice(random_schools)
     })
     return student.id, student
 
@@ -208,11 +209,16 @@ def test_queries(number_of_students,
     log(f'Found {len(queryset)} hits')
     println()
     
-    queryset = StudentModel.query.w('height').lt(150).w('age').lt(14).measure_time().collect()
+    queryset = StudentModel.query.w('height').lt(150).w('age').lt(16).measure_time().collect()
     log(f'Found {len(queryset)} hits')
     println()
     
-    queryset = StudentModel.query.w('height').lt(150).w('age').lt(14).sort_by('name').measure_time().collect()
+    queryset = StudentModel.query.where('height').less_than(150) \
+                                 .where('age').less_than(16) \
+                                 .sort_by('name') \
+                                 .filter_by('name') \
+                                 .measure_time() \
+                                 .collect()
     log(f'Found {len(queryset)} hits')
     println()
     
