@@ -220,16 +220,5 @@ def test_queries(number_of_students,
                                  .measure_time() \
                                  .collect()
     log(f'Found {len(queryset)} hits')
-    println()
-    
-    # query2 = StudentModel.query.where('height').greater_than(150).filter_by('name').sort_by('age')
-    
-    # Create a query with chained where's for bonus usage:
-    single_query = (
-        StudentModel.query
-        .where('name').equals('jennifer')
-        .where('age').less_than(20)
-        #  .where('school.name').equals('Howard High')
-    )
     
     log('--------------------')
