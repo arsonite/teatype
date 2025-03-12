@@ -18,7 +18,6 @@ from typing import List
 
 # From package imports
 from pympler import asizeof
-from teatype.hsdb import HSDBQuery
 
 class _MemoryFootprint:
     def __init__(self, index_database:object):

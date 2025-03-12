@@ -11,15 +11,15 @@
 # all copies or substantial portions of the Software.
 
 # WARNING: Do not change the order of the imports, it will break the code
+from .RawFileStructure import RawFileStructure
+from .RawFileHandler import RawFileHandler
+from .IndexDatabase import IndexDatabase
+from .HybridStorage import HybridStorage
+
 from .HSDBRelation import HSDBRelation
-# from .HSDBMigration import HSDBMigration
+from .HSDBMigration import HSDBMigration
+from .HSDBQuery import HSDBQuery
 from .HSDBValueWrapper import HSDBValueWrapper
 from .HSDBAttribute import HSDBAttribute
 from .HSDBMeta import HSDBMeta
-from .HSDBMigration import HSDBMigration
-from .HSDBQuery import HSDBQuery
 from .HSDBModel import HSDBModel
-from .IndexDatabase import IndexDatabase
-from .RawFileStructure import RawFileStructure
-from .RawFileHandler import RawFileHandler
-from .HybridStorage import HybridStorage

@@ -14,8 +14,9 @@
 from typing import List, Union
 
 # From package imports
-from teatype.hsdb import HSDBModel, IndexDatabase
+from teatype.hsdb import HybridStorage
 
+_EXECUTION_HOOKS = ['__iter__', '__len__', '__getitem__', 'all', 'collect', 'first', 'last', 'set']
 _OPERATOR_VERBS = [('eq', 'equals'),
                    ('ge', 'greater_than_or_equals'),
                    ('le', 'less_than_or_equals'),
@@ -24,35 +25,40 @@ _OPERATOR_VERBS = [('eq', 'equals'),
 
 # TODO: Add support for running queries on querysets again after execution to allow reducing even further after initial query
 class HSDBQuery:
-    _already_executed:bool
     _conditions:List
     _current_attribute:str
     _filter_key:str
-    _index_db_reference:IndexDatabase
+    _index_db_reference:object # IndexDatabase, avoiding import loop
     _index_id:str
-    _model:HSDBModel
     _paginate:Union[int, int]
     _return_ids:bool
-    _sort_key:str
+    _sort_by:str
     _sort_order:str
+    already_executed:bool
+    model:type # HSDBModel class, avoiding import loop
     
-    def __init__(self, model:HSDBModel):
+    def __init__(self, model:type):
         # model is used later to help interpret attribute types and relations
         self.model = model
         
-        self._aready_executed = False
+        self.already_executed = False
+        
         self._conditions = [] # list of (attribute_path, operator, value)
         self._current_attribute = None
         self._filter_key = None
-        self._index_db_reference = IndexDatabase()
+        self._index_db_reference = HybridStorage().index_database._db
         self._index_id = None
         self._paginate = None
         self._return_ids = False
-        self._sort_key = None
+        self._sort_by = None
         self._sort_order = None
 
     def __repr__(self):
-        return f"<HSDBQuery conditions={self._conditions} filter_key={self._filter_key} sort_by={self._sort_key}>"
+        return f'<HSDBQuery ' \
+               f'conditions={self._conditions} ' \
+               f'filter_key={self._filter_key} ' \
+               f'sort_by={self._sort_by}({self._sort_order}) ' \
+                '/>'
 
     def _add_condition(self, op, value):
         if self._current_attribute is None:
@@ -67,7 +73,7 @@ class HSDBQuery:
             if self._current_attribute is not None:
                 raise ValueError('No value specified for attribute. Call a operator verb first: ' + ', '.join([v for k, v in _OPERATOR_VERBS]))
             
-        if self._already_executed:
+        if self.already_executed:
             raise ValueError('Query already executed. Call a new query property to start a new query.')
     
     def _run_query(self):
@@ -79,26 +85,26 @@ class HSDBQuery:
 
         Returns:
         List of identifiers that match the query if self._return_ids is True.
-        List of data that match the query if self._return_ids is False.
+        List of entry that match the query if self._return_ids is False.
         """
-        def get_nested_value(data, attribute_path):
+        def __get_nested_value(entry, attribute_path):
             parts = attribute_path.split('.')
-            value = data
+            value = entry
             for part in parts:
                 if not isinstance(value, dict):
                     # Look up the referenced record in the db using string key.
                     reference = str(value)
-                    if reference in self._index_db_reference._db and isinstance(self._index_db_reference._db[reference], dict):
-                        value = self._index_db_reference._db[reference]
+                    if reference in self._index_db_reference and isinstance(self._index_db_reference[reference], dict):
+                        value = self._index_db_reference[reference]
                     else:
                         # If reference not found, return None.
                         return None
                 value = value.get(part)
             return value
 
-        def condition_matches(data, condition):
+        def __condition_matches(entry, condition):
             attribute, operator, expected = condition
-            actual_attribute = get_nested_value(data, attribute)
+            actual_attribute = __get_nested_value(entry, attribute)
             actual_value = actual_attribute._value
             if operator == '==':
                 return actual_value == expected
@@ -109,32 +115,33 @@ class HSDBQuery:
             else:
                 raise ValueError(f'Unsupported operator {operator}')
             
-        self._block_pending_condition()
+        self._block_executed_query()
 
         # First filter using conditions.
-        results = []
-        for identifier, data in self._index_db_reference._db.items():
-            if data.get('model_name') != self.model_class:
+        entries = []
+        for id, entry in self._index_db_reference.items():
+            if entry.model_name != self.model_class:
                 continue
-            if all(condition_matches(data, condition) for condition in self.conditions):
-                if self.return_ids:
-                    results.append(identifier)
-                else:
-                    results.append(data)
-        # Sort the results if needed.
-        if self.sort_key:
-            results.sort(key=lambda item: get_nested_value(item[1], self.sort_key))
-        if self.filter_key:
-            results = [item for item in results if get_nested_value(item[1], self.filter_key)]
             
-        self._already_executed = True
+            if all(__condition_matches(entry, condition) for condition in self.conditions):
+                if self.return_ids:
+                    entries.append(id)
+                else:
+                    entries.append(entry)
+        # Sort the entries if needed.
+        if self.sort_key:
+            entries.sort(key=lambda entry: __get_nested_value(entry[1], self.sort_key))
+        if self.filter_key:
+            entries = [entry for entry in entries if __get_nested_value(entry[1], self.filter_key)]
+            
+        self.already_executed = True
         
-        # Return list of identifiers.
-        return [item[0] for item in results]
+        # Return list of ids.
+        return [entry[0] for entry in entries]
     
     def sort_by(self, attribute_name:str, sort_order:str='asc'):
         self._block_executed_query(include_pending_condition=True)
-        self._sort_key = attribute_name
+        self._sort_by = attribute_name
         self._sort_order = sort_order
         return self
 
@@ -160,44 +167,44 @@ class HSDBQuery:
         Trigger execution when iterating.
         """
         self._block_executed_query()
-        return iter(self._execute())
+        return iter(self._run_query())
 
     def __len__(self):
         """
         Trigger execution when len() is called.
         """
         self._block_executed_query()
-        return len(self._execute())
+        return len(self._run_query())
 
     def __getitem__(self, index):
         """
         Trigger execution when accessing an item.
         """
         self._block_executed_query()
-        return self._execute()[index]
+        return self._run_query()[index]
 
     def all(self):
         self._block_executed_query()
         # Calling all resets any previous conditions
         self._conditions = []
-        return self._execute()
+        return self._run_query()
     
     def collect(self):
         """
         Forcing the query to execute and return the results without any special actions.
         """
         self._block_executed_query()
-        return self._execute()
+        return self._run_query()
     
     def first(self):
         self._block_executed_query()
         self.paginate = (0, 1)
-        return self._execute()
+        return self._run_query()
         
     def last(self):
         self._block_executed_query()
         self.paginate = (-1, -1)
-        return self._execute()
+        return self._run_query()
     
     def set(self, patch_data:dict, id:str=None):
         self._block_executed_query()
@@ -208,7 +215,7 @@ class HSDBQuery:
     ##################
 
     def where(self, attribute_name:str):
-        self._block_pending_condition(include_pending_condition=True)
+        self._block_executed_query(include_pending_condition=True)
         # Set current attribute that the following operator verb will apply to
         self._current_attribute = attribute_name
         return self
@@ -241,21 +248,10 @@ class HSDBQuery:
     ####################
     # Operator aliases #
     ####################
-
-    def w(self, attribute_name:str):
-        return self.where(attribute_name)
     
-    def eq(self, value:any):
-        return self.equals(value)
-    
-    def ge(self, value:any):
-        return self.equals_or_greater_than(value)
-    
-    def le(self, value:any):
-        return self.equal_or_less_than(value)
-    
-    def lt(self, value:any):
-        return self.less_than(value)
-    
-    def gt(self, value:any):
-        return self.greater_than(value)
+    def w(self, attribute_name: str) -> 'HSDBQuery': return self.where(attribute_name)
+    def eq(self, value:any) -> 'HSDBQuery': return self.equals(value)
+    def ge(self, value:any) -> 'HSDBQuery': return self.greater_than_or_equals(value)
+    def le(self, value:any) -> 'HSDBQuery': return self.less_than_or_equals(value)
+    def lt(self, value:any) -> 'HSDBQuery': return self.less_than(value)
+    def gt(self, value:any) -> 'HSDBQuery': return self.greater_than(value)

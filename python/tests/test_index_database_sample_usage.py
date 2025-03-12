@@ -22,7 +22,7 @@ from concurrent.futures import ProcessPoolExecutor
 from pprint import pprint
 
 # From package imports
-from teatype.hsdb import HSDBAttribute, HSDBModel,IndexDatabase
+from teatype.hsdb import HSDBAttribute, HSDBModel, HybridStorage
 from teatype.logging import hint, println
 from teatype.util import generate_id, stopwatch
 
@@ -109,8 +109,8 @@ def random_schools():
     ]
 
 @pytest.fixture
-def index_database():
-    return IndexDatabase(models=[])
+def hybrid_storage():
+    return HybridStorage(cold_mode=True)
 
 ##########
 # PyTest #
@@ -121,14 +121,15 @@ def test_create_students_parallel(number_of_students,
                                   random_first_names,
                                   random_sur_names,
                                   random_schools,
-                                  index_database):
+                                  hybrid_storage):
     """
     Test student creation in parallel and database update.
     """
     println()
     
+    db = hybrid_storage.index_database._db
     for school in random_schools:
-        index_database._db.update({school.id: school})
+        db.update({school.id: school})
     
     if number_of_students == 1:
         stopwatch('Creating student')
@@ -149,10 +150,10 @@ def test_create_students_parallel(number_of_students,
 
     stopwatch('Index DB update')
     # Simulate and verify database update
-    index_database._db.update(students)
+    db.update(students)
     stopwatch()
     
-    total_database_entries = len(index_database._db.keys())
+    total_database_entries = len(db.keys())
     println()
     print(f'Total generated students: {total_database_entries}')
     
@@ -162,6 +163,7 @@ def test_create_students_parallel(number_of_students,
     # query is now a representation like:
     print(queryset) # e.g. <HSDBQuery conditions=[('name', '==', ...?), ('height', '>', 150)] sort_by=age>
     # Execute query
+    queryset.collect()
     
     # Create a query with chained where's for bonus usage:
     single_query = (

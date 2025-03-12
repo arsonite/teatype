@@ -12,7 +12,7 @@
 
 # From package imports
 from teatype.io import env, file, path
-from teatype.hsdb import HSDBModel, RawFileStructure
+from teatype.hsdb import RawFileStructure
 
 class RawFileHandler:
     _raw_file_structure:RawFileStructure
@@ -26,7 +26,7 @@ class RawFileHandler:
         
     # TODO: If new attributes surface (migrations), apply them to old files (backup before)
     def create_entry(self,
-                     model_instance:HSDBModel,
+                     model_instance:object,
                      overwrite_path:str,
                      compress:bool=False,
                      include_relational_data:bool=False) -> str:

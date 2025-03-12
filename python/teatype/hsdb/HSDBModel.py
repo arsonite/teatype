@@ -30,24 +30,26 @@ from teatype.util import generate_id
 # TODO: Add attribute supports
 # TODO: Add language supports
 class HSDBModel(ABC, metaclass=HSDBMeta):
-    # TODO: Implement these as computed properties
-    # _app_name:str
+    # Private class variables
+    # _app_name:str # TODO: Implement these as computed properties
     _attribute_cache = {} # Cache to store attributes once for each class
     _overwrite_path:str
     _overwrite_name:str
     _overwrite_plural_name:str
-    _path:str
-    _name:str
-    _plural_name:str
     _relations:dict
     
+    # Public class variables
+    cls:type['HSDBModel']
+    path:str
+    model_name:str
+    resource_name:str
+    resource_name_plural:str
     # migrated_at:dt
     # migration_app_name:str
     # migration_id:int
     # migration_name:str
     
-    cls:type['HSDBModel']
-    
+    # HSDB attributes
     # app_name     = HSDBAttribute(str,  editable=False) # TODO: Maybe make this as a computed python property?
     created_at   = HSDBAttribute(dt,   computed=True)
     id           = HSDBAttribute(str,  computed=True, unique=True)
@@ -70,35 +72,6 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         if self.__class__ not in self._attribute_cache:
             self._cache_attributes()
 
-        # DEPRECATED: Do I even need this anymore?
-            # self._fields = {} # Store actual field values
-            # for field_name, field in self.__class__.__dict__.items():
-            #     if isinstance(field, HSDBAttribute):
-            #         if field.required and field_name not in data:
-            #             raise ValueError(f"Missing required field: {field_name}")
-            #         setattr(self, field_name, data.get(field_name, None))
-            
-            # Initialize the attributes (lazy loading and caching for values)
-            # for attribute_name in self._attribute_cache[self.__class__]:
-            #     # Get the attribute from the cache
-            #     attribute = self._attribute_cache[self.__class__].get(attribute_name)
-            #     # Dynamically create the instance attribute
-            #     instance_attribute = HSDBAttribute(
-            #         attribute.type, 
-            #         **{key: value for key, value in vars(attribute).items() if key not in [
-            #             'name', 'type', '_cached_value', '_key', '_value', '_wrapper']} # Exclude these keys
-            #     )
-            #     instance_attribute.key = attribute_name  # Set the key to the attribute name
-                
-            #     # Set value if data is provided
-            #     if attribute_name in data:
-            #         if hasattr(instance_attribute, 'computed') and instance_attribute.computed:
-            #             raise ValueError(f'{attribute_name} is computed and cannot be set')
-            #         instance_attribute.value = data.get(attribute_name)
-                
-            #     # Assign to the instance
-            #     setattr(self, attribute_name, instance_attribute) # Set the attribute to the instance
-        
         # Create a dict to hold instance-specific field values
         self._fields = {}
         for attribute_name, attribute in self._attribute_cache[self.__class__].items():
@@ -122,29 +95,28 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 # self._fields[attribute_name] = instance_attribute
             
         # Model name and pluralization
-        self._model_name = type(self).__name__ 
-        self._name = parse_name(self._model_name, remove='-model', plural=False)
-        self._plural_name = parse_name(self._model_name, remove='-model', plural=True)
+        self.cls = self.__class__
+        self.model_name = type(self).__name__ 
+        self.resource_name = parse_name(self.model_name, remove='-model', plural=False)
+        self.resource_name_plural = parse_name(self.model_name, remove='-model', plural=True)
 
         # Validation after initialization
         for attribute_name, attr in self.__dict__.items():
             if isinstance(attr, HSDBAttribute):
                 if attr.required and not attr.value:
-                    raise ValueError(f'Model "{self._model_name}" init error: attribute "{attribute_name}" is required')
+                    raise ValueError(f'Model "{self.model_name}" init error: attribute "{attribute_name}" is required')
         
         # TODO: Find a more elegant solution than this ugly a** hack
         # self.id.instance.__computational_override__(generate_id(truncate=5))
-        self.id = generate_id(truncate=64)
+        self.id = generate_id()
         
         current_time = dt.now()
         self.created_at = current_time
         self.updated_at = current_time
             
         if overwrite_path:
-            self._path = overwrite_path
-        self._path = f'{self._plural_name}/{self.id}.json'
-        
-        self.cls = self.__class__
+            self.path = overwrite_path
+        self.path = f'{self.resource_name_plural}/{self.id}.json'
         
         # TODO: Make this dynamic
         # self.app_name = 'raw'
@@ -243,7 +215,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
             } 
             serialized_data['base_data'] = base_data
         
-        data_key = self._name + '_data' if use_data_key else 'data'
+        data_key = self.resource_name + '_data' if use_data_key else 'data'
         serialized_data[data_key] = serializer
         
         if include_migration:
@@ -256,7 +228,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         if include_model:
             model_data = {
                 'app_name': self.app_name,
-                'model_name': self._model_name,
+                'model_name': self.model_name,
             }
             serialized_data['model_data'] = model_data
         
