@@ -250,7 +250,7 @@ class BaseStartCLI(BaseCLI):
             self.start_command += f' > {stdout_path} 2>&1 &'
         
         if file.exists('./.env'):
-            env.load(silent_fail=silent_mode) # Load the environment variables
+            env.load() # Load the environment variables
         else:
             warn('No ".env" file found. Limited functionality available.', verbose=False)
         
