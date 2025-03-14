@@ -25,12 +25,12 @@ class dt(datetime.datetime):
         _GLOBAL_TZ = tz
 
     @classmethod
-    def as_string(cls,
-                  continent:str=None,
-                  city:str=None,
-                  tz:str='UTC',
-                  format:str='%Y-%m-%dT%H:%M:%SZ%Z',
-                  return_dt:bool=False) -> str:
+    def now(cls,
+            continent:str=None,
+            city:str=None,
+            format:str='%Y-%m-%dT%H:%M:%SZ%Z',
+            return_string:bool=True,
+            tz:str='UTC',) -> str:
         # If tz not provided, try to build it from continent/city
         if not tz and continent and city:
             tz = f'{continent}/{city}'
@@ -45,16 +45,16 @@ class dt(datetime.datetime):
             raise ValueError(f'Invalid timezone: {tz}')
 
         current_time = datetime.datetime.now(timezone)
-        if return_dt:
+        if not return_string:
             return current_time
         return current_time.strftime(format)
 
     @classmethod
     def parse(cls, 
-              dt_str:str,
-              format:str='%Y-%m-%dT%H:%M:%SZ%Z',
+              dt_string:str,
               continent:str=None,
               city:str=None,
+              format:str='%Y-%m-%dT%H:%M:%SZ%Z',
               tz:str='UTC') -> datetime.datetime:
         if not tz and continent and city:
             tz = f'{continent}/{city}'
@@ -67,6 +67,6 @@ class dt(datetime.datetime):
         except ZoneInfo.KeyError:
             raise ValueError(f'Invalid timezone: {tz}')
 
-        dt_instance = datetime.datetime.strptime(dt_str, format)
+        dt_instance = datetime.datetime.strptime(dt_string, format)
         dt_instance = dt_instance.replace(tzinfo=timezone)
         return dt_instance
