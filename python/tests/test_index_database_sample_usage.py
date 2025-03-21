@@ -22,13 +22,17 @@ from concurrent.futures import ProcessPoolExecutor
 from pprint import pprint
 
 # From package imports
-from teatype.hsdb import HSDBAttribute, HSDBModel, HybridStorage
+from teatype.hsdb import HSDBAttribute, HSDBRelation, HSDBModel, HybridStorage
 from teatype.logging import hint, log, println
 from teatype.util import generate_id, stopwatch
 
 ##################
 # Example Models #
 ##################
+    
+class SchoolModel(HSDBModel):
+    address = HSDBAttribute(str, required=True)
+    name    = HSDBAttribute(str, required=True)
 
 # Assume these are your models derived from BaseModel.
 class StudentModel(HSDBModel):
@@ -36,11 +40,7 @@ class StudentModel(HSDBModel):
     gender = HSDBAttribute(str, required=True)
     height = HSDBAttribute(int, description='Height in cm', required=True)
     name   = HSDBAttribute(str, required=True)
-    # school = HSDBAttribute(type=HSDBRelation)
-    
-class SchoolModel(HSDBModel):
-    address = HSDBAttribute(str, required=True)
-    name    = HSDBAttribute(str, required=True)
+    # school = HSDBRelation.OneToOne(SchoolModel)
     
 ####################
 # Helper Functions #
@@ -258,6 +258,6 @@ def test_queries(number_of_students,
     println()
     
     lion_reichl.print()
-    lion_reichl.school.print()
+    # lion_reichl.school.print()
     
     log('--------------------')

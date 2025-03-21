@@ -1,0 +1,122 @@
+# Copyright (C) 2024-2025 Burak Günaydin
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# From system imports
+from abc import ABC, abstractmethod
+
+# TODO: Try to do automatic type checking and assignment in ValueWrapper as well
+# TODO: Implement support for dicts and lists (potentially dangerous though)
+class HSDBField(ABC):
+    _cached_value:object        # Cache for the field value
+    _key:str                    # internal storage for key
+    _value:object               # internal storage for value
+    _wrapper:'_ValueWrapper'    # internal storage for value wrapper
+    name:str                    # The field name # TODO: Check if this is needed anymore, maybe refactor in future
+
+    def __init__(self):
+        self._cached_value = None
+        self._key = None
+        self._value = None
+        self._wrapper = None
+        
+        self.name = None
+        
+    def __set_name__(self, owner, name):
+        """Automatically assigns the field name when the class is created."""
+        self.name = name
+        
+    ##############
+    # Properties #
+    ##############
+    
+    @property
+    def cls(self):
+        return self.__class__
+    
+    @property
+    def instance(self):
+        return self.__instance
+
+    @property
+    def key(self):
+        return self._key
+
+    @property
+    def value(self):
+        return self._value
+        
+    ######################
+    # Descriptor Methods #
+    ######################
+
+    def __set__(self, instance, value):
+        # Set the value and cache it
+        # TODO: Fix validation
+        # self._validate_value(value)
+        # instance.__dict__[self.name] = value
+        self._wrapper = None # Invalidate the cached wrapper
+
+    def __set_name__(self, owner, name):
+        self.name = name # Store the field name for later use in the instance
+        self._key = name # Set the key to the field name by default
+        
+    ##################
+    # Setter Methods #
+    ##################
+
+    @key.setter
+    def key(self, new_key:str):
+        self._validate_key(new_key)
+        self._key = new_key
+
+    @value.setter
+    def value(self, new_value:any):
+        # self._validate_value(new_value)
+        self._value = new_value
+        
+    ####################
+    # Internal Classes #
+    ####################
+
+    class _ValueWrapper(ABC):
+        """
+        Wrapper that stores both the value and the field pointer reference.
+        """
+        def __init__(self, value, field):
+            self._value = value
+            # DEPRECATED: This is no longer needed since we are using lazy loading and caching
+                # The field metadata (e.g., type, required), no longer keeping reference to the original HSDBField
+            self._field = field
+            
+            self._cached_metadata = None
+            self._metadata_loaded = False
+
+        # DEPRECATED: This method is not needed anymore since lazy loading and caching optimization
+            # def __getattr__(self, item):
+            #     """
+            #     If we access metadata (e.g., `student_A.id.type`), return it from the field.
+            #     """
+            #     return getattr(self._field, item)
+
+        def __repr__(self):
+            return repr(self._value)
+
+        def __str__(self):
+            return str(self._value)
+        
+        ####################
+        # Abstract Methods #
+        ####################
+        
+        @abstractmethod
+        def _load_metadata(self):
+            raise NotImplementedError('Method not implemented')

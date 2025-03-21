@@ -17,7 +17,7 @@ import sys
 from typing import Generic, Type, TypeVar
 
 # From package imports
-from teatype.hsdb import HSDBRelation, HSDBValueWrapper
+from teatype.hsdb import HSDBField
 from teatype.util import dt
 
 # Type alias for attribute types
@@ -30,7 +30,6 @@ _AVAILABLE_FIELDS = [
     'editable',
     'indexed',
     'max_size',
-    'relation',
     'required',
     'searchable',
     'type',
@@ -38,16 +37,17 @@ _AVAILABLE_FIELDS = [
 ]
 _SUPPORTED_TYPES = [bool, dt, float, int, str]
 
+
+
 # TODO: Try to do automatic type checking and assignment in ValueWrapper as well
 # TODO: Implement support for dicts and lists (potentially dangerous though)
-class HSDBAttribute(Generic[T]):
+class HSDBAttribute(HSDBField, Generic[T]):
     computed:bool         # Whether the attribute is computed, more of a flavour attribute, laxily enforced
     description:str       # Description of the attribute
     editable:bool         # Whether the attribute can be edited, automatically set to False if computed
     indexed:bool          # Whether the attribute is indexed
     key:str               # The attribute key
     max_size:int          # Maximum size of the attribute value (only relevant for strings)
-    relation:HSDBRelation # Relation object if attribute is a relation
     required:bool         # Whether the attribute is required, automatically set to True if computed
     searchable:bool       # Whether the attribute is searchable
     type:Type[T]          # holds an actual Python type, e.g. str, int, etc.
@@ -60,10 +60,11 @@ class HSDBAttribute(Generic[T]):
                  editable:bool=True,
                  indexed:bool=False,
                  max_size:int=sys.maxsize,
-                 relation:HSDBRelation=None,
                  required:bool=False,
                  searchable:bool=False,
                  unique:bool=False):
+        super().__init__()
+        
         # Manual type checking to complement static type checking
         if type not in _SUPPORTED_TYPES:
             raise ValueError(f'Unsupported type: {type.__name__}, supported types are: {_SUPPORTED_TYPES}')
@@ -77,8 +78,6 @@ class HSDBAttribute(Generic[T]):
             raise ValueError('indexed must be a boolean')
         if not isinstance(max_size, int):
             raise ValueError('max_size must be an integer')
-        if not isinstance(relation, HSDBRelation) and relation != None:
-            raise ValueError('relation must be an instance of HSDBRelation')
         if not isinstance(required, bool):
             raise ValueError('required must be a boolean')
         if not isinstance(searchable, bool):
@@ -93,25 +92,16 @@ class HSDBAttribute(Generic[T]):
         self.editable = False if computed else editable
         self.indexed = indexed
         self.max_size = max_size
-        self.relation = relation
         self.required = True if computed else required
         self.searchable = searchable
         self.type = type # This sets the actual type based on the generic argument
         self.unique = unique
-        
-        self._cached_value = None # Cache for the field value
-        self._key = None # internal storage for key
-        self._wrapper = None #
-        self._value = None # internal storage for value
-        
-        self.name = None # Will be assigned dynamically by __set_name__
-        
-    def __set_name__(self, owner, name):
-        """Automatically assigns the field name when the class is created."""
-        self.name = name
-        
-    def __repr__(self):
-        return f'HSDBAttribute(key={self.key}, value={self.value}, type={self.type.__name__})'
+
+    def __get__(self, instance, owner):
+        if self._wrapper is None: # Lazy loading of the wrapper
+            value = instance.__dict__['_fields'].get(self.key)
+            self._wrapper = self._AttributeWrapper(value.value, self)
+        return self._wrapper
     
     def _validate_key(self, key):
         if self._key is not None:
@@ -138,61 +128,6 @@ class HSDBAttribute(Generic[T]):
         if not self.editable:
             raise ValueError(f'Attribute "{self.key}" is not editable after it has been set once')
         
-    ##############
-    # Properties #
-    ##############
-    
-    @property
-    def cls(self):
-        return self.__class__
-    
-    @property
-    def instance(self):
-        return self.__instance
-
-    @property
-    def key(self):
-        return self._key
-
-    @property
-    def value(self):
-        return self._value
-        
-    ######################
-    # Descriptor Methods #
-    ######################
-
-    def __get__(self, instance, owner):
-        if self._wrapper is None: # Lazy loading of the wrapper
-            value = instance.__dict__['_fields'].get(self.key)
-            self._wrapper = HSDBValueWrapper(value.value, self)
-        return self._wrapper
-
-    def __set__(self, instance, value):
-        # Set the value and cache it
-        # TODO: Fix validation
-        # self._validate_value(value)
-        # instance.__dict__[self.name] = value
-        self._wrapper = None # Invalidate the cached wrapper
-
-    def __set_name__(self, owner, name):
-        self.name = name # Store the field name for later use in the instance
-        self._key = name # Set the key to the field name by default
-        
-    ##################
-    # Setter Methods #
-    ##################
-
-    @key.setter
-    def key(self, new_key:str):
-        self._validate_key(new_key)
-        self._key = new_key
-
-    @value.setter
-    def value(self, new_value:any):
-        # self._validate_value(new_value)
-        self._value = new_value
-        
     #################
     # Class methods #
     #################
@@ -209,3 +144,90 @@ class HSDBAttribute(Generic[T]):
             raise ValueError(f'Unsupported type: {item.__name__}, supported types are: {_SUPPORTED_TYPES}')
         # Return the class type with the parameter
         return cls
+        
+    ####################
+    # Internal Classes #
+    ####################
+    
+    class _AttributeWrapper(HSDBField._ValueWrapper):
+        def _load_metadata(self):
+            """
+            Load the metadata (lazy loading).
+            """
+            if not self._metadata_loaded:
+                self._cached_metadata = {
+                    'cls': self._field.cls,
+                    'computed': self._field.computed,
+                    'description': self._field.description,
+                    'editable': self._field.editable,
+                    'indexed': self._field.indexed,
+                    'instance': self._field,
+                    'key': self._field.key,
+                    'max_size': self._field.max_size,
+                    'required': self._field.required,
+                    'searchable': self._field.searchable,
+                    'type': self._field.type,
+                    'unique': self._field.unique
+                }
+                self._metadata_loaded = True
+            return self._cached_metadata
+
+        @property
+        def cls(self):
+            metadata = self._load_metadata()
+            return metadata['cls']
+
+        @property
+        def computed(self):
+            metadata = self._load_metadata()
+            return metadata['computed']
+        
+        @property
+        def description(self):
+            metadata = self._load_metadata()
+            return metadata['description']
+        
+        @property
+        def editable(self):
+            metadata = self._load_metadata()
+            return metadata['editable']
+        
+        @property
+        def indexed(self):
+            metadata = self._load_metadata()
+            return metadata['indexed']
+        
+        @property
+        def instance(self):
+            metadata = self._load_metadata()
+            return metadata['instance']
+        
+        @property
+        def key(self):
+            metadata = self._load_metadata()
+            return metadata['key']
+        
+        @property
+        def max_size(self):
+            metadata = self._load_metadata()
+            return metadata['max_size']
+        
+        @property
+        def required(self):
+            metadata = self._load_metadata()
+            return metadata['required']
+        
+        @property
+        def searchable(self):
+            metadata = self._load_metadata()
+            return metadata['searchable']
+
+        @property
+        def type(self):
+            metadata = self._load_metadata()
+            return metadata['type']
+        
+        @property
+        def unique(self):
+            metadata = self._load_metadata()
+            return metadata['unique']
