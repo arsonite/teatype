@@ -16,6 +16,7 @@ from typing import List
 
 # From package imports
 from teatype.hsdb import HSDBField, HSDBQuery
+from teatype.util import kebabify
 
 # TODO: HSDB type is Relation for metadata access, but value is always the query close
 # TODO: Internal callable that returns special query with overwritten foreign model and capped queryset in the init of hsdbmodel
@@ -24,8 +25,10 @@ from teatype.hsdb import HSDBField, HSDBQuery
 class HSDBRelation(HSDBField):
     primary_keys:List[str]
     primary_model:type
-    relation_type:type
+    relational_name:type
+    relational_type:type
     relational_key:str
+    reverse_lookup:str
     secondary_keys:List[str]
     secondary_model:type
     
@@ -36,15 +39,31 @@ class HSDBRelation(HSDBField):
     
     def __init__(self,
                  primary_keys:List[str],
+                 primary_model:type,
                  secondary_keys:List[str],
-                 relation_type:type,
+                 secondary_model:type,
+                 relational_type:type,
+                 reverse_lookup:str,
                  relational_key:str='id') -> None:
+        super().__init__()
+        
+        self.primary_model = primary_model
         self.relational_key = relational_key
+        self.reverse_lookup = reverse_lookup
+        self.secondary_model = secondary_model
         
         self.setPrimaryKeys(primary_keys)
         self.setSecondaryKeys(secondary_keys)
         
-        self.name = f'{self.primary_model.model_name}_{relation_type}_{self.secondary_model.model_name}'
+        self.relational_name = f'{self.primary_model.__name__}_{relational_type}_{self.secondary_model.__name__}'
+        
+        self._value = self._query_closure
+
+    def __get__(self, instance, owner):
+        if self._wrapper is None:
+            value = instance.__dict__['_fields'].get(self.key)
+            self._wrapper = self._RelationWrapper(value.value, self)
+        return self._wrapper
             
     def _validate_key(self, key:str) -> None:
         if not isinstance(key, str) or not key:
@@ -85,31 +104,14 @@ class HSDBRelation(HSDBField):
     def setPrimaryKeys(self, primary_keys:List[str]) -> None:
         self._validate_keys(primary_keys)
         self._primary_keys = primary_keys
-        self._parse_relation_type()
         
     def setSecondaryKeys(self, secondary_keys:List[str]) -> None:
         self._validate_keys(secondary_keys)
         self._secondary_keys = secondary_keys
-        self._parse_relation_type()
         
     ####################
     # Internal Classes #
     ####################
-
-    # class _RelationProxy:
-    #     def __init__(self, relation:HSDBRelation) -> None:
-    #         self._relation = relation
-    
-    class _RelationFactory(ABC):
-        @classmethod
-        def create(cls,
-                   relation_type:type,
-                   primary_model:type,
-                   secondary_model:type,
-                   primary_keys:List[str],
-                   secondary_keys:List[str],
-                   relational_key:str='id'):
-            return HSDBRelation(primary_keys, secondary_keys, relation_type, relational_key)
 
     class _RelationWrapper(HSDBField._ValueWrapper):
         def _load_metadata(self):
@@ -118,81 +120,88 @@ class HSDBRelation(HSDBField):
             """
             if not self._metadata_loaded:
                 self._cached_metadata = {
-                    'cls': self._field.cls,
-                    'computed': self._field.computed,
-                    'description': self._field.description,
-                    'editable': self._field.editable,
-                    'indexed': self._field.indexed,
-                    'instance': self._field,
-                    'key': self._field.key,
-                    'max_size': self._field.max_size,
-                    'required': self._field.required,
-                    'searchable': self._field.searchable,
-                    'type': self._field.type,
-                    'unique': self._field.unique
+                    'primary_keys': self._field.primary_keys,
+                    'primary_model': self._field.primary_model,
+                    'relational_key': self._field.relational_key,
+                    'relational_name': self._field.relational_name,
+                    'relational_type': self._field.relational_type,
+                    'reverse_lookup': self._field.reverse_lookup,
+                    'secondary_keys': self._field.secondary_keys,
+                    'secondary_model': self._field.secondary_model
                 }
                 self._metadata_loaded = True
             return self._cached_metadata
 
         @property
-        def cls(self):
+        def primary_keys(self):
             metadata = self._load_metadata()
-            return metadata['cls']
-
-        @property
-        def computed(self):
-            metadata = self._load_metadata()
-            return metadata['computed']
+            return metadata['primary_keys']
         
         @property
-        def description(self):
+        def primary_model(self):
             metadata = self._load_metadata()
-            return metadata['description']
+            return metadata['primary_model']
         
         @property
-        def editable(self):
+        def relational_key(self):
             metadata = self._load_metadata()
-            return metadata['editable']
+            return metadata['relational_key']
         
         @property
-        def indexed(self):
+        def relational_name(self):
             metadata = self._load_metadata()
-            return metadata['indexed']
+            return metadata['relational_name']
         
         @property
-        def instance(self):
+        def relational_type(self):
             metadata = self._load_metadata()
-            return metadata['instance']
+            return metadata['relational_type']
         
         @property
-        def key(self):
+        def reverse_lookup(self):
             metadata = self._load_metadata()
-            return metadata['key']
+            return metadata['reverse_lookup']
         
         @property
-        def max_size(self):
+        def secondary_keys(self):
             metadata = self._load_metadata()
-            return metadata['max_size']
+            return metadata['secondary_keys']
         
         @property
-        def required(self):
+        def secondary_model(self):
             metadata = self._load_metadata()
-            return metadata['required']
+            return metadata['secondary_model']
+    
+    class _RelationFactory(ABC):
+        relational_key:str
+        relation_type:str
+        reverse_lookup:str
+        secondary_model:type
         
-        @property
-        def searchable(self):
-            metadata = self._load_metadata()
-            return metadata['searchable']
-
-        @property
-        def type(self):
-            metadata = self._load_metadata()
-            return metadata['type']
-        
-        @property
-        def unique(self):
-            metadata = self._load_metadata()
-            return metadata['unique']
+        def __init__(self,
+                     secondary_model:type,
+                     relational_key:str='id',
+                     reverse_lookup:str=None) -> None:
+            self.relational_key = relational_key
+            self.secondary_model = secondary_model
+            
+            self.relation_type = kebabify(self.__class__.__name__)
+            if reverse_lookup is not None:
+                self.reverse_lookup = reverse_lookup
+            else:
+                self.reverse_lookup = kebabify(secondary_model.__name__, replace=('-model', ''))
+            
+        def create(self,
+                   primary_keys:List[str],
+                   primary_model:type,
+                   secondary_keys:List[str]) -> 'HSDBRelation':
+            return HSDBRelation(primary_keys,
+                                primary_model,
+                                secondary_keys,
+                                self.secondary_model,
+                                self.relation_type,
+                                self.reverse_lookup,
+                                self.relational_key)
     
     class OneToOne(_RelationFactory):
         pass

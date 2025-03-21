@@ -16,14 +16,15 @@ import re
 # From system imports
 from typing import Union
 
-def parse_name(raw_name:str,
-               plural:bool=False,
-               remove:str=None,
-               replace:Union[str,str]=None,
-               seperator:str='-') -> str:
+def kebabify(raw_name:str,
+             plural:bool=False,
+             remove:str=None,
+             replace:Union[str,str]=None,
+             seperator:str='-') -> str:
     parsed_name = re.sub(r'(?<!^)(?=[A-Z])', seperator, raw_name).lower()
     if remove:
         parsed_name = parsed_name.replace(remove, '')
+    # TODO: Implement support for multiple replace
     if replace:
         parsed_name = parsed_name.replace(replace[0], replace[1])
     if plural:

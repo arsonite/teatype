@@ -20,7 +20,7 @@ from typing import List
 # From package imports
 from teatype.io import file, path
 from teatype.logging import err, hint, println, warn
-from teatype.hsdb.util import parse_name
+from teatype.util import kebabify
 
 class _ParsingError:
     entry_id:str
@@ -52,7 +52,7 @@ def parse_index_files(hybrid_storage_instance:object=None, migrator:object=None)
     parsed_index_data = {}
     parsing_errors_found = False
     for model in models:
-        model_plural_name = parse_name(model.__name__, plural=True, remove='-model')
+        model_plural_name = kebabify(model.__name__, plural=True, remove='-model')
         model_path = f'{index_path}/{model_plural_name}'
         if not path.exists(model_path):
             continue

@@ -12,6 +12,7 @@
 
 from .dt import dt
 from .generate_id import generate_id
+from .kebabify import kebabify
 from .implemented_trap import implemented_trap
 from .SingletonMeta import SingletonMeta
 from .staticproperty import staticproperty

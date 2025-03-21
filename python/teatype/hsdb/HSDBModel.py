@@ -18,17 +18,15 @@ import pprint
 from abc import ABC
 
 # From package imports
-from teatype.hsdb import HSDBAttribute, HSDBMeta, HSDBQuery
-from teatype.hsdb.util import parse_name
+from teatype.hsdb import HSDBAttribute, HSDBMeta, HSDBQuery, HSDBRelation
 from teatype.util import dt, staticproperty
 
 # From-as package imports
-from teatype.util import generate_id
+from teatype.util import generate_id, kebabify
 
+# TODO: Add allowing to use string literal for relation name to avoid circular imports (need access to hybridstorage to iterate through models)
 # TODO: Try optimizing some questionable parts of the code
-# TODO: Implement additional HSDBField as descriptor to allow direct access of attributes without specifying .value
 # TODO: Add validation method inside model
-# TODO: Add attribute supports
 # TODO: Add language supports
 class HSDBModel(ABC, metaclass=HSDBMeta):
     # Private class variables
@@ -98,8 +96,8 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         # Model name and pluralization
         self.model = self.__class__
         self.model_name = type(self).__name__ 
-        self.resource_name = parse_name(self.model_name, remove='-model', plural=False)
-        self.resource_name_plural = parse_name(self.model_name, remove='-model', plural=True)
+        self.resource_name = kebabify(self.model_name, remove='-model', plural=False)
+        self.resource_name_plural = kebabify(self.model_name, remove='-model', plural=True)
 
         # Validation after initialization
         for attribute_name, attr in self.__dict__.items():

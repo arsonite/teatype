@@ -22,7 +22,7 @@ from typing import List, Type
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework.views import APIView
 from teatype.hsdb import HybridStorage
-from teatype.hsdb.util import parse_name
+from teatype.util import kebabify
 from teatype.web.django_support.responses import NotAllowed, ServerError, Success
 
 _COLLECTION_METHODS=['GET', 'POST']
@@ -96,13 +96,13 @@ class HSDBDjangoView(APIView):
     
     # TODO: Figure out how to make these work as properties
     def api_id(self) -> str:
-        parsed_name = parse_name(type(self).__name__)
+        parsed_name = kebabify(type(self).__name__)
         return f'{parsed_name}_id'
     
     def api_name(self) -> str:
         if self.overwrite_api_name:
             return self.overwrite_api_name
-        return parse_name(type(self).__name__)
+        return kebabify(type(self).__name__)
     
     def api_plural_name(self) -> str:
         api_name = self.api_name()
@@ -116,7 +116,7 @@ class HSDBDjangoView(APIView):
         if self.overwrite_api_path:
             return self.overwrite_api_path
         
-        parsed_name = parse_name(type(self).__name__)
+        parsed_name = kebabify(type(self).__name__)
         if self.is_collection:
             return f'/{parsed_name}'
         return f'/{self.api_plural_name()}/<str:{self.api_id()}>'

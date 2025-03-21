@@ -11,7 +11,6 @@
 # all copies or substantial portions of the Software.
 
 from .parse_fixtures import parse_fixtures
-from .parse_name import parse_name
 from .parse_index_files import parse_index_files
 
-__all__ = ['parse_fixtures', 'parse_index_files', 'parse_name']
+__all__ = ['parse_fixtures', 'parse_index_files']

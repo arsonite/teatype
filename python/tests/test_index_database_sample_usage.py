@@ -40,7 +40,7 @@ class StudentModel(HSDBModel):
     gender = HSDBAttribute(str, required=True)
     height = HSDBAttribute(int, description='Height in cm', required=True)
     name   = HSDBAttribute(str, required=True)
-    # school = HSDBRelation.OneToOne(SchoolModel)
+    school = HSDBRelation.OneToOne(SchoolModel)
     
 ####################
 # Helper Functions #
@@ -55,8 +55,7 @@ def create_student(i:int, random_first_names, random_sur_names, random_schools):
         'age': random.randint(13, 23),
         'height': random.randint(140, 200),
         'name': f'{random.choice(random_first_names)} {random.choice(random_sur_names)}',
-        # 'school': random.choice([random_school.id for random_school in random_schools])
-        'school': random.choice(random_schools)
+        'school': random.choice([random_school.id for random_school in random_schools])
     })
     return student.id, student
 
@@ -243,12 +242,13 @@ def test_queries(number_of_students,
                       .where('age').less_than(16) \
                       .verbose() \
                       .last()
-    
+
+    tu_berlin = SchoolModel.query.where('name').equals('Technische Universität Berlin').verbose().first()
     lion_reichl = StudentModel({
         'age': 30,
         'height': 181,
         'name': 'Lion Reichl',
-        'school': random_schools[-1]
+        'school': tu_berlin.id
     })
     db.update({lion_reichl.id: lion_reichl})
     lion_reichl_id = lion_reichl.id
@@ -258,6 +258,13 @@ def test_queries(number_of_students,
     println()
     
     lion_reichl.print()
+    
+    school_attr = lion_reichl.school.create(primary_keys=[lion_reichl.id._value],
+                                            primary_model=lion_reichl.model,
+                                            secondary_keys=[tu_berlin.id._value])
+    lion_reichl.school = school_attr
+    print(lion_reichl.school.all())
+    
     # lion_reichl.school.print()
     
     log('--------------------')
