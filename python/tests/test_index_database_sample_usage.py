@@ -117,7 +117,8 @@ def random_schools():
         SchoolModel({'address': '112 Birch St', 'name': 'Monroe High'}),
         SchoolModel({'address': '131 Maple St', 'name': 'Roosevelt High'}),
         SchoolModel({'address': '415 Cedar St', 'name': 'Washington High'}),
-        SchoolModel({'address': '161 Walnut St', 'name': 'Wilson High'})
+        SchoolModel({'address': '161 Walnut St', 'name': 'Wilson High'}),
+        SchoolModel({'address': 'Straße des 17. Juni 135', 'name': 'Technische Universität Berlin'}),
     ]
 
 @pytest.fixture
@@ -205,20 +206,58 @@ def test_queries(number_of_students,
     log('Test queries:')
     println()
     
-    queryset = StudentModel.query.w('height').lt(150).measure_time().collect()
-    log(f'Found {len(queryset)} hits')
+    SchoolModel.query.verbose().all()
+                      
+    StudentModel.query.verbose().all()
+    
+    StudentModel.query.w('height').gt(180).verbose().collect()
+    
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .sort_by('name') \
+                      .filter_by('name') \
+                      .verbose() \
+                      .collect()
+    
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .paginate(0, 10)
+    
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .paginate(1, 10)
+    
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .paginate(0, 30)
+    
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .first()
+    
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .last()
+    
+    lion_reichl = StudentModel({
+        'age': 30,
+        'height': 181,
+        'name': 'Lion Reichl',
+        'school': random_schools[-1]
+    })
+    db.update({lion_reichl.id: lion_reichl})
+    lion_reichl_id = lion_reichl.id
+    StudentModel.query.verbose().get(id=lion_reichl_id)
+    
+    log('Test relations:')
     println()
     
-    queryset = StudentModel.query.w('height').lt(150).w('age').lt(16).measure_time().collect()
-    log(f'Found {len(queryset)} hits')
-    println()
-    
-    queryset = StudentModel.query.where('height').less_than(150) \
-                                 .where('age').less_than(16) \
-                                 .sort_by('name') \
-                                 .filter_by('name') \
-                                 .measure_time() \
-                                 .collect()
-    log(f'Found {len(queryset)} hits')
+    lion_reichl.print()
+    lion_reichl.school.print()
     
     log('--------------------')

@@ -12,6 +12,7 @@
 
 # System imports
 import json
+import pprint
 
 # From system imports
 from abc import ABC
@@ -39,7 +40,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     _relations:dict
     
     # Public class variables
-    cls:type['HSDBModel']
+    model:type['HSDBModel']
     path:str
     model_name:str
     resource_name:str
@@ -95,7 +96,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 # self._fields[attribute_name] = instance_attribute
             
         # Model name and pluralization
-        self.cls = self.__class__
+        self.model = self.__class__
         self.model_name = type(self).__name__ 
         self.resource_name = parse_name(self.model_name, remove='-model', plural=False)
         self.resource_name_plural = parse_name(self.model_name, remove='-model', plural=True)
@@ -126,8 +127,8 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     def __getattribute__(self, name):
         # If the field name is in our field cache, return the value from _fields
         _cache = object.__getattribute__(self, '_attribute_cache')
-        cls = type(self)
-        if cls in _cache and name in _cache[cls]:
+        model = type(self)
+        if model in _cache and name in _cache[model]:
             return object.__getattribute__(self, '_fields').get(name).__get__(self, self.__class__)
         return object.__getattribute__(self, name)
 
@@ -161,8 +162,8 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         seen = set()
 
         # Traverse through the method resolution order to gather attributes
-        for cls in reversed(self.__class__.__mro__):
-            for attribute_name, attribute in cls.__dict__.items():
+        for model in reversed(self.__class__.__mro__):
+            for attribute_name, attribute in model.__dict__.items():
                 if attribute_name in seen:
                     continue
                 if isinstance(attribute, HSDBAttribute):
@@ -189,6 +190,9 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     def query(self):
         # Always return a new query builder instance when query is accessed.
         return HSDBQuery(self)
+    
+    def print(self):
+        pprint.pprint(self.model.serialize(self))
     
     # TODO: Optimization
     # TODO: Group data with key and base data into index data
@@ -242,7 +246,12 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 snapshot_dict[key] = str(value)
         return snapshot_dict
     
+    def save(self):
+        # TODO: Save to database and rawfile
+        pass
+    
     def update(self, data:dict):
+        # TODO: Patch the model with the given data in model, db and rawfile
         for key, value in data.items():
             setattr(self, key, value)
         self.updated_at = dt.now()

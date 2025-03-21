@@ -12,10 +12,12 @@
 
 # From system imports
 from functools import reduce
+from pprint import pprint
 from typing import List, Union
 
 # From package imports
 from teatype.hsdb import HybridStorage
+from teatype.logging import log, println
 from teatype.util import stopwatch
 
 _EXECUTION_HOOKS = ['__iter__', '__len__', '__getitem__', 'all', 'collect', 'first', 'last', 'set']
@@ -29,14 +31,15 @@ _OPERATOR_VERBS = [('eq', 'equals'),
 class HSDBQuery:
     _conditions:List
     _current_attribute:str
+    _executed_hook:str
     _filter_key:str
     _index_db_reference:object # IndexDatabase, avoiding import loop
-    _index_id:str
-    _measure_time:bool
-    _paginate:Union[int, int]
+    _pagination:Union[int, int]
+    _print:bool
     _return_ids:bool
     _sort_key:str
     _sort_order:str
+    _verbose:bool
     already_executed:bool
     model:type # HSDBModel class, avoiding import loop
     
@@ -48,21 +51,35 @@ class HSDBQuery:
         
         self._conditions = [] # list of (attribute_path, operator, value)
         self._current_attribute = None
+        self._executed_hook = None
         self._filter_key = None
         self._index_db_reference = HybridStorage().index_database._db
-        self._index_id = None
-        self._measure_time = False
-        self._paginate = None
+        self._pagination = None
+        self._print = False
         self._return_ids = False
         self._sort_key = None
         self._sort_order = None
+        self._verbose = False
 
     def __repr__(self):
-        return f'<HSDBQuery ' \
-               f'conditions={self._conditions} ' \
-               f'filter_key={self._filter_key} ' \
-               f'sort_by={self._sort_key}({self._sort_order}) ' \
-                '/>'
+        repr = '<HSDBQuery '
+        model_name = str(self.model).split('.')[-1].replace('\'', '').replace('>', '')
+        repr += f'model={model_name} '
+        
+        if self._conditions:
+            repr += f'conditions={str(self._conditions)} '
+            
+        if self._filter_key:
+            repr += f'filter_key="{self._filter_key}" '
+            
+        if self._sort_key:
+            repr += f'sort_by="{self._sort_key}" '
+            repr += f'sort_order="{self._sort_order}" '
+            
+        if self.already_executed:
+            repr += f'exec={self._executed_hook}()'
+        repr += '>'
+        return repr
                 
     def __str__(self):
         return self.__repr__()
@@ -83,82 +100,112 @@ class HSDBQuery:
         if self.already_executed:
             raise ValueError('Query already executed. Call a new query property to start a new query.')
     
-    def _run_query(self):
-        """
-        Execute a query representation on an in-memory db.
-
-        Parameters:
-        query: HSDBQuery instance with conditions and sort_key.
-
-        Returns:
-        List of identifiers that match the query if self._return_ids is True.
-        List of entry that match the query if self._return_ids is False.
-        """
-        def __get_nested_value(entry, attribute_path:str) -> any:
-            """
-            Retrieve the value of a nested attribute path in the entry.
-
-            This method now handles nested class attributes and avoids repeated class lookups
-            by utilizing the attribute index.
-            """
-            parts = attribute_path.split('.')
-            # Use a reduce to iterate over the attribute parts
-            def lookup_value(accumulated_value, part):
-                if isinstance(accumulated_value, dict):
-                    # If it's a dict, look up the value by key
-                    return accumulated_value.get(part, None)
-                elif hasattr(accumulated_value, part):
-                    # If it's an object, use getattr to get the attribute
-                    return getattr(accumulated_value, part, None)
-                else:
-                    return None
-            # Initial value is the entry object itself (which may be a dictionary or class instance)
-            return reduce(lookup_value, parts, entry)
-
-        def __condition_matches(entry, condition):
-            attribute, operator, expected = condition
-            actual_attribute = __get_nested_value(entry, attribute)
-            actual_value = actual_attribute._value
-            if operator == '==':
-                return actual_value == expected
-            elif operator == '<':
-                return actual_value is not None and actual_value < expected
-            elif operator == '>':
-                return actual_value is not None and actual_value > expected
-            else:
-                raise ValueError(f'Unsupported operator {operator}')
-            
+    def _run_query(self, id:str=None):
         self._block_executed_query()
         
-        if self._measure_time:
-            stopwatch(str(self))
+        try:
+            """
+            Execute a query representation on an in-memory db.
 
-        # First filter using conditions.
-        entries = []
-        for id, entry in self._index_db_reference.items():
-            if entry.cls != self.model:
-                continue
-            if all(__condition_matches(entry, condition) for condition in self._conditions):
-                if self._return_ids:
-                    entries.append(id)
-                else:
-                    entries.append(entry)
+            Parameters:
+            query: HSDBQuery instance with conditions and sort_key.
 
-        # TODO: Add support for nested values in sorting and filtering
-        # Sort the entries if needed.
-        if self._sort_key:
-            entries.sort(key=lambda entry: getattr(entry, self._sort_key)._value, reverse=self._sort_order == 'desc')
+            Returns:
+            List of identifiers that match the query if self._return_ids is True.
+            List of entry that match the query if self._return_ids is False.
+            """
+            if not id:
+                def __get_nested_value(entry, attribute_path:str) -> any:
+                    """
+                    Retrieve the value of a nested attribute path in the entry.
+
+                    This method now handles nested class attributes and avoids repeated class lookups
+                    by utilizing the attribute index.
+                    """
+                    parts = attribute_path.split('.')
+                    # Use a reduce to iterate over the attribute parts
+                    def lookup_value(accumulated_value, part):
+                        if isinstance(accumulated_value, dict):
+                            # If it's a dict, look up the value by key
+                            return accumulated_value.get(part, None)
+                        elif hasattr(accumulated_value, part):
+                            # If it's an object, use getattr to get the attribute
+                            return getattr(accumulated_value, part, None)
+                        else:
+                            return None
+                    # Initial value is the entry object itself (which may be a dictionary or class instance)
+                    return reduce(lookup_value, parts, entry)
+
+                def __condition_matches(entry, condition):
+                    attribute, operator, expected = condition
+                    actual_attribute = __get_nested_value(entry, attribute)
+                    actual_value = actual_attribute._value
+                    if operator == '==':
+                        return actual_value == expected
+                    elif operator == '<':
+                        return actual_value is not None and actual_value < expected
+                    elif operator == '>':
+                        return actual_value is not None and actual_value > expected
+                    else:
+                        raise ValueError(f'Unsupported operator {operator}')
+                    
+                self._block_executed_query()
+                
+                if self._verbose:
+                    stopwatch('Query runtime')
+
+                # First filter using conditions.
+                queryset = []
+                for id, entry in self._index_db_reference.items():
+                    if entry.model != self.model:
+                        continue
+                    if all(__condition_matches(entry, condition) for condition in self._conditions):
+                        if self._return_ids:
+                            queryset.append(id)
+                        else:
+                            queryset.append(entry)
+
+                # TODO: Add support for nested values in sorting and filtering
+                # Sort the queryset if needed.
+                if self._sort_key:
+                    queryset.sort(key=lambda entry: getattr(entry, self._sort_key)._value, reverse=self._sort_order == 'desc')
+                    
+                if self._filter_key:
+                    queryset = [getattr(entry, self._filter_key) for entry in queryset]
+                    
+                # Pagination logic
+                if self._pagination:
+                    page, page_size = self._pagination
+                    total_entries = len(queryset)
+                    if page < 0:
+                        page = max((total_entries // page_size) - 1, 0) # Last page
+                    start_index = page * page_size
+                    end_index = start_index + page_size
+                    queryset = queryset[start_index:end_index]
+            else:
+                queryset = [self._index_db_reference[id]]
             
-        if self._filter_key:
-            entries = [getattr(entry, self._filter_key) for entry in entries]
+            self.already_executed = True
             
-        if self._measure_time:
-            stopwatch()
-        
-        self.already_executed = True
-        
-        # Return list of ids.
-        return entries
+            if self._verbose:
+                log(self)
+                stopwatch()
+                found_message = f'Found {len(queryset)} hit' + ('s' if len(queryset) > 1 else '')
+                log(found_message)
+                
+                if self._print:
+                    print('Queryset:')
+                    for entry in queryset:
+                        pprint(entry.model.serialize(entry))
+                println()
+            
+            # Return list of ids.
+            return queryset if not id else queryset[0]
+        except KeyError as ke:
+            self.already_executed = True
+            if id:
+                raise KeyError(f'No db entry found with id "{id}"')
+            raise KeyError(ke)
     
     def sort_by(self, attribute_name:str, sort_order:str='asc'):
         self._block_executed_query(include_pending_condition=True)
@@ -167,7 +214,7 @@ class HSDBQuery:
         return self
 
     def filter_by(self, attribute_name:str):
-        self._block_executed_query()
+        self._block_executed_query(include_pending_condition=True)
         # Set the attribute to include in the query results.
         # When the query is executed, only records with this attribute will be returned 
         # as dictionaries containing just that attribute.
@@ -178,14 +225,15 @@ class HSDBQuery:
     # Runtime modifiers #
     #####################
     
-    def measure_time(self):
-        self._block_executed_query()
-        self._measure_time = True
-        return self
-    
     def return_ids(self):
         self._block_executed_query()
         self._return_ids = True
+        return self
+    
+    def verbose(self, print:bool=False):
+        self._block_executed_query()
+        self._print = print
+        self._verbose = True
         return self
     
     ###################
@@ -196,78 +244,69 @@ class HSDBQuery:
         """
         Trigger execution when iterating.
         """
-        self._block_executed_query()
+        self._executed_hook = '__iter__'
         return iter(self._run_query())
 
     def __len__(self):
         """
         Trigger execution when len() is called.
         """
-        self._block_executed_query()
+        self._executed_hook = '__len__'
         return len(self._run_query())
 
     def __getitem__(self, index):
         """
         Trigger execution when accessing an item.
         """
-        self._block_executed_query()
+        self._executed_hook = '__getitem__'
         return self._run_query()[index]
 
     def all(self):
-        self._block_executed_query()
         # Calling all resets any previous conditions
         self._conditions = []
+        self._executed_hook = 'all'
         return self._run_query()
     
     def collect(self):
         """
         Forcing the query to execute and return the results without any special actions.
         """
-        self._block_executed_query()
+        self._executed_hook = 'collect'
         return self._run_query()
+    
+    def count(self):
+        """
+        Alias for len().
+        """
+        self._executed_hook = 'count'
+        return len(self)
+    
+    # TODO: Dynamically generate args with kwargs with unique model fields
+    def get(self, id:str):
+        # Get a record with the given id.
+        self._executed_hook = 'get'
+        return self._run_query(id)
     
     def first(self):
-        self._block_executed_query()
-        self.paginate = (0, 1)
-        return self._run_query()
+        self._executed_hook = 'first'
+        return self.paginate(0, 1)
         
     def last(self):
-        self._block_executed_query()
-        self.paginate = (-1, -1)
-        return self._run_query()
+        self._executed_hook = 'last'
+        return self.paginate(-1, 1)
     
-    def set(self, patch_data:dict, id:str=None):
-        self._block_executed_query()
-        # Update a record with the given id.
+    def paginate(self, page:int, page_size:int):
+        self._pagination = (page, page_size)
+        self._executed_hook = 'paginate'
+        return self._run_query()
     
     ##################
     # Operator verbs #
     ##################
-
-    def where(self, attribute_name:str):
-        self._block_executed_query(include_pending_condition=True)
-        # Set current attribute that the following operator verb will apply to
-        self._current_attribute = attribute_name
-        return self
     
     def equals(self, value:any):
         self._block_executed_query()
         self._add_condition('==', value)
-        return self
-    
-    def greater_than_or_equals(self, value:any):
-        self._block_executed_query()
-        self._add_condition('>=', value)
-        return self
-    
-    def less_than_or_equals(self, value:any):
-        self._block_executed_query()
-        self._add_condition('<=', value)
-        return self
-
-    def less_than(self, value:any):
-        self._block_executed_query()
-        self._add_condition('<', value)
         return self
 
     def greater_than(self, value:any):
@@ -275,13 +314,34 @@ class HSDBQuery:
         self._add_condition('>', value)
         return self
     
+    def greater_than_or_equals(self, value:any):
+        self._block_executed_query()
+        self._add_condition('>=', value)
+        return self
+
+    def less_than(self, value:any):
+        self._block_executed_query()
+        self._add_condition('<', value)
+        return self
+    
+    def less_than_or_equals(self, value:any):
+        self._block_executed_query()
+        self._add_condition('<=', value)
+        return self
+
+    def where(self, attribute_name:str):
+        self._block_executed_query(include_pending_condition=True)
+        # Set current attribute that the following operator verb will apply to
+        self._current_attribute = attribute_name
+        return self
+    
     ####################
     # Operator aliases #
     ####################
     
-    def w(self, attribute_name: str) -> 'HSDBQuery': return self.where(attribute_name)
     def eq(self, value:any) -> 'HSDBQuery': return self.equals(value)
-    def ge(self, value:any) -> 'HSDBQuery': return self.greater_than_or_equals(value)
-    def le(self, value:any) -> 'HSDBQuery': return self.less_than_or_equals(value)
-    def lt(self, value:any) -> 'HSDBQuery': return self.less_than(value)
     def gt(self, value:any) -> 'HSDBQuery': return self.greater_than(value)
+    def gte(self, value:any) -> 'HSDBQuery': return self.greater_than_or_equals(value)
+    def lt(self, value:any) -> 'HSDBQuery': return self.less_than(value)
+    def lte(self, value:any) -> 'HSDBQuery': return self.less_than_or_equals(value)
+    def w(self, attribute_name: str) -> 'HSDBQuery': return self.where(attribute_name)

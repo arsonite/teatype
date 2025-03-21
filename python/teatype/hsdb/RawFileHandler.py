@@ -35,11 +35,11 @@ class RawFileHandler:
             if path.exists(absolute_path):
                 return 'File already exists'
 
-            ModelClass = model_instance.cls
+            Model = model_instance.model
             # TODO: If model folder does not exist, create it and put model_meta.json into it
             # TODO: Create variable in path.create for exists ok
             file.write(absolute_path,
-                       ModelClass.serialize(model_instance),
+                       Model.serialize(model_instance),
                        force_format='json',
                        prettify=not compress,
                        create_parents=True)
