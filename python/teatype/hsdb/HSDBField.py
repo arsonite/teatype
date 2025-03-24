@@ -12,6 +12,13 @@
 
 # From system imports
 from abc import ABC, abstractmethod
+from typing import List
+
+_AVAILABLE_FIELDS = [
+    'editable',
+    'indexed',
+    'required',
+]
 
 # TODO: Try to do automatic type checking and assignment in ValueWrapper as well
 # TODO: Implement support for dicts and lists (potentially dangerous though)
@@ -20,14 +27,29 @@ class HSDBField(ABC):
     _key:str                    # internal storage for key
     _value:object               # internal storage for value
     _wrapper:'_ValueWrapper'    # internal storage for value wrapper
+    editable:bool               # Whether the attribute can be edited, automatically set to False if computed
+    indexed:bool                # Whether the attribute is indexed
+    key:str                     # Property for the field key
     name:str                    # The field name # TODO: Check if this is needed anymore, maybe refactor in future
+    required:bool               # Whether the attribute is required, automatically set to True if computed
+    value:any                   # Property for the field value
 
-    def __init__(self):
+    def __init__(self, editable:bool, indexed:bool, required:bool):
+        if not isinstance(editable, bool):
+            raise ValueError('editable must be a boolean')
+        if not isinstance(indexed, bool):
+            raise ValueError('indexed must be a boolean')
+        if not isinstance(required, bool):
+            raise ValueError('required must be a boolean')
+        
+        self.editable = editable
+        self.indexed = indexed
+        self.required = required
+        
         self._cached_value = None
         self._key = None
         self._value = None
         self._wrapper = None
-        
         self.name = None
         
     def __set_name__(self, owner, name):
@@ -88,10 +110,11 @@ class HSDBField(ABC):
     ####################
 
     class _ValueWrapper(ABC):
+        cache_values:dict = {} # Cache for the field values
         """
         Wrapper that stores both the value and the field pointer reference.
         """
-        def __init__(self, value, field):
+        def __init__(self, value:any, field:str, additional_available_fields:List[str]=[]):
             self._value = value
             # DEPRECATED: This is no longer needed since we are using lazy loading and caching
                 # The field metadata (e.g., type, required), no longer keeping reference to the original HSDBField
@@ -99,6 +122,11 @@ class HSDBField(ABC):
             
             self._cached_metadata = None
             self._metadata_loaded = False
+            
+            # Dynamically create properties that fetch from metadata
+            for prop in (_AVAILABLE_FIELDS + additional_available_fields):
+                setattr(self, prop, property(lambda self, p=prop: self._load_metadata()[p])
+            )
 
         # DEPRECATED: This method is not needed anymore since lazy loading and caching optimization
             # def __getattr__(self, item):
@@ -113,10 +141,34 @@ class HSDBField(ABC):
         def __str__(self):
             return str(self._value)
         
-        ####################
-        # Abstract Methods #
-        ####################
+        @property
+        def cls(self):
+            metadata = self._load_metadata()
+            return metadata['cls']
         
-        @abstractmethod
+        @property
+        def instance(self):
+            metadata = self._load_metadata()
+            return metadata['instance']
+        
+        @property
+        def key(self):
+            metadata = self._load_metadata()
+            return metadata['key']
+        
         def _load_metadata(self):
-            raise NotImplementedError('Method not implemented')
+            """
+            Load the metadata (lazy loading).
+            """
+            if not self._metadata_loaded:
+                self._cached_metadata = {
+                    'cls': self._field.cls,
+                    'instance': self._field,
+                    'key': self._field.key
+                }
+                
+                for cache_key, cache_value in self.cache_values.items():
+                    self._cached_metadata[cache_key] = cache_value
+                    
+                self._metadata_loaded = True
+            return self._cached_metadata

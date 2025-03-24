@@ -32,9 +32,12 @@ class HSDBRelation(HSDBField):
     secondary_keys:List[str]
     secondary_model:type
     
+    @property
     def _query_closure(self):
         query = HSDBQuery(self)
-        query._index_db_reference = {{entry.id:entry for entry in self.secondary_model.objects.all()}}
+        subset = {key:query._index_db_reference[key] for key in query._index_db_reference if key in self.secondary_keys}
+        query._index_db_reference = subset
+        # query._index_db_reference = {{entry.id:entry for entry in self.secondary_model.query.all()}}
         return query
     
     def __init__(self,
@@ -44,8 +47,10 @@ class HSDBRelation(HSDBField):
                  secondary_model:type,
                  relational_type:type,
                  reverse_lookup:str,
-                 relational_key:str='id') -> None:
-        super().__init__()
+                 editable:bool=True,
+                 relational_key:str='id',
+                 required:bool=False) -> None:
+        super().__init__(editable, True, required)
         
         self.primary_model = primary_model
         self.relational_key = relational_key
@@ -61,8 +66,7 @@ class HSDBRelation(HSDBField):
 
     def __get__(self, instance, owner):
         if self._wrapper is None:
-            value = instance.__dict__['_fields'].get(self.key)
-            self._wrapper = self._RelationWrapper(value.value, self)
+            self._wrapper = self._RelationWrapper(self._value, self)
         return self._wrapper
             
     def _validate_key(self, key:str) -> None:
@@ -103,11 +107,11 @@ class HSDBRelation(HSDBField):
     
     def setPrimaryKeys(self, primary_keys:List[str]) -> None:
         self._validate_keys(primary_keys)
-        self._primary_keys = primary_keys
+        self.primary_keys = primary_keys
         
     def setSecondaryKeys(self, secondary_keys:List[str]) -> None:
         self._validate_keys(secondary_keys)
-        self._secondary_keys = secondary_keys
+        self.secondary_keys = secondary_keys
         
     ####################
     # Internal Classes #
@@ -173,16 +177,22 @@ class HSDBRelation(HSDBField):
             return metadata['secondary_model']
     
     class _RelationFactory(ABC):
+        editable:bool
         relational_key:str
         relation_type:str
+        required:bool
         reverse_lookup:str
         secondary_model:type
         
         def __init__(self,
                      secondary_model:type,
+                     editable:bool=True,
                      relational_key:str='id',
+                     required:bool=False,
                      reverse_lookup:str=None) -> None:
+            self.editable = editable
             self.relational_key = relational_key
+            self.required = required
             self.secondary_model = secondary_model
             
             self.relation_type = kebabify(self.__class__.__name__)
@@ -201,7 +211,9 @@ class HSDBRelation(HSDBField):
                                 self.secondary_model,
                                 self.relation_type,
                                 self.reverse_lookup,
-                                self.relational_key)
+                                self.editable,
+                                self.relational_key,
+                                self.required)
     
     class OneToOne(_RelationFactory):
         pass

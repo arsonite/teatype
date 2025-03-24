@@ -53,6 +53,7 @@ class HSDBQuery:
         self._current_attribute = None
         self._executed_hook = None
         self._filter_key = None
+        # TODO: Replace with entire HybridStorage for access to indices and filesystem
         self._index_db_reference = HybridStorage().index_database._db
         self._pagination = None
         self._print = False

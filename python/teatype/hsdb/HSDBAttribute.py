@@ -27,8 +27,6 @@ T = TypeVar('T')
 _AVAILABLE_FIELDS = [
     'computed',
     'description',
-    'editable',
-    'indexed',
     'max_size',
     'required',
     'searchable',
@@ -37,18 +35,12 @@ _AVAILABLE_FIELDS = [
 ]
 _SUPPORTED_TYPES = [bool, dt, float, int, str]
 
-
-
 # TODO: Try to do automatic type checking and assignment in ValueWrapper as well
 # TODO: Implement support for dicts and lists (potentially dangerous though)
 class HSDBAttribute(HSDBField, Generic[T]):
     computed:bool         # Whether the attribute is computed, more of a flavour attribute, laxily enforced
     description:str       # Description of the attribute
-    editable:bool         # Whether the attribute can be edited, automatically set to False if computed
-    indexed:bool          # Whether the attribute is indexed
-    key:str               # The attribute key
     max_size:int          # Maximum size of the attribute value (only relevant for strings)
-    required:bool         # Whether the attribute is required, automatically set to True if computed
     searchable:bool       # Whether the attribute is searchable
     type:Type[T]          # holds an actual Python type, e.g. str, int, etc.
     unique:bool           # Whether the attribute value must be unique
@@ -63,7 +55,7 @@ class HSDBAttribute(HSDBField, Generic[T]):
                  required:bool=False,
                  searchable:bool=False,
                  unique:bool=False):
-        super().__init__()
+        super().__init__(editable, indexed, required)
         
         # Manual type checking to complement static type checking
         if type not in _SUPPORTED_TYPES:
@@ -72,14 +64,8 @@ class HSDBAttribute(HSDBField, Generic[T]):
             raise ValueError('computed must be a boolean')
         if not isinstance(description, str) and description != None:
             raise ValueError('description must be a string')
-        if not isinstance(editable, bool):
-            raise ValueError('editable must be a boolean')
-        if not isinstance(indexed, bool):
-            raise ValueError('indexed must be a boolean')
         if not isinstance(max_size, int):
             raise ValueError('max_size must be an integer')
-        if not isinstance(required, bool):
-            raise ValueError('required must be a boolean')
         if not isinstance(searchable, bool):
             raise ValueError('searchable must be a boolean')
         if not isinstance(unique, bool):
@@ -90,7 +76,6 @@ class HSDBAttribute(HSDBField, Generic[T]):
         self.computed = computed
         self.description = description
         self.editable = False if computed else editable
-        self.indexed = indexed
         self.max_size = max_size
         self.required = True if computed else required
         self.searchable = searchable
@@ -150,84 +135,5 @@ class HSDBAttribute(HSDBField, Generic[T]):
     ####################
     
     class _AttributeWrapper(HSDBField._ValueWrapper):
-        def _load_metadata(self):
-            """
-            Load the metadata (lazy loading).
-            """
-            if not self._metadata_loaded:
-                self._cached_metadata = {
-                    'cls': self._field.cls,
-                    'computed': self._field.computed,
-                    'description': self._field.description,
-                    'editable': self._field.editable,
-                    'indexed': self._field.indexed,
-                    'instance': self._field,
-                    'key': self._field.key,
-                    'max_size': self._field.max_size,
-                    'required': self._field.required,
-                    'searchable': self._field.searchable,
-                    'type': self._field.type,
-                    'unique': self._field.unique
-                }
-                self._metadata_loaded = True
-            return self._cached_metadata
-
-        @property
-        def cls(self):
-            metadata = self._load_metadata()
-            return metadata['cls']
-
-        @property
-        def computed(self):
-            metadata = self._load_metadata()
-            return metadata['computed']
-        
-        @property
-        def description(self):
-            metadata = self._load_metadata()
-            return metadata['description']
-        
-        @property
-        def editable(self):
-            metadata = self._load_metadata()
-            return metadata['editable']
-        
-        @property
-        def indexed(self):
-            metadata = self._load_metadata()
-            return metadata['indexed']
-        
-        @property
-        def instance(self):
-            metadata = self._load_metadata()
-            return metadata['instance']
-        
-        @property
-        def key(self):
-            metadata = self._load_metadata()
-            return metadata['key']
-        
-        @property
-        def max_size(self):
-            metadata = self._load_metadata()
-            return metadata['max_size']
-        
-        @property
-        def required(self):
-            metadata = self._load_metadata()
-            return metadata['required']
-        
-        @property
-        def searchable(self):
-            metadata = self._load_metadata()
-            return metadata['searchable']
-
-        @property
-        def type(self):
-            metadata = self._load_metadata()
-            return metadata['type']
-        
-        @property
-        def unique(self):
-            metadata = self._load_metadata()
-            return metadata['unique']
+        def __init__(self, value:any, field:str):
+            super().__init__(value, field, _AVAILABLE_FIELDS)

@@ -132,7 +132,7 @@ def hybrid_storage(random_schools):
 ##########
 
 @pytest.mark.skip
-@pytest.mark.parametrize('number_of_students', [1, 10, 100, 1000, 10000])
+@pytest.mark.parametrize('number_of_students', [1, 11, 111, 1_111, 11_111, 111_111])
 def test_create_students_parallel(number_of_students,
                                   random_first_names,
                                   random_sur_names,
@@ -172,13 +172,13 @@ def test_create_students_parallel(number_of_students,
     
     log('--------------------')
 
+@pytest.mark.skip
 @pytest.mark.parametrize('number_of_students, generate_in_parallel, measure_memory_footprint', [
-    (12345, False, False),
+    (11111, False, False),
 ])
 def test_queries(number_of_students,
                  generate_in_parallel,
                  measure_memory_footprint,
-                 
                  random_first_names,
                  random_sur_names,
                  random_schools,
@@ -242,6 +242,49 @@ def test_queries(number_of_students,
                       .where('age').less_than(16) \
                       .verbose() \
                       .last()
+                      
+    student = StudentModel({
+        'age': 21,
+        'height': 181,
+        'name': 'Mark Grayson'
+    })
+    db.update({student.id: student})
+    student_id = student.id
+    StudentModel.query.verbose().get(id=student_id)
+    
+    log('--------------------')
+    
+@pytest.mark.parametrize('number_of_students, generate_in_parallel, measure_memory_footprint', [
+    (1111, False, False),
+])
+def test_relations(number_of_students,
+                   generate_in_parallel,
+                   measure_memory_footprint,
+                   random_first_names,
+                   random_sur_names,
+                   random_schools,
+                   hybrid_storage):
+    log('--------------------')
+
+    stopwatch('Seeding DB data')
+    db = hybrid_storage.index_database._db
+    if generate_in_parallel:
+        students = create_students_parallel(number_of_students, random_first_names, random_sur_names, random_schools)
+    else:
+        students = create_students_sequentially(number_of_students, random_first_names, random_sur_names, random_schools)
+    db.update(students)
+    total_database_entries = len(db.keys())
+    stopwatch()
+    log(f'Total data: {total_database_entries}')
+    if measure_memory_footprint:
+        stopwatch('Measuring memory footprint')
+        log(hybrid_storage.index_database.memory_footprint)
+        stopwatch()
+    println()
+    
+    # Create a query chain that does not execute immediately.
+    log('Test queries:')
+    println()
 
     tu_berlin = SchoolModel.query.where('name').equals('Technische Universität Berlin').verbose().first()
     lion_reichl = StudentModel({
@@ -256,8 +299,6 @@ def test_queries(number_of_students,
     
     log('Test relations:')
     println()
-    
-    lion_reichl.print()
     
     school_attr = lion_reichl.school.create(primary_keys=[lion_reichl.id._value],
                                             primary_model=lion_reichl.model,

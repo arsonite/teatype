@@ -16,10 +16,10 @@ from .RawFileHandler import RawFileHandler
 from .IndexDatabase import IndexDatabase
 from .HybridStorage import HybridStorage
 
+from .HSDBQuery import HSDBQuery
 from .HSDBField import HSDBField
 from .HSDBAttribute import HSDBAttribute
 from .HSDBRelation import HSDBRelation
-from .HSDBQuery import HSDBQuery
 from .HSDBMigration import HSDBMigration
 from .HSDBMeta import HSDBMeta
 from .HSDBModel import HSDBModel
