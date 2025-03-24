@@ -16,6 +16,7 @@ import pprint
 
 # From system imports
 from abc import ABC
+from typing import List
 
 # From package imports
 from teatype.hsdb import HSDBAttribute, HSDBMeta, HSDBQuery, HSDBRelation
@@ -70,44 +71,42 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         # Cache the attributes if not already cached
         if self.__class__ not in self._attribute_cache:
             self._cache_attributes()
-
+            
+        # TODO: Make this more efficient since only class needs to know this information
+        # Model name and pluralization
+        self.model_name = type(self).__name__
+        self.model = self.__class__
+        self.resource_name = kebabify(self.model_name, remove='-model', plural=False)
+        self.resource_name_plural = kebabify(self.model_name, remove='-model', plural=True)
+        
         # Create a dict to hold instance-specific field values
         self._fields = {}
         for attribute_name, attribute in self._attribute_cache[self.__class__].items():
-            # Dynamically create the instance attribute
-            instance_attribute = HSDBAttribute(
-                attribute.type, 
-                **{key: value for key, value in vars(attribute).items() if key not in [
-                    'name', 'type', '_cached_value', '_key', '_value', '_wrapper']} # Exclude these keys
-            )
-            instance_attribute.key = attribute_name
+            if isinstance(attribute, HSDBRelation._RelationFactory):
+                continue
+            
+            if attribute.required and not attribute.computed and attribute_name not in data:
+                raise ValueError(f'Model "{self.model_name}" init error: "{attribute_name}" is required')
+            
             if attribute_name in data:
                 # Validate type before assignment
-                if not isinstance(data[attribute_name], attribute.type):
+                if not isinstance(data.get(attribute_name), attribute.type):
                     raise ValueError(f'Field "{attribute_name}" must be of type {attribute.type.__name__}')
                 if attribute.computed:
                     raise ValueError(f'{attribute_name} is computed and cannot be set')
-                attribute_value = data.get(attribute_name)
-                instance_attribute.value = attribute_value
-                
-                setattr(self, attribute_name, attribute_value)
-                # self._fields[attribute_name] = instance_attribute
-            
-        # Model name and pluralization
-        self.model = self.__class__
-        self.model_name = type(self).__name__ 
-        self.resource_name = kebabify(self.model_name, remove='-model', plural=False)
-        self.resource_name_plural = kebabify(self.model_name, remove='-model', plural=True)
-
-        # Validation after initialization
-        for attribute_name, attr in self.__dict__.items():
-            if isinstance(attr, HSDBAttribute):
-                if attr.required and not attr.value:
-                    raise ValueError(f'Model "{self.model_name}" init error: attribute "{attribute_name}" is required')
+                setattr(self, attribute_name, data.get(attribute_name))
         
         # TODO: Find a more elegant solution than this ugly a** hack
         # self.id.instance.__computational_override__(generate_id(truncate=5))
         self.id = generate_id()
+                
+        # Having to initalize lazily, because needing id to properly intialize relations
+        for attribute_name, attribute in self._attribute_cache[self.__class__].items():
+            if isinstance(attribute, HSDBAttribute):
+                continue
+            
+            if attribute_name in data:
+                setattr(self, attribute_name, data.get(attribute_name))
         
         current_time = dt.now()
         self.created_at = current_time
@@ -131,22 +130,36 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         return object.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
+        # if attribute_name in data:
+        #     instance_relation = attribute.lazy_init(
+        #         self.id,
+                
+        #         data.get(attribute_name),
+        #     )
+        #     instance_relation.key = attribute_name
+            
+        #     instance_relation.value = attribute._query_closure
+        #     setattr(self, attribute_name, attribute_value)
+        
         _cache = self.__class__._attribute_cache.get(self.__class__, {})
         if name in _cache:
             attribute = _cache[name]
-            # TODO: Fix validation
-            # if attribute.computed and self._fields.get(name) is not None:
-            #     raise ValueError(f'Attribute "{name}" is computed and cannot be set manually')
-            # if not isinstance(value, attribute.type):
-            #     raise ValueError(f'Field "{name}" must be of type {attribute.type.__name__}')
-            # attribute.__set__(self, value)
-            instance_attribute = HSDBAttribute(
-                attribute.type, 
-                **{key: value for key, value in vars(attribute).items() if key not in [
-                    'name', 'type', '_cached_value', '_key', '_value', '_wrapper']} # Exclude these keys
-            )
-            instance_attribute.key = attribute.name
-            instance_attribute.value = value
+            if isinstance(attribute, HSDBAttribute):
+                instance_attribute = HSDBAttribute(
+                    attribute.type, 
+                    **{key: value for key, value in vars(attribute).items() if key not in [
+                        'name', 'type', '_cached_value', '_key', '_value', '_wrapper']} # Exclude these keys
+                )
+                instance_attribute.key = attribute.name
+                instance_attribute.value = value
+            elif isinstance(attribute, HSDBRelation._RelationFactory):
+                instance_attribute = attribute.lazy_init(
+                    [self.id._value] if isinstance(self.id._value, str) else self.id._value,
+                    self.model,
+                    [value._value] if isinstance(value._value, str) else value._value
+                )
+                instance_attribute.key = name
+                instance_attribute.value = instance_attribute._query_closure
             self.__dict__.setdefault('_fields', {})[name] = instance_attribute
         else:
             super().__setattr__(name, value)
@@ -164,7 +177,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
             for attribute_name, attribute in model.__dict__.items():
                 if attribute_name in seen:
                     continue
-                if isinstance(attribute, HSDBAttribute):
+                if isinstance(attribute, HSDBAttribute) or isinstance(attribute, HSDBRelation._RelationFactory):
                     seen.add(attribute_name)
                     self._attribute_cache[self.__class__][attribute_name] = attribute
                     

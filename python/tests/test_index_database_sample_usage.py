@@ -40,7 +40,7 @@ class StudentModel(HSDBModel):
     gender = HSDBAttribute(str, required=True)
     height = HSDBAttribute(int, description='Height in cm', required=True)
     name   = HSDBAttribute(str, required=True)
-    school = HSDBRelation.OneToOne(SchoolModel)
+    school = HSDBRelation.OneToMany(SchoolModel, required=True)
     
 ####################
 # Helper Functions #
@@ -51,10 +51,12 @@ def create_student(i:int, random_first_names, random_sur_names, random_schools):
     Creates a student object with random attributes.
     """
     random.seed()
+    gender = random.choice(['male', 'female'])
     student = StudentModel({
         'age': random.randint(13, 23),
+        'gender': gender,
         'height': random.randint(140, 200),
-        'name': f'{random.choice(random_first_names)} {random.choice(random_sur_names)}',
+        'name': f'{random.choice(random_first_names[0] if gender == "male" else random_first_names[1])} {random.choice(random_sur_names)}',
         'school': random.choice([random_school.id for random_school in random_schools])
     })
     return student.id, student
@@ -91,11 +93,13 @@ def create_students_parallel(number_of_students, random_first_names, random_sur_
 
 @pytest.fixture(scope='module')
 def random_first_names():
-    return [
-        'Alice', 'Bob', 'Charlie', 'David', 'Eve', 'Frank', 'Grace', 'Heidi',
-        'Ivan', 'Judy', 'Kevin', 'Linda', 'Michael', 'Nancy', 'Oscar', 'Pamela',
-        'Quincy', 'Rachel', 'Steve', 'Tina', 'Ursula', 'Victor', 'Wendy', 'Xander',
-    ]
+        return [[
+            'Bob', 'Charlie', 'David', 'Frank', 'Ivan', 'Kevin', 'Michael', 'Oscar',
+            'Quincy', 'Sam', 'Steve', 'Victor', 'Xander',
+        ], [
+            'Alice', 'Eve', 'Grace', 'Heidi', 'Judy', 'Linda','Nancy', 'Pamela',
+            'Quincy', 'Rachel', 'Sam', 'Tina', 'Ursula', 'Wendy',
+        ]]
 
 @pytest.fixture(scope='module')
 def random_sur_names():
@@ -245,6 +249,7 @@ def test_queries(number_of_students,
                       
     student = StudentModel({
         'age': 21,
+        'gender': 'male',
         'height': 181,
         'name': 'Mark Grayson'
     })
@@ -289,23 +294,20 @@ def test_relations(number_of_students,
     tu_berlin = SchoolModel.query.where('name').equals('Technische Universität Berlin').verbose().first()
     lion_reichl = StudentModel({
         'age': 30,
+        'gender': 'male',
         'height': 181,
         'name': 'Lion Reichl',
         'school': tu_berlin.id
     })
     db.update({lion_reichl.id: lion_reichl})
-    lion_reichl_id = lion_reichl.id
-    StudentModel.query.verbose().get(id=lion_reichl_id)
     
     log('Test relations:')
     println()
-    
-    school_attr = lion_reichl.school.create(primary_keys=[lion_reichl.id._value],
-                                            primary_model=lion_reichl.model,
-                                            secondary_keys=[tu_berlin.id._value])
-    lion_reichl.school = school_attr
+
+    print(lion_reichl.school)
+    print(lion_reichl.school.relation_type)
     print(lion_reichl.school.all())
-    
-    # lion_reichl.school.print()
+    print(lion_reichl.school._value.all())
+    # lion_reichl.school.verbose(print=True).all()
     
     log('--------------------')
