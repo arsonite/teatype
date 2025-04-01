@@ -40,7 +40,7 @@ class StudentModel(HSDBModel):
     gender = HSDBAttribute(str, required=True)
     height = HSDBAttribute(int, description='Height in cm', required=True)
     name   = HSDBAttribute(str, required=True)
-    school = HSDBRelation.OneToMany(SchoolModel, required=True)
+    school = HSDBRelation.ManyToOne(SchoolModel, required=True)
     
 ####################
 # Helper Functions #

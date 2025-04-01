@@ -16,7 +16,7 @@ from typing import List
 
 # From package imports
 from teatype.hsdb import HSDBField, HSDBQuery, HybridStorage
-from teatype.util import kebabify
+from teatype.util import generate_id, kebabify
 
 _AVAILABLE_FIELDS = [
     'primary_model',
@@ -38,6 +38,7 @@ class HSDBRelation(HSDBField):
     """
     _hsdb_reference:object # HybridStorage, avoiding import loop
     primary_model:type
+    relation_id:str
     relation_name:type
     relation_type:type
     relation_key:str
@@ -86,7 +87,7 @@ class HSDBRelation(HSDBField):
             self.reverse_lookup = reverse_lookup
         else:
             reverse_lookup_key = kebabify(secondary_model.__name__, replace=('-model', ''))
-            if relation_type == 'one-to-many' or relation_type == 'many-to-many':
+            if relation_type == 'many-to-one' or relation_type == 'many-to-many':
                 reverse_lookup_key = f'{reverse_lookup_key}s'
             self.reverse_lookup = reverse_lookup_key
     
@@ -98,10 +99,11 @@ class HSDBRelation(HSDBField):
             # query._index_db_reference = {{entry.id:entry for entry in self.secondary_model.query.all()}}
             return query
         
+        self.relation_id = generate_id()
+        self._hsdb_reference = HybridStorage()
         self._value = _query_closure
         
-        self.setPrimaryKeys(primary_keys)
-        self.setSecondaryKeys(secondary_keys)
+        self.addKeyPairs(primary_keys, secondary_keys)
     
     def __get__(self, instance, owner):
         if self._wrapper is None:
@@ -121,40 +123,54 @@ class HSDBRelation(HSDBField):
             raise ValueError('keys must be a non-empty list')
         for key in keys:
             self._validate_key(key)
-        
-    def addPrimaryKey(self, primary_key:str) -> None:
-        if primary_key in self.primary_keys:
-            raise ValueError(f'Primary key {primary_key} already exists')
-        elif primary_key in self.secondary_keys:
-            raise ValueError(f'Primary key {primary_key} cannot be a secondary')
-        self._validate_key(primary_key)        
-        self.primary_keys.append(primary_key)
-        
-    def addSecondaryKey(self, secondary_key:str) -> None:
-        if secondary_key in self.secondary_keys:
-            raise ValueError(f'Secondary key {secondary_key} already exists')
-        elif secondary_key in self.primary_keys:
-            raise ValueError(f'Secondary key {secondary_key} cannot be a primary')
-        self._validate_key(secondary_key)        
-        self.secondary_keys.append(secondary_key)
-        
-    def removePrimaryKey(self, primary_key:str) -> None:
-        if primary_key not in self.primary_keys:
-            raise ValueError(f'Primary key {primary_key} does not exist')
-        self.primary_keys.remove(primary_key)
-        
-    def removeSecondaryKey(self, secondary_key:str) -> None:
-        if secondary_key not in self.secondary_keys:
-            raise ValueError(f'Secondary key {secondary_key} does not exist')
-        self.secondary_keys.remove(secondary_key)
-    
-    def setPrimaryKeys(self, primary_keys:List[str]) -> None:
+            
+    def addKeyPairs(self,
+                    primary_keys:List[str],
+                    secondary_keys:List[str]) -> None:
+        """
+        Add primary and secondary keys to the relation.
+        """
         self._validate_keys(primary_keys)
-        self.primary_keys = primary_keys
-        
-    def setSecondaryKeys(self, secondary_keys:List[str]) -> None:
         self._validate_keys(secondary_keys)
-        self.secondary_keys = secondary_keys
+        self._hsdb_reference.index_database._relational_index.add(
+            relation_name=self.relation_name,
+            relation_type=self.relation_type,
+            primary_keys=primary_keys,
+            secondary_keys=secondary_keys,
+        
+    # def addPrimaryKey(self, primary_key:str) -> None:
+    #     if primary_key in self.primary_keys:
+    #         raise ValueError(f'Primary key {primary_key} already exists')
+    #     elif primary_key in self.secondary_keys:
+    #         raise ValueError(f'Primary key {primary_key} cannot be a secondary')
+    #     self._validate_key(primary_key)        
+    #     self.primary_keys.append(primary_key)
+        
+    # def addSecondaryKey(self, secondary_key:str) -> None:
+    #     if secondary_key in self.secondary_keys:
+    #         raise ValueError(f'Secondary key {secondary_key} already exists')
+    #     elif secondary_key in self.primary_keys:
+    #         raise ValueError(f'Secondary key {secondary_key} cannot be a primary')
+    #     self._validate_key(secondary_key)        
+    #     self.secondary_keys.append(secondary_key)
+        
+    # def removePrimaryKey(self, primary_key:str) -> None:
+    #     if primary_key not in self.primary_keys:
+    #         raise ValueError(f'Primary key {primary_key} does not exist')
+    #     self.primary_keys.remove(primary_key)
+        
+    # def removeSecondaryKey(self, secondary_key:str) -> None:
+    #     if secondary_key not in self.secondary_keys:
+    #         raise ValueError(f'Secondary key {secondary_key} does not exist')
+    #     self.secondary_keys.remove(secondary_key)
+    
+    # def setPrimaryKeys(self, primary_keys:List[str]) -> None:
+    #     self._validate_keys(primary_keys)
+    #     self.primary_keys = primary_keys
+        
+    # def setSecondaryKeys(self, secondary_keys:List[str]) -> None:
+    #     self._validate_keys(secondary_keys)
+    #     self.secondary_keys = secondary_keys
         
     ####################
     # Internal Classes #
@@ -194,15 +210,15 @@ class HSDBRelation(HSDBField):
                       primary_model:type,
                       secondary_keys:List[str]) -> 'HSDBRelation':
             self.apply_ruleset(primary_keys, secondary_keys)
-            return HSDBRelation(primary_keys,
-                                primary_model,
-                                secondary_keys,
-                                self.secondary_model,
-                                self.relation_type,
-                                self.reverse_lookup,
-                                self.editable,
-                                self.relation_key,
-                                self.required)
+            return HSDBRelation(primary_keys=primary_keys,
+                                primary_model=primary_model,
+                                secondary_keys=secondary_keys,
+                                secondary_model=self.secondary_model,
+                                relation_type=self.relation_type,
+                                editable=self.editable,
+                                relation_key=self.relation_key,
+                                required=self.required,
+                                reverse_lookup=self.reverse_lookup,)
             
         #########
         # Hooks #
@@ -214,12 +230,12 @@ class HSDBRelation(HSDBField):
     class OneToOne(_RelationFactory):
         def apply_ruleset(self, primary_keys:List[str], secondary_keys:List[str]) -> None:
             if len(primary_keys) > 1 or len(secondary_keys) > 1:
-                raise ValueError('One to one relation can only have one entry')
+                raise ValueError('One-To-One relation can only have one entry')
 
-    class OneToMany(_RelationFactory):
+    class ManyToOne(_RelationFactory):
         def apply_ruleset(self, primary_keys:List[str], secondary_keys:List[str]) -> None:
             if len(primary_keys) > 1:
-                raise ValueError('One to many relation can only have one primary key entry')
+                raise ValueError('Many-To-One relation can only have one primary key entry')
 
     class ManyToMany(_RelationFactory):
         pass

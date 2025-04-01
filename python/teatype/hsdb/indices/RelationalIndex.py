@@ -16,6 +16,45 @@ from typing import List
 # From package imports
 from teatype.hsdb.indices import BaseIndex
 
+"""
+Following structure for different relation types:
+    one-to-one:
+        primary_index: {
+            relation_name: {
+                primary_key[str]: secondary_key[str]
+            }
+        }
+        reverse_index: {
+            relation_name: {
+                secondary_key[str]: primary_key[str]
+            }
+        }
+        
+    many-to-one:
+        primary_index: {
+            relation_name: {
+                primary_key[str]: secondary_key[str]
+            }
+        }
+        reverse_index: {
+            relation_name: {
+                secondary_key[str]: [primary_key[str]]
+            }
+        }
+    
+    many-to-many:
+        primary_index: {
+            relation_name: {
+                primary_keys: [primary_key[str]],
+                secondary_keys: [secondary_key[str]]
+            }
+        }
+        reverse_index: None
+
+Info:
+    relation_name consists of <primary_model>_<relation_type>_<secondary_model>
+"""
+
 class RelationalIndex(BaseIndex):
     reverse_index:dict
     
@@ -26,21 +65,35 @@ class RelationalIndex(BaseIndex):
         
         self.reverse_index = dict()
         
-    def add(self, relation_name:str, target_id:str, secondary_ids:List[str]=[], reverse_lookup:bool=False) -> None:
+    def add(self,
+            relation_name:str,
+            relation_type:str,
+            primary_keys:str,
+            secondary_keys:List[str]=[],
+            reverse_lookup:bool=False) -> None:
         """
         Add an entry to the index.
         """
-        if reverse_lookup:
-            target_index = self.reverse_index[relation_name]
-        else:
-            target_index = self.primary_index[relation_name]
-            
         with self.transaction_lock:
-            if relation_name not in target_index:
-                target_index[relation_name] = {}
+            if relation_name not in self.primary_index:
+                self.primary_index[relation_name] = {}
                 
-            if target_id not in target_index[relation_name]:
-                target_index[relation_name][target_id] = secondary_ids
+            if relation_name not in self.reverse_index:
+                self.reverse_index[relation_name] = {}
+                
+            if relation_type not in ['one-to-one', 'many-to-one']:
+                primary_key = primary_keys[0]
+                secondary_key = secondary_keys[0]
+                if relation_type == 'one-to-one':
+                    self.primary_index[relation_name][primary_key] = secondary_key
+                    self.reverse_index[relation_name][secondary_key] = primary_key
+                else:
+                    self.primary_index[relation_name][primary_key] = secondary_key
+                    if secondary_key not in self.reverse_index[relation_name]:
+                        self.reverse_index[relation_name][secondary_key] = []
+                    self.reverse_index[relation_name][secondary_key].append(primary_key)
+            else:
+                pass
         
     def clear(self, relation_name:str=None, reverse_lookup:bool=False) -> None:
         """
