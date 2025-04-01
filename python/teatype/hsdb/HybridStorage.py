@@ -34,7 +34,6 @@ class HybridStorage(threading.Thread, metaclass=SingletonMeta):
     combining them to synchronize model entries with file storage in a 
     threaded environment. The SingletonMeta ensures only one instance exists.
     """
-
     coroutines:List
     coroutines_queue:Queue
     fixtures:dict

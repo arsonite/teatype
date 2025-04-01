@@ -33,7 +33,7 @@ class HSDBQuery:
     _current_attribute:str
     _executed_hook:str
     _filter_key:str
-    _index_db_reference:object # IndexDatabase, avoiding import loop
+    _hsdb_reference:object # HybridStorage, avoiding import loop
     _pagination:Union[int, int]
     _print:bool
     _return_ids:bool
@@ -53,8 +53,7 @@ class HSDBQuery:
         self._current_attribute = None
         self._executed_hook = None
         self._filter_key = None
-        # TODO: Replace with entire HybridStorage for access to indices and filesystem
-        self._index_db_reference = HybridStorage().index_database._db
+        self._hsdb_reference = HybridStorage()
         self._pagination = None
         self._print = False
         self._return_ids = False
@@ -115,76 +114,81 @@ class HSDBQuery:
             List of identifiers that match the query if self._return_ids is True.
             List of entry that match the query if self._return_ids is False.
             """
-            if not id:
-                def __get_nested_value(entry, attribute_path:str) -> any:
-                    """
-                    Retrieve the value of a nested attribute path in the entry.
-
-                    This method now handles nested class attributes and avoids repeated class lookups
-                    by utilizing the attribute index.
-                    """
-                    parts = attribute_path.split('.')
-                    # Use a reduce to iterate over the attribute parts
-                    def lookup_value(accumulated_value, part):
-                        if isinstance(accumulated_value, dict):
-                            # If it's a dict, look up the value by key
-                            return accumulated_value.get(part, None)
-                        elif hasattr(accumulated_value, part):
-                            # If it's an object, use getattr to get the attribute
-                            return getattr(accumulated_value, part, None)
-                        else:
-                            return None
-                    # Initial value is the entry object itself (which may be a dictionary or class instance)
-                    return reduce(lookup_value, parts, entry)
-
-                def __condition_matches(entry, condition):
-                    attribute, operator, expected = condition
-                    actual_attribute = __get_nested_value(entry, attribute)
-                    actual_value = actual_attribute._value
-                    if operator == '==':
-                        return actual_value == expected
-                    elif operator == '<':
-                        return actual_value is not None and actual_value < expected
-                    elif operator == '>':
-                        return actual_value is not None and actual_value > expected
-                    else:
-                        raise ValueError(f'Unsupported operator {operator}')
-                    
-                self._block_executed_query()
+            with self._hsdb_reference.index_database._db_lock:
+                # Check if the database is empty
+                if not self._hsdb_reference.index_database._db:
+                    raise KeyError('No db entries found')
                 
-                if self._verbose:
-                    stopwatch('Query runtime')
+                if id:
+                    queryset = [self._hsdb_reference.index_database._db[id]]
+                else:
+                    def __get_nested_value(entry, attribute_path:str) -> any:
+                        """
+                        Retrieve the value of a nested attribute path in the entry.
 
-                # First filter using conditions.
-                queryset = []
-                for id, entry in self._index_db_reference.items():
-                    if entry.model != self.model:
-                        continue
-                    if all(__condition_matches(entry, condition) for condition in self._conditions):
-                        if self._return_ids:
-                            queryset.append(id)
+                        This method now handles nested class attributes and avoids repeated class lookups
+                        by utilizing the attribute index.
+                        """
+                        parts = attribute_path.split('.')
+                        # Use a reduce to iterate over the attribute parts
+                        def lookup_value(accumulated_value, part):
+                            if isinstance(accumulated_value, dict):
+                                # If it's a dict, look up the value by key
+                                return accumulated_value.get(part, None)
+                            elif hasattr(accumulated_value, part):
+                                # If it's an object, use getattr to get the attribute
+                                return getattr(accumulated_value, part, None)
+                            else:
+                                return None
+                        # Initial value is the entry object itself (which may be a dictionary or class instance)
+                        return reduce(lookup_value, parts, entry)
+
+                    def __condition_matches(entry, condition):
+                        attribute, operator, expected = condition
+                        actual_attribute = __get_nested_value(entry, attribute)
+                        actual_value = actual_attribute._value
+                        if operator == '==':
+                            return actual_value == expected
+                        elif operator == '<':
+                            return actual_value is not None and actual_value < expected
+                        elif operator == '>':
+                            return actual_value is not None and actual_value > expected
                         else:
-                            queryset.append(entry)
+                            raise ValueError(f'Unsupported operator {operator}')
+                        
+                    self._block_executed_query()
+                    
+                    if self._verbose:
+                        stopwatch('Query runtime')
 
-                # TODO: Add support for nested values in sorting and filtering
-                # Sort the queryset if needed.
-                if self._sort_key:
-                    queryset.sort(key=lambda entry: getattr(entry, self._sort_key)._value, reverse=self._sort_order == 'desc')
-                    
-                if self._filter_key:
-                    queryset = [getattr(entry, self._filter_key) for entry in queryset]
-                    
-                # Pagination logic
-                if self._pagination:
-                    page, page_size = self._pagination
-                    total_entries = len(queryset)
-                    if page < 0:
-                        page = max((total_entries // page_size) - 1, 0) # Last page
-                    start_index = page * page_size
-                    end_index = start_index + page_size
-                    queryset = queryset[start_index:end_index]
-            else:
-                queryset = [self._index_db_reference[id]]
+                    # First filter using conditions.
+                    queryset = []
+                    for id, entry in self._hsdb_reference.index_database._db.items():
+                        if entry.model != self.model:
+                            continue
+                        if all(__condition_matches(entry, condition) for condition in self._conditions):
+                            if self._return_ids:
+                                queryset.append(id)
+                            else:
+                                queryset.append(entry)
+
+                    # TODO: Add support for nested values in sorting and filtering
+                    # Sort the queryset if needed.
+                    if self._sort_key:
+                        queryset.sort(key=lambda entry: getattr(entry, self._sort_key)._value, reverse=self._sort_order == 'desc')
+                        
+                    if self._filter_key:
+                        queryset = [getattr(entry, self._filter_key) for entry in queryset]
+                        
+                    # Pagination logic
+                    if self._pagination:
+                        page, page_size = self._pagination
+                        total_entries = len(queryset)
+                        if page < 0:
+                            page = max((total_entries // page_size) - 1, 0) # Last page
+                        start_index = page * page_size
+                        end_index = start_index + page_size
+                        queryset = queryset[start_index:end_index]
             
             self.already_executed = True
             

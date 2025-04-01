@@ -15,8 +15,11 @@ from abc import ABC, abstractmethod
 from typing import List
 
 _AVAILABLE_FIELDS = [
+    'cls',
     'editable',
+    # 'instance',
     'indexed',
+    'key',
     'required',
 ]
 
@@ -114,19 +117,31 @@ class HSDBField(ABC):
         """
         Wrapper that stores both the value and the field pointer reference.
         """
-        def __init__(self, value:any, field:str, additional_available_fields:List[str]=[]):
+        def __init__(self, value:any,
+                     field:str,
+                     additional_available_fields:List[str]=[],
+                     available_functions:List[str]=[]):
             self._value = value
             # DEPRECATED: This is no longer needed since we are using lazy loading and caching
                 # The field metadata (e.g., type, required), no longer keeping reference to the original HSDBField
             self._field = field
             
+            self.cache_values = {}
             self._cached_metadata = None
             self._metadata_loaded = False
             
             # Dynamically create properties that fetch from metadata
             for prop in (_AVAILABLE_FIELDS + additional_available_fields):
-                setattr(self, prop, property(lambda self, p=prop: self._load_metadata()[p])
-            )
+                self.cache_values[prop] = getattr(self._field, prop)
+                # Create a property for each available field
+                # This allows us to access the metadata without needing to call a method
+                setattr(self.__class__, prop, property(lambda self, p=prop: self._load_metadata().get(p)))
+                
+            # Dynamically create function aliases
+            for func in available_functions:
+                # Create a function alias for each available function
+                # This allows us to access the metadata without needing to call a method
+                setattr(self.__class__, func, lambda self, f=func: getattr(self._field, f)())
 
         # DEPRECATED: This method is not needed anymore since lazy loading and caching optimization
             # def __getattr__(self, item):
@@ -141,34 +156,22 @@ class HSDBField(ABC):
         def __str__(self):
             return str(self._value)
         
-        @property
-        def cls(self):
-            metadata = self._load_metadata()
-            return metadata['cls']
-        
-        @property
-        def instance(self):
-            metadata = self._load_metadata()
-            return metadata['instance']
-        
-        @property
-        def key(self):
-            metadata = self._load_metadata()
-            return metadata['key']
-        
         def _load_metadata(self):
             """
             Load the metadata (lazy loading).
             """
             if not self._metadata_loaded:
+                # Cache the metadata to avoid reloading it
                 self._cached_metadata = {
                     'cls': self._field.cls,
-                    'instance': self._field,
+                    # 'instance': self._field,
                     'key': self._field.key
                 }
                 
+                # Add the cached values to the metadata
                 for cache_key, cache_value in self.cache_values.items():
                     self._cached_metadata[cache_key] = cache_value
                     
+                del self.cache_values
                 self._metadata_loaded = True
             return self._cached_metadata

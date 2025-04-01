@@ -25,8 +25,8 @@ from teatype.util import dt, staticproperty
 # From-as package imports
 from teatype.util import generate_id, kebabify
 
+# TODO: Replace data with kwargs on init
 # TODO: Add allowing to use string literal for relation name to avoid circular imports (need access to hybridstorage to iterate through models)
-# TODO: Try optimizing some questionable parts of the code
 # TODO: Add validation method inside model
 # TODO: Add language supports
 class HSDBModel(ABC, metaclass=HSDBMeta):
@@ -159,7 +159,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                     [value._value] if isinstance(value._value, str) else value._value
                 )
                 instance_attribute.key = name
-                instance_attribute.value = instance_attribute._query_closure
+                instance_attribute.value = instance_attribute._value
             self.__dict__.setdefault('_fields', {})[name] = instance_attribute
         else:
             super().__setattr__(name, value)

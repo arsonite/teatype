@@ -18,6 +18,7 @@ from typing import List
 
 # From package imports
 from pympler import asizeof
+from teatype.hsdb.indices import RelationalIndex
 
 class _MemoryFootprint:
     def __init__(self, index_db:'IndexDatabase'):
@@ -34,64 +35,27 @@ class _MemoryFootprint:
         return self.__repr__()
         
 class IndexDatabase:
-    _cache_register:dict # For all dynamic query cache values
-    _cache_register_lock:threading.Lock
-    _compute_index:dict # For all compute values for easy modification
-    _compute_index_lock:threading.Lock
+    # _cache_register:dict # For all dynamic query cache values
+    # _compute_index:dict # For all compute values for easy modification
     _db:dict # For all raw data
     _db_lock:threading.Lock
-    _indexed_fields:dict # For all indexed fields for faster query lookups
-    _indexed_fields_lock:threading.Lock
-    _model_index:dict # For all model references for faster model query lookups
-    _model_index_lock:threading.Lock
+    # _indexed_fields:dict # For all indexed fields for faster query lookups
+    # _model_index:dict # For all model references for faster model query lookups
     _relational_index:dict # For all relations between models parsed dynamically from the model definitions
-    _relational_index_lock:threading.Lock
     models:List[type] # For all models
-    use_cache:bool # Whether to use cache for faster lookups
-    use_compute_index:bool # Whether to use compute index for faster lookups
-    use_indexed_fields:bool # Whether to use indexed fields for faster lookups
-    use_model_index:bool # Whether to use model index for faster lookups
-    use_pointer_reference:bool # Indicates whether to use pointer reference of foreign objects or ids
-    use_relational_index:bool # Whether to use relational index for faster lookups
     
     def __init__(self,
-                 models:List[type],
-                 use_cache:bool=True,
-                 use_compute_index:bool=True,
-                 use_indexed_fields:bool=True,
-                 use_model_index:bool=True,
-                 use_pointer_reference:bool=False,
-                 use_relational_index:bool=True):
+                 models:List[type]):
         self.models = models
-        self.use_cache = use_cache
-        self.use_compute_index = use_compute_index
-        self.use_indexed_fields = use_indexed_fields
-        self.use_model_index = use_model_index
-        self.use_pointer_reference = use_pointer_reference
-        self.use_relational_index = use_relational_index
-        
-        if use_cache:
-            self._cache_register = dict()
-            self._cache_register_lock = threading.Lock()
-        
-        if use_compute_index:
-            self._compute_index = dict()
-            self._compute_index_lock = threading.Lock()
-        
-        if use_indexed_fields:
-            self._indexed_fields = dict()
-            self._indexed_fields_lock = threading.Lock()
-        
-        if use_model_index:
-           self._model_index = dict()
-           self._model_index_lock = threading.Lock()
-        
-        if use_relational_index:
-            self._relational_index = dict()
-            self._relational_index_lock = threading.Lock()
         
         self._db = dict()
         self._db_lock = threading.Lock()
+        
+        # self._cache_register = dict()
+        # self._compute_index = dict()
+        # self._indexed_fields = dict()
+        # self._model_index = dict()
+        self._relational_index = RelationalIndex()
         
     ##############
     # Properties #

@@ -121,7 +121,7 @@ def random_schools():
         SchoolModel({'address': '131 Maple St', 'name': 'Roosevelt High'}),
         SchoolModel({'address': '415 Cedar St', 'name': 'Washington High'}),
         SchoolModel({'address': '161 Walnut St', 'name': 'Wilson High'}),
-        SchoolModel({'address': 'Straße des 17. Juni 135', 'name': 'Technische Universität Berlin'}),
+        SchoolModel({'address': 'Arcisstraße 21', 'name': 'Technische Universität München'}),
     ]
 
 @pytest.fixture
@@ -291,7 +291,7 @@ def test_relations(number_of_students,
     log('Test queries:')
     println()
 
-    tu_berlin = SchoolModel.query.where('name').equals('Technische Universität Berlin').verbose().first()
+    tu_berlin = SchoolModel.query.where('name').equals('Technische Universität München').verbose().first()
     lion_reichl = StudentModel({
         'age': 30,
         'gender': 'male',
@@ -305,9 +305,10 @@ def test_relations(number_of_students,
     println()
 
     print(lion_reichl.school)
-    print(lion_reichl.school.relation_type)
     print(lion_reichl.school.all())
-    print(lion_reichl.school._value.all())
+    # print(lion_reichl.school.secondary_keys)
+    # print(lion_reichl.school.relation_type)
+    # print(lion_reichl.school._value.all())
     # lion_reichl.school.verbose(print=True).all()
     
     log('--------------------')

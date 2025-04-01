@@ -15,21 +15,16 @@ from abc import ABC
 from typing import List
 
 # From package imports
-from teatype.hsdb import HSDBField, HSDBQuery
+from teatype.hsdb import HSDBField, HSDBQuery, HybridStorage
 from teatype.util import kebabify
 
 _AVAILABLE_FIELDS = [
-    'primary_keys',
     'primary_model',
     'relation_key',
     'relation_name',
     'relation_type',
     'reverse_lookup',
-    'secondary_keys',
     'secondary_model',
-    
-    # Query params
-    'all'
 ]
 
 # TODO: HSDB type is Relation for metadata access, but value is always the query close
@@ -37,38 +32,37 @@ _AVAILABLE_FIELDS = [
 # TODO: Accessing the HSDB Relation value returns the query closure object without execution, a one to one executes the query and returns the object by overriding method
 # TODO: Dont use references after all, just ids, otherwise whats the point of the index db
 class HSDBRelation(HSDBField):
-    # TODO: Extradite instances tracking to index database instead? since its basically indexing?
-    _instances:dict['HSDBRelation']=dict() # Class-level dict that tracks existing instances by relation_name
-    primary_keys:List[str]
+    """
+    This class acts as a descriptor for managing relations between models and as a interface
+    for interacting with the relational index of the IndexDatabase singleton instance.
+    """
+    _hsdb_reference:object # HybridStorage, avoiding import loop
     primary_model:type
     relation_name:type
     relation_type:type
     relation_key:str
     reverse_lookup:str
-    secondary_keys:List[str]
     secondary_model:type
     
-    def __new__(cls, *args, **kwargs):
-        # Kwargs not working for some reason, so using args instead
-        # relation_name = cls._stitch_relation_name(kwargs.get('primary_model'), kwargs.get('secondary_model'), kwargs.get('relation_type'))
-        relation_name = cls._stitch_relation_name(args[1], args[3], args[4])
-        
-        if relation_name in cls._instances:
-            instance = cls._instances[relation_name]
-            for primary_key in args[0]:
-                if primary_key not in instance.primary_keys:
-                    instance.addPrimaryKey(primary_key)
-            for secondary_key in args[2]:
-                if secondary_key not in instance.secondary_keys:
-                    instance.addSecondaryKey(secondary_key)
-            return instance
-        
-        print('Creating new instance')
-        
-        instance = super().__new__(cls)
-        print(instance)
-        cls._instances[relation_name] = instance
-        return instance
+    # DEPRECATED: Moved away from caching instances since using relational index
+        # def __new__(cls, *args, **kwargs):
+        #     # Kwargs not working for some reason, so using args instead
+        #     # relation_name = cls._stitch_relation_name(kwargs.get('primary_model'), kwargs.get('secondary_model'), kwargs.get('relation_type'))
+        #     relation_name = cls._stitch_relation_name(args[1], args[3], args[4])
+            
+        #     if relation_name in cls._instances:
+        #         instance = cls._instances[relation_name]
+        #         for primary_key in args[0]:
+        #             if primary_key not in instance.primary_keys:
+        #                 instance.addPrimaryKey(primary_key)
+        #         for secondary_key in args[2]:
+        #             if secondary_key not in instance.secondary_keys:
+        #                 instance.addSecondaryKey(secondary_key)
+        #         return instance
+            
+        #     instance = super().__new__(cls)
+        #     cls._instances[relation_name] = instance
+        #     return instance
     
     def __init__(self,
                  primary_keys:List[str],
@@ -76,36 +70,39 @@ class HSDBRelation(HSDBField):
                  secondary_keys:List[str],
                  secondary_model:type,
                  relation_type:type,
-                 reverse_lookup:str,
                  editable:bool=True,
                  relation_key:str='id',
-                 required:bool=False) -> None:
-        if hasattr(self, 'initialized'): # Prevent reinitialization on existing instance
-            return
-        
+                 required:bool=False,
+                 reverse_lookup:str=None) -> None:
         super().__init__(editable, True, required)
         
-        self.primary_model = primary_model
         self.relation_key = relation_key
+        self.relation_type = relation_type
         self.reverse_lookup = reverse_lookup
         self.secondary_model = secondary_model
         
+        self.relation_name = self._stitch_relation_name(primary_model, secondary_model, relation_type)
+        if reverse_lookup is not None:
+            self.reverse_lookup = reverse_lookup
+        else:
+            reverse_lookup_key = kebabify(secondary_model.__name__, replace=('-model', ''))
+            if relation_type == 'one-to-many' or relation_type == 'many-to-many':
+                reverse_lookup_key = f'{reverse_lookup_key}s'
+            self.reverse_lookup = reverse_lookup_key
+    
+        def _query_closure(self, target_model:type):
+            query = HSDBQuery(target_model)
+            subset = { key:query._index_db_reference[key] for key in query._index_db_reference if key in self.secondary_keys }
+            query._index_db_reference = subset
+            query.model = self.secondary_model
+            # query._index_db_reference = {{entry.id:entry for entry in self.secondary_model.query.all()}}
+            return query
+        
+        self._value = _query_closure
+        
         self.setPrimaryKeys(primary_keys)
         self.setSecondaryKeys(secondary_keys)
-        
-        self.initialized = True  # Flag to prevent reinitialization
-        self.relation_name = self._stitch_relation_name(primary_model, secondary_model, relation_type)
-        self._value = self._query_closure
     
-    @property
-    def _query_closure(self):
-        query = HSDBQuery(self)
-        subset = {key:query._index_db_reference[key] for key in query._index_db_reference if key in self.secondary_keys}
-        query._index_db_reference = subset
-        query.model = self.secondary_model
-        # query._index_db_reference = {{entry.id:entry for entry in self.secondary_model.query.all()}}
-        return query
-
     def __get__(self, instance, owner):
         if self._wrapper is None:
             self._wrapper = self._RelationWrapper(self._value, self)
