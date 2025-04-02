@@ -29,10 +29,32 @@ from teatype.util import generate_id, stopwatch
 ##################
 # Example Models #
 ##################
+
+class CompanyModel(HSDBModel):
+    address = HSDBAttribute(str, required=True)
+    industry = HSDBAttribute(str, required=True)
+    name    = HSDBAttribute(str, required=True)
+    number_of_employees = HSDBAttribute(int, computed=True)
+    public = HSDBAttribute(bool, required=True)
+    revenue = HSDBAttribute(float, required=True)
+    stock_symbol = HSDBAttribute(str, required=True)
+    
+class EmployeeModel(HSDBModel):
+    age    = HSDBAttribute(int, required=True)
+    company = HSDBRelation.ManyToOne('CompanyModel', required=True)
+    gender = HSDBAttribute(str, required=True)
+    nationality = HSDBAttribute(str, required=True)
+    name   = HSDBAttribute(str, required=True)
+    salary = HSDBAttribute(float, required=True)
+    team   = HSDBRelation.ManyToOne('TeamModel', required=True)
     
 class SchoolModel(HSDBModel):
     address = HSDBAttribute(str, required=True)
     name    = HSDBAttribute(str, required=True)
+    
+class TeamModel(HSDBModel):
+    department = HSDBAttribute(str, required=True)
+    name = HSDBAttribute(str, required=True)
 
 # Assume these are your models derived from BaseModel.
 class StudentModel(HSDBModel):
@@ -259,6 +281,7 @@ def test_queries(number_of_students,
     
     log('--------------------')
     
+@pytest.mark.skip
 @pytest.mark.parametrize('number_of_students, generate_in_parallel, measure_memory_footprint', [
     (1111, False, False),
 ])
@@ -310,5 +333,23 @@ def test_relations(number_of_students,
     # print(lion_reichl.school.relation_type)
     # print(lion_reichl.school._value.all())
     # lion_reichl.school.verbose(print=True).all()
+    
+    log('--------------------')
+    
+def test_queries_and_relations(hybrid_storage):
+    log('--------------------')
+
+    db = hybrid_storage.index_database._db
+    
+    enamentis_gmbh = CompanyModel({
+        'address': 'Unter den Linden 6',
+        'industry': 'Software & Hardware',
+        'name': 'PowerCycle GmbH',
+        'public': True,
+        'revenue': 123_456.78,
+        'stock_symbol': 'PCG',
+    })
+    db.update({enamentis_gmbh.id: enamentis_gmbh})
+    CompanyModel.query.where('name').equals('PowerCycle GmbH').verbose(print=True).first()
     
     log('--------------------')

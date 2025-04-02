@@ -153,6 +153,13 @@ class HSDBQuery:
                             return actual_value is not None and actual_value < expected
                         elif operator == '>':
                             return actual_value is not None and actual_value > expected
+                        elif operator == '<=':
+                            return actual_value is not None and actual_value <= expected
+                        elif operator == '>=':
+                            return actual_value is not None and actual_value >= expected
+                        elif operator == '∋':
+                            # Check if the value is in the list
+                            return expected in actual_value if isinstance(actual_value, list) else False
                         else:
                             raise ValueError(f'Unsupported operator {operator}')
                         
@@ -163,12 +170,12 @@ class HSDBQuery:
 
                     # First filter using conditions.
                     queryset = []
-                    for id, entry in self._hsdb_reference.index_database._db.items():
+                    for entry_id, entry in self._hsdb_reference.index_database._db.items():
                         if entry.model != self.model:
                             continue
                         if all(__condition_matches(entry, condition) for condition in self._conditions):
                             if self._return_ids:
-                                queryset.append(id)
+                                queryset.append(entry_id)
                             else:
                                 queryset.append(entry)
 
@@ -308,6 +315,11 @@ class HSDBQuery:
     ##################
     # Operator verbs #
     ##################
+    
+    def contains(self, value:any):
+        self._block_executed_query()
+        self._add_condition('∋', value)
+        return self
     
     def equals(self, value:any):
         self._block_executed_query()

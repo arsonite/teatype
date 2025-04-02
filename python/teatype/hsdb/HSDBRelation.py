@@ -77,16 +77,16 @@ class HSDBRelation(HSDBField):
                  reverse_lookup:str=None) -> None:
         super().__init__(editable, True, required)
         
+        self.primary_model = primary_model
         self.relation_key = relation_key
         self.relation_type = relation_type
-        self.reverse_lookup = reverse_lookup
         self.secondary_model = secondary_model
         
         self.relation_name = self._stitch_relation_name(primary_model, secondary_model, relation_type)
         if reverse_lookup is not None:
             self.reverse_lookup = reverse_lookup
         else:
-            reverse_lookup_key = kebabify(secondary_model.__name__, replace=('-model', ''))
+            reverse_lookup_key = kebabify(primary_model.__name__, replace=('-model', ''))
             if relation_type == 'many-to-one' or relation_type == 'many-to-many':
                 reverse_lookup_key = f'{reverse_lookup_key}s'
             self.reverse_lookup = reverse_lookup_key
@@ -137,40 +137,8 @@ class HSDBRelation(HSDBField):
             relation_type=self.relation_type,
             primary_keys=primary_keys,
             secondary_keys=secondary_keys,
-        
-    # def addPrimaryKey(self, primary_key:str) -> None:
-    #     if primary_key in self.primary_keys:
-    #         raise ValueError(f'Primary key {primary_key} already exists')
-    #     elif primary_key in self.secondary_keys:
-    #         raise ValueError(f'Primary key {primary_key} cannot be a secondary')
-    #     self._validate_key(primary_key)        
-    #     self.primary_keys.append(primary_key)
-        
-    # def addSecondaryKey(self, secondary_key:str) -> None:
-    #     if secondary_key in self.secondary_keys:
-    #         raise ValueError(f'Secondary key {secondary_key} already exists')
-    #     elif secondary_key in self.primary_keys:
-    #         raise ValueError(f'Secondary key {secondary_key} cannot be a primary')
-    #     self._validate_key(secondary_key)        
-    #     self.secondary_keys.append(secondary_key)
-        
-    # def removePrimaryKey(self, primary_key:str) -> None:
-    #     if primary_key not in self.primary_keys:
-    #         raise ValueError(f'Primary key {primary_key} does not exist')
-    #     self.primary_keys.remove(primary_key)
-        
-    # def removeSecondaryKey(self, secondary_key:str) -> None:
-    #     if secondary_key not in self.secondary_keys:
-    #         raise ValueError(f'Secondary key {secondary_key} does not exist')
-    #     self.secondary_keys.remove(secondary_key)
-    
-    # def setPrimaryKeys(self, primary_keys:List[str]) -> None:
-    #     self._validate_keys(primary_keys)
-    #     self.primary_keys = primary_keys
-        
-    # def setSecondaryKeys(self, secondary_keys:List[str]) -> None:
-    #     self._validate_keys(secondary_keys)
-    #     self.secondary_keys = secondary_keys
+            reverse_lookup=self.reverse_lookup,
+        )
         
     ####################
     # Internal Classes #
@@ -197,13 +165,10 @@ class HSDBRelation(HSDBField):
             self.editable = editable
             self.relation_key = relation_key
             self.required = required
+            self.reverse_lookup = reverse_lookup
             self.secondary_model = secondary_model
             
             self.relation_type = kebabify(self.__class__.__name__)
-            if reverse_lookup is not None:
-                self.reverse_lookup = reverse_lookup
-            else:
-                self.reverse_lookup = kebabify(secondary_model.__name__, replace=('-model', ''))
             
         def lazy_init(self,
                       primary_keys:List[str],
