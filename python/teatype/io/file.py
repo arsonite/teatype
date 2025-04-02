@@ -615,6 +615,8 @@ def write(path:str, data:any, force_format:str=None, prettify:bool=False, create
                 writer = csv.writer(f)
                 # Write multiple rows to the CSV file
                 writer.writerows(data)
+            elif force_format == 'bytes':
+                f.write(data.decode('utf-8'))
             else:
                 # Write plain text data to the file
                 f.write(data)
