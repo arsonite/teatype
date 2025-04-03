@@ -30,6 +30,7 @@ _SUPPORTED_TYPES = [str, List[str]]
 # Type alias for attribute types
 T = TypeVar('T')
 
+# TODO: Id or something to differentiate between many-to-many relations or think about it more deeply again
 # TODO: If model is string, search model database for the model
 # TODO: HSDB type is Relation for metadata access, but value is always the query close
 # TODO: Internal callable that returns special query with overwritten foreign model and capped queryset in the init of hsdbmodel

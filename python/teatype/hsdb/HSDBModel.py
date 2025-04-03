@@ -113,7 +113,6 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 attribute_value = data.get(attribute_name)
                 
                 if attribute.type == List[str]:
-                    print([type(av) for av in attribute_value])
                     if not (all(isinstance(item, str) for item in attribute_value) or \
                             all(isinstance(item, HSDBModel) for item in attribute_value) or \
                             all(isinstance(item, HSDBField._ValueWrapper) for item in attribute_value)):

@@ -77,10 +77,10 @@ class RelationalIndex(BaseIndex):
             if relation_name not in self.primary_index:
                 self.primary_index[relation_name] = {}
                 
-            if reverse_relation_name not in self.reverse_index:
-                self.reverse_index[reverse_relation_name] = {}
-                
             if relation_type == 'one-to-one' or relation_type == 'many-to-one':
+                if reverse_relation_name not in self.reverse_index:
+                    self.reverse_index[reverse_relation_name] = {}
+                    
                 primary_key = primary_keys[0]
                 secondary_key = secondary_keys[0]
                 if relation_type == 'one-to-one':
