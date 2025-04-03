@@ -27,6 +27,7 @@ _AVAILABLE_FIELDS = [
     'secondary_model',
 ]
 
+# TODO: If model is string, search model database for the model
 # TODO: HSDB type is Relation for metadata access, but value is always the query close
 # TODO: Internal callable that returns special query with overwritten foreign model and capped queryset in the init of hsdbmodel
 # TODO: Accessing the HSDB Relation value returns the query closure object without execution, a one to one executes the query and returns the object by overriding method

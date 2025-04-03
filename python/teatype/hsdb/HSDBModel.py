@@ -25,6 +25,7 @@ from teatype.util import dt, staticproperty
 # From-as package imports
 from teatype.util import generate_id, kebabify
 
+# TODO: Implement auto-compute variable for count of reverse lookup models (amount_of_<relation_name>s)
 # TODO: Replace data with kwargs on init
 # TODO: Add allowing to use string literal for relation name to avoid circular imports (need access to hybridstorage to iterate through models)
 # TODO: Add validation method inside model

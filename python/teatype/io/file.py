@@ -335,7 +335,7 @@ def list(directory:str,
     """
     try:
         # Check if a depth greater than 1 is specified without enabling recursive walking
-        if depth is not None and depth > 1 and walk == False:
+        if depth is not None and walk == False:
             warn('Cannot specify depth without walking through subdirectories. Ignoring depth parameter.')
         
         # Initialize an empty list to store the results of files and directories
@@ -343,10 +343,9 @@ def list(directory:str,
         
         # Define an inner function to handle recursive directory walking
         def walk_directory(dir_path, current_depth):
-            if depth is not None:
-                # Terminate recursion if the current depth exceeds the specified maximum depth
-                if current_depth > depth:
-                    return
+            # Terminate recursion if the current depth exceeds the specified maximum depth
+            if current_depth > depth:
+                return
             # Iterate over each entry in the current directory
             for entry in os.scandir(dir_path):
                 if entry.is_dir():
@@ -360,19 +359,15 @@ def list(directory:str,
                     walk_directory(entry.path, current_depth + 1)
                 else:
                     if only_include:
-                        # Skip ffiles that do not have the specified extensions
+                        # Skip files that do not have the specified extensions
                         if not entry.name.endswith(tuple(only_include)):
                             continue
                     # Append directory details to the results list
                     results.append(_File(entry.path, trimmed=trim_files, nested_depth=current_depth))
-        if walk:
-            # If recursive walking is enabled, start walking from the root directory
-            walk_directory(directory, 1)
-        else:
-            # If recursive walking is disabled, list only the immediate entries in the root directory
-            for entry in os.scandir(directory):
-                # Append directory details to the results list
-                results.append(_File(entry.path, trimmed=trim_files))
+                    
+        if not walk:
+            depth = 1
+        walk_directory(directory, 1)
         
         if stringify:
             results = [str(result) for result in results]

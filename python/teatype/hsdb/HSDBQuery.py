@@ -34,6 +34,7 @@ class HSDBQuery:
     _executed_hook:str
     _filter_key:str
     _hsdb_reference:object # HybridStorage, avoiding import loop
+    _measure_time:bool
     _pagination:Union[int, int]
     _print:bool
     _return_ids:bool
@@ -54,6 +55,7 @@ class HSDBQuery:
         self._executed_hook = None
         self._filter_key = None
         self._hsdb_reference = HybridStorage()
+        self._measure_time = False
         self._pagination = None
         self._print = False
         self._return_ids = False
@@ -165,7 +167,7 @@ class HSDBQuery:
                         
                     self._block_executed_query()
                     
-                    if self._verbose:
+                    if self._measure_time:
                         stopwatch('Query runtime')
 
                     # First filter using conditions.
@@ -201,15 +203,17 @@ class HSDBQuery:
             
             if self._verbose:
                 log(self)
-                stopwatch()
                 found_message = f'Found {len(queryset)} hit' + ('s' if len(queryset) > 1 else '')
                 log(found_message)
                 
-                if self._print:
-                    print('Queryset:')
-                    for entry in queryset:
-                        pprint(entry.model.serialize(entry))
-                println()
+            if self._measure_time:
+                stopwatch()
+                
+            if self._print:
+                print('Queryset:')
+                for entry in queryset:
+                    pprint(entry.model.serialize(entry))
+            println()
             
             # Return list of ids.
             return queryset if not id else queryset[0]
@@ -242,9 +246,18 @@ class HSDBQuery:
         self._return_ids = True
         return self
     
-    def verbose(self, print:bool=False):
+    def print(self):
         self._block_executed_query()
-        self._print = print
+        self._print = True
+        return self
+    
+    def measure_time(self):
+        self._block_executed_query()
+        self._measure_time = True
+        return self
+    
+    def verbose(self):
+        self._block_executed_query()
         self._verbose = True
         return self
     
