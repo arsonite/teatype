@@ -12,7 +12,7 @@
 
 # From system imports
 from abc import ABC
-from typing import List
+from typing import Generic, List, Type, TypeVar
 
 # From package imports
 from teatype.hsdb import HSDBField, HSDBQuery, HybridStorage
@@ -26,13 +26,16 @@ _AVAILABLE_FIELDS = [
     'reverse_lookup',
     'secondary_model',
 ]
+_SUPPORTED_TYPES = [str, List[str]]
+# Type alias for attribute types
+T = TypeVar('T')
 
 # TODO: If model is string, search model database for the model
 # TODO: HSDB type is Relation for metadata access, but value is always the query close
 # TODO: Internal callable that returns special query with overwritten foreign model and capped queryset in the init of hsdbmodel
 # TODO: Accessing the HSDB Relation value returns the query closure object without execution, a one to one executes the query and returns the object by overriding method
 # TODO: Dont use references after all, just ids, otherwise whats the point of the index db
-class HSDBRelation(HSDBField):
+class HSDBRelation(HSDBField, Generic[T]):
     """
     This class acts as a descriptor for managing relations between models and as a interface
     for interacting with the relational index of the IndexDatabase singleton instance.
@@ -72,16 +75,18 @@ class HSDBRelation(HSDBField):
                  secondary_keys:List[str],
                  secondary_model:type,
                  relation_type:type,
+                 type:T,
                  editable:bool=True,
                  relation_key:str='id',
                  required:bool=False,
                  reverse_lookup:str=None) -> None:
-        super().__init__(editable, True, required)
+        super().__init__(editable, True, required, _SUPPORTED_TYPES, type)
         
         self.primary_model = primary_model
         self.relation_key = relation_key
         self.relation_type = relation_type
         self.secondary_model = secondary_model
+        self.type = type # This sets the actual type based on the generic argument
         
         self.relation_name = self._stitch_relation_name(primary_model, secondary_model, relation_type)
         reverse_relation_type = relation_type
@@ -153,16 +158,17 @@ class HSDBRelation(HSDBField):
         def __init__(self, value:any, field:str):
             super().__init__(value, field, _AVAILABLE_FIELDS)
     
-    class _RelationFactory(ABC):
+    class _RelationFactory(ABC, Generic[T]):
         editable:bool
         relation_key:str
         relation_type:str
         required:bool
         reverse_lookup:str
-        secondary_model:type
+        secondary_model:'type'
+        type:T
         
         def __init__(self,
-                     secondary_model:type,
+                     secondary_model:'type',
                      editable:bool=True,
                      relation_key:str='id',
                      required:bool=False,
@@ -172,12 +178,13 @@ class HSDBRelation(HSDBField):
             self.required = required
             self.reverse_lookup = reverse_lookup
             self.secondary_model = secondary_model
+            self.type = self.__class__.type
             
             self.relation_type = kebabify(self.__class__.__name__)
             
         def lazy_init(self,
                       primary_keys:List[str],
-                      primary_model:type,
+                      primary_model:'type',
                       secondary_keys:List[str]) -> 'HSDBRelation':
             self.apply_ruleset(primary_keys, secondary_keys)
             return HSDBRelation(primary_keys=primary_keys,
@@ -188,7 +195,8 @@ class HSDBRelation(HSDBField):
                                 editable=self.editable,
                                 relation_key=self.relation_key,
                                 required=self.required,
-                                reverse_lookup=self.reverse_lookup,)
+                                reverse_lookup=self.reverse_lookup,
+                                type=self.type)
             
         #########
         # Hooks #
@@ -198,14 +206,18 @@ class HSDBRelation(HSDBField):
             return
     
     class OneToOne(_RelationFactory):
+        type=str
+        
         def apply_ruleset(self, primary_keys:List[str], secondary_keys:List[str]) -> None:
             if len(primary_keys) > 1 or len(secondary_keys) > 1:
                 raise ValueError('One-To-One relation can only have one entry')
 
     class ManyToOne(_RelationFactory):
+        type=str
+        
         def apply_ruleset(self, primary_keys:List[str], secondary_keys:List[str]) -> None:
             if len(primary_keys) > 1:
                 raise ValueError('Many-To-One relation can only have one primary key entry')
 
     class ManyToMany(_RelationFactory):
-        pass
+        type=List[str]

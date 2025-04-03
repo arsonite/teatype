@@ -19,7 +19,7 @@ from abc import ABC
 from typing import List
 
 # From package imports
-from teatype.hsdb import HSDBAttribute, HSDBMeta, HSDBQuery, HSDBRelation
+from teatype.hsdb import HSDBAttribute, HSDBField, HSDBMeta, HSDBQuery, HSDBRelation
 from teatype.util import dt, staticproperty
 
 # From-as package imports
@@ -84,6 +84,8 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         self._fields = {}
         for attribute_name, attribute in self._attribute_cache[self.__class__].items():
             if isinstance(attribute, HSDBRelation._RelationFactory):
+                if attribute.required and attribute_name not in data:
+                    raise ValueError(f'Model "{self.model_name}" init error: "{attribute_name}" is required')
                 continue
             
             if attribute.required and not attribute.computed and attribute_name not in data:
@@ -106,8 +108,34 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
             if isinstance(attribute, HSDBAttribute):
                 continue
             
+            # Assume that if the attribute is not an HSDBAttribute, it is a relation
             if attribute_name in data:
-                setattr(self, attribute_name, data.get(attribute_name))
+                attribute_value = data.get(attribute_name)
+                
+                if attribute.type == List[str]:
+                    print([type(av) for av in attribute_value])
+                    if not (all(isinstance(item, str) for item in attribute_value) or \
+                            all(isinstance(item, HSDBModel) for item in attribute_value) or \
+                            all(isinstance(item, HSDBField._ValueWrapper) for item in attribute_value)):
+                        raise ValueError(f'Field "{attribute_name}" must be a list of id strings or HSDBModel instances')
+                else:
+                    if not (isinstance(attribute_value, attribute.type) or \
+                            isinstance(attribute_value, HSDBModel)) or \
+                            isinstance(attribute_value, HSDBField._ValueWrapper):
+                        raise ValueError(f'Field "{attribute_name}" must be of type "{attribute.type.__name__}" or an HSDBModel instance')
+                
+                # Allowing to pass both model instance and id string
+                if isinstance(attribute_value, HSDBModel):
+                    attribute_value = attribute_value.id
+                elif isinstance(attribute_value, list):
+                    # If the attribute is a list of HSDBModel instances, extract their IDs
+                    if all(isinstance(item, HSDBModel) for item in attribute_value):
+                        attribute_value = [item.id for item in attribute_value]
+                    else:
+                        attribute_value = [item for item in attribute_value]
+                    
+                # Initialize the relation lazily
+                setattr(self, attribute_name, attribute_value)
         
         current_time = dt.now()
         self.created_at = current_time
@@ -121,7 +149,6 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         # self.app_name = 'raw'
         # self.migration_id = 1
     
-    # TODO: Get cache working again
     def __getattribute__(self, name):
         # If the field name is in our field cache, return the value from _fields
         _cache = object.__getattribute__(self, '_attribute_cache')
@@ -154,10 +181,14 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 instance_attribute.key = attribute.name
                 instance_attribute.value = value
             elif isinstance(attribute, HSDBRelation._RelationFactory):
+                if attribute.type == List[str]:
+                    instance_value = [v._value if isinstance(v._value, str) else v._value for v in value]
+                else:
+                    instance_value = [value._value] if isinstance(value._value, str) else value._value
                 instance_attribute = attribute.lazy_init(
                     [self.id._value] if isinstance(self.id._value, str) else self.id._value,
                     self.model,
-                    [value._value] if isinstance(value._value, str) else value._value
+                    instance_value
                 )
                 instance_attribute.key = name
                 instance_attribute.value = instance_attribute._value

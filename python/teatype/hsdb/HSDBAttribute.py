@@ -20,9 +20,6 @@ from typing import Generic, Type, TypeVar
 from teatype.hsdb import HSDBField
 from teatype.util import dt
 
-# Type alias for attribute types
-T = TypeVar('T')
-
 # Supported attribute types
 _AVAILABLE_FIELDS = [
     'computed',
@@ -30,14 +27,15 @@ _AVAILABLE_FIELDS = [
     'max_size',
     'required',
     'searchable',
-    'type',
     'unique'
 ]
 _SUPPORTED_TYPES = [bool, dt, float, int, str]
+# Type alias for attribute types
+T = TypeVar('T')
 
 # TODO: Try to do automatic type checking and assignment in ValueWrapper as well
 # TODO: Implement support for dicts and lists (potentially dangerous though)
-class HSDBAttribute(HSDBField, Generic[T]):
+class HSDBAttribute(HSDBField):
     computed:bool         # Whether the attribute is computed, more of a flavour attribute, laxily enforced
     description:str       # Description of the attribute
     max_size:int          # Maximum size of the attribute value (only relevant for strings)
@@ -55,11 +53,8 @@ class HSDBAttribute(HSDBField, Generic[T]):
                  required:bool=False,
                  searchable:bool=False,
                  unique:bool=False):
-        super().__init__(editable, indexed, required)
+        super().__init__(editable, indexed, required, _SUPPORTED_TYPES, type)
         
-        # Manual type checking to complement static type checking
-        if type not in _SUPPORTED_TYPES:
-            raise ValueError(f'Unsupported type: {type.__name__}, supported types are: {_SUPPORTED_TYPES}')
         if not isinstance(computed, bool):
             raise ValueError('computed must be a boolean')
         if not isinstance(description, str) and description != None:
@@ -79,7 +74,6 @@ class HSDBAttribute(HSDBField, Generic[T]):
         self.max_size = max_size
         self.required = True if computed else required
         self.searchable = searchable
-        self.type = type # This sets the actual type based on the generic argument
         self.unique = unique
 
     def __get__(self, instance, owner):

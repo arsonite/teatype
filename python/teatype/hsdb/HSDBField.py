@@ -12,7 +12,7 @@
 
 # From system imports
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Generic, List, Type, TypeVar
 
 _AVAILABLE_FIELDS = [
     'cls',
@@ -21,11 +21,14 @@ _AVAILABLE_FIELDS = [
     'indexed',
     'key',
     'required',
+    'type'
 ]
+# Type alias for attribute types
+T = TypeVar('T')
 
 # TODO: Try to do automatic type checking and assignment in ValueWrapper as well
 # TODO: Implement support for dicts and lists (potentially dangerous though)
-class HSDBField(ABC):
+class HSDBField(ABC, Generic[T]):
     _cached_value:object        # Cache for the field value
     _key:str                    # internal storage for key
     _value:object               # internal storage for value
@@ -35,9 +38,13 @@ class HSDBField(ABC):
     key:str                     # Property for the field key
     name:str                    # The field name # TODO: Check if this is needed anymore, maybe refactor in future
     required:bool               # Whether the attribute is required, automatically set to True if computed
+    type:T                     # The type of the attribute
     value:any                   # Property for the field value
 
-    def __init__(self, editable:bool, indexed:bool, required:bool):
+    def __init__(self, editable:bool, indexed:bool, required:bool, SUPPORTED_TYPES:List[Type], type:Type):
+        # Manual type checking to complement static type checking
+        if type not in SUPPORTED_TYPES:
+            raise ValueError(f'Unsupported type: {type.__name__}, supported types are: {SUPPORTED_TYPES}')
         if not isinstance(editable, bool):
             raise ValueError('editable must be a boolean')
         if not isinstance(indexed, bool):
@@ -48,6 +55,7 @@ class HSDBField(ABC):
         self.editable = editable
         self.indexed = indexed
         self.required = required
+        self.type = type
         
         self._cached_value = None
         self._key = None

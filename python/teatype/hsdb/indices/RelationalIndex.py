@@ -93,8 +93,8 @@ class RelationalIndex(BaseIndex):
                         self.reverse_index[reverse_relation_name][secondary_key] = []
                     self.reverse_index[reverse_relation_name][secondary_key].append(primary_key)
             else:
-                # TODO: Implement many-to-many relation type
-                raise NotImplementedError(f'Relation type "{relation_type}" is not implemented.')
+                self.primary_index[relation_name]['primary_keys'] = [primary_keys]
+                self.primary_index[relation_name]['secondary_keys'] = secondary_keys
         
     def clear(self, relation_name:str=None, reverse_lookup:bool=False) -> None:
         """
