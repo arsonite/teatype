@@ -54,7 +54,6 @@ Following structure for different relation types:
 Info:
     relation_name consists of <primary_model>_<relation_type>_<secondary_model>
 """
-
 class RelationalIndex(BaseIndex):
     reverse_index:dict
     
@@ -67,10 +66,10 @@ class RelationalIndex(BaseIndex):
         
     def add(self,
             relation_name:str,
+            reverse_relation_name:str,
             relation_type:str,
             primary_keys:str,
-            secondary_keys:List[str]=[],
-            reverse_lookup:bool=False) -> None:
+            secondary_keys:List[str]=[]) -> None:
         """
         Add an entry to the index.
         """
@@ -78,20 +77,21 @@ class RelationalIndex(BaseIndex):
             if relation_name not in self.primary_index:
                 self.primary_index[relation_name] = {}
                 
-            if relation_name not in self.reverse_index:
-                self.reverse_index[relation_name] = {}
+            if reverse_relation_name not in self.reverse_index:
+                self.reverse_index[reverse_relation_name] = {}
                 
             if relation_type == 'one-to-one' or relation_type == 'many-to-one':
                 primary_key = primary_keys[0]
                 secondary_key = secondary_keys[0]
                 if relation_type == 'one-to-one':
                     self.primary_index[relation_name][primary_key] = secondary_key
-                    self.reverse_index[relation_name][secondary_key] = primary_key
+                    self.reverse_index[reverse_relation_name][secondary_key] = primary_key
                 else:
+                    
                     self.primary_index[relation_name][primary_key] = secondary_key
-                    if secondary_key not in self.reverse_index[relation_name]:
-                        self.reverse_index[relation_name][secondary_key] = []
-                    self.reverse_index[relation_name][secondary_key].append(primary_key)
+                    if secondary_key not in self.reverse_index[reverse_relation_name]:
+                        self.reverse_index[reverse_relation_name][secondary_key] = []
+                    self.reverse_index[reverse_relation_name][secondary_key].append(primary_key)
             else:
                 # TODO: Implement many-to-many relation type
                 raise NotImplementedError(f'Relation type "{relation_type}" is not implemented.')

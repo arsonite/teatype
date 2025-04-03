@@ -120,6 +120,9 @@ class HSDBQuery:
                 # Check if the database is empty
                 if not self._hsdb_reference.index_database._db:
                     raise KeyError('No db entries found')
+                    
+                if self._verbose and self._measure_time:
+                    stopwatch('Query runtime')
                 
                 if id:
                     queryset = [self._hsdb_reference.index_database._db[id]]
@@ -166,9 +169,6 @@ class HSDBQuery:
                             raise ValueError(f'Unsupported operator {operator}')
                         
                     self._block_executed_query()
-                    
-                    if self._measure_time:
-                        stopwatch('Query runtime')
 
                     # First filter using conditions.
                     queryset = []
@@ -199,21 +199,20 @@ class HSDBQuery:
                         end_index = start_index + page_size
                         queryset = queryset[start_index:end_index]
             
-            self.already_executed = True
-            
-            if self._verbose:
-                log(self)
-                found_message = f'Found {len(queryset)} hit' + ('s' if len(queryset) > 1 else '')
-                log(found_message)
-                
-            if self._measure_time:
-                stopwatch()
-                
-            if self._print:
-                print('Queryset:')
-                for entry in queryset:
-                    pprint(entry.model.serialize(entry))
-            println()
+                    self.already_executed = True
+                    
+                if self._verbose:
+                    log(self)
+                    if self._measure_time:
+                        stopwatch()
+                    found_message = f'Found {len(queryset)} hit' + ('s' if len(queryset) > 1 else '')
+                    log(found_message)
+                    
+                    if self._print:
+                        print('Queryset:')
+                        for entry in queryset:
+                            pprint(entry.model.serialize(entry))
+                    println()
             
             # Return list of ids.
             return queryset if not id else queryset[0]
@@ -246,18 +245,10 @@ class HSDBQuery:
         self._return_ids = True
         return self
     
-    def print(self):
+    def verbose(self, measure_time:bool=True, print:bool=False):
         self._block_executed_query()
-        self._print = True
-        return self
-    
-    def measure_time(self):
-        self._block_executed_query()
-        self._measure_time = True
-        return self
-    
-    def verbose(self):
-        self._block_executed_query()
+        self._print = print
+        self._measure_time = measure_time
         self._verbose = True
         return self
     

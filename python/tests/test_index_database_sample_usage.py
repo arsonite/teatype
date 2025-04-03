@@ -29,89 +29,60 @@ from teatype.util import generate_id, stopwatch
 ##################
 # Example Models #
 ##################
-
-class CompanyModel(HSDBModel):
-    address             = HSDBAttribute(str, required=True)
-    industry            = HSDBAttribute(str, required=True)
-    name                = HSDBAttribute(str, required=True)
-    number_of_employees = HSDBAttribute(int, computed=True)
-    public              = HSDBAttribute(bool, required=True)
-    revenue             = HSDBAttribute(float, required=True)
-    stock_symbol        = HSDBAttribute(str, required=False)
     
-class CompanyModel(HSDBModel):
+class SchoolModel(HSDBModel):
     address = HSDBAttribute(str, required=True)
     name    = HSDBAttribute(str, required=True)
-    
-class TeamModel(HSDBModel):
-    department  = HSDBAttribute(str, required=True)
-    company     = HSDBRelation.ManyToOne(CompanyModel, required=True)
-    
-class EmployeeModel(HSDBModel):
-    age         = HSDBAttribute(int, required=True)
-    gender      = HSDBAttribute(str, required=True)
-    height      = HSDBAttribute(int, description='Height in cm', required=True)
-    looks       = HSDBAttribute(str, required=False)
-    nationality = HSDBAttribute(str, required=False)
-    name        = HSDBAttribute(str, required=True)
-    salary      = HSDBAttribute(float, required=True)
-    team        = HSDBRelation.ManyToOne(TeamModel, required=True)
+
+# Assume these are your models derived from BaseModel.
+class StudentModel(HSDBModel):
+    age    = HSDBAttribute(int, required=True)
+    gender = HSDBAttribute(str, required=True)
+    height = HSDBAttribute(int, description='Height in cm', required=True)
+    name   = HSDBAttribute(str, required=True)
+    school = HSDBRelation.ManyToOne(SchoolModel, required=True)
     
 ####################
 # Helper Functions #
 ####################
 
-def create_employee(i:int, random_first_names, random_sur_names, random_teams):
+def create_student(i:int, random_first_names, random_sur_names, random_schools):
     """
-    Creates a employee object with random attributes.
+    Creates a student object with random attributes.
     """
     random.seed()
     gender = random.choice(['male', 'female'])
-    employee = EmployeeModel({
-        'age': random.randint(18, 67),
+    student = StudentModel({
+        'age': random.randint(13, 23),
         'gender': gender,
         'height': random.randint(140, 200),
         'name': f'{random.choice(random_first_names[0] if gender == "male" else random_first_names[1])} {random.choice(random_sur_names)}',
-        'team': random.choice([random_team.id for random_team in random_teams])
+        'school': random.choice([random_school.id for random_school in random_schools])
     })
-    return employee.id, employee
+    return student.id, student
 
-def create_teams(i:int, random_departments, random_names):
+def create_students_sequentially(number_of_students, random_first_names, random_sur_names, random_schools):
     """
-    Creates a employee object with random attributes.
+    Creates students sequentially.
     """
-    random.seed()
-    employee = EmployeeModel({
-        'age': random.randint(18, 67),
-        'gender': gender,
-        'height': random.randint(140, 200),
-        'name': f'{random.choice(random_first_names[0] if gender == "male" else random_first_names[1])} {random.choice(random_sur_names)}',
-        'company': random.choice([random_company.id for random_company in random_companies])
-    })
-    return employee.id, employee
+    students = {}
+    for i in range(number_of_students):
+        student = create_student(i, random_first_names, random_sur_names, random_schools)
+        students[student[0]] = student[1]
+    return students
 
-def create_employees_sequentially(number_of_employees, random_first_names, random_sur_names, random_teams):
+def create_students_parallel(number_of_students, random_first_names, random_sur_names, random_schools):
     """
-    Creates employees sequentially.
-    """
-    employees = {}
-    for i in range(number_of_employees):
-        employee = create_employee(i, random_first_names, random_sur_names, random_teams)
-        employees[employee[0]] = employee[1]
-    return employees
-
-def create_employees_parallel(number_of_employees, random_first_names, random_sur_names, random_teams):
-    """
-    Creates employees in parallel using ProcessPoolExecutor.
+    Creates students in parallel using ProcessPoolExecutor.
     """
     with ProcessPoolExecutor(max_workers=os.cpu_count()) as executor:
         results = dict(
             executor.map(
-                create_employee,
-                range(number_of_employees),
-                [random_first_names] * number_of_employees,
-                [random_sur_names] * number_of_employees,
-                [random_teams] * number_of_employees
+                create_student,
+                range(number_of_students),
+                [random_first_names] * number_of_students,
+                [random_sur_names] * number_of_students,
+                [random_schools] * number_of_students
             )
         )
     return results
@@ -140,118 +111,91 @@ def random_sur_names():
     ]
 
 @pytest.fixture(scope='module')
-def random_departments():
+def random_schools():
     return [
-        'Engineering', 'Marketing', 'Sales', 'Finance', 'HR', 'IT', 'Customer Support',
-        'Legal', 'Product Management', 'Research and Development', 'Quality Assurance',
-        'Operations', 'Supply Chain', 'Business Development', 'Public Relations',
-        'Data Science', 'Analytics', 'Design', 'Content Creation', 'Social Media',
-        'Project Management', 'Administration', 'Facilities Management', 'Security',
-        'Training and Development', 'Corporate Strategy', 'Investor Relations',
-        'Compliance', 'Risk Management', 'Procurement', 'Logistics', 'Technical Support',
-    ]
-
-@pytest.fixture(scope='module')
-def random_companies():
-    return [
-        CompanyModel({
-            'address': 'Unter den Linden 6',
-            'industry': 'Software & Hardware',
-            'name': 'PowerCycle GmbH',
-            'public': True,
-            'revenue': 123_456.78,
-            'stock_symbol': 'PCG',
-        }),
-        CompanyModel({
-            'address': 'Alexanderplatz 1',
-            'industry': 'Finance',
-            'name': 'Bank of Berlin',
-            'public': True,
-            'revenue': 987_654.32,
-            'stock_symbol': 'BB',
-        }),
-        CompanyModel({
-            'address': 'Kurfürstendamm 1',
-            'industry': 'Retail',
-            'name': 'Berlin Mall',
-            'public': False,
-            'revenue': 456_789.01,
-            'stock_symbol': 'BM',
-        }),
-        CompanyModel({
-            'address': 'Potsdamer Platz 1',
-            'industry': 'Entertainment',
-            'name': 'Berlin Cinema',
-            'public': True,
-            'revenue': 654_321.09,
-            'stock_symbol': 'BC',
-        }),
-        CompanyModel({
-            'address': 'Friedrichstraße 1',
-            'industry': 'Transportation',
-            'name': 'Berlin Transport',
-            'public': False,
-            'revenue': 321_098.76,
-            'stock_symbol': 'BT',
-        }),
-        CompanyModel({
-            'address': 'Unter den Linden 7',
-            'industry': 'Telecommunications',
-            'name': 'Berlin Telecom',
-            'public': True,
-            'revenue': 789_012.34,
-            'stock_symbol': 'BTT',
-        }),
-        CompanyModel({
-            'address': 'Alexanderplatz 2',
-            'industry': 'Real Estate',
-            'name': 'Berlin Properties',
-            'public': True,
-            'revenue': 234_567.89,
-            'stock_symbol': 'BP',
-        }),
-        CompanyModel({
-            'address': 'Kurfürstendamm 2',
-            'industry': 'Healthcare',
-            'name': 'Berlin Health',
-            'public': False,
-            'revenue': 876_543.21,
-            'stock_symbol': 'BH',
-        }),
-        
+        SchoolModel({'address': '123 Main St', 'name': 'Howard High'}),
+        SchoolModel({'address': '456 ElmSt', 'name': 'Jefferson High'}),
+        SchoolModel({'address': '789 Oak St', 'name': 'Lincoln High'}),
+        SchoolModel({'address': '101 Pine St', 'name': 'Madison High'}),
+        SchoolModel({'address': '112 Birch St', 'name': 'Monroe High'}),
+        SchoolModel({'address': '131 Maple St', 'name': 'Roosevelt High'}),
+        SchoolModel({'address': '415 Cedar St', 'name': 'Washington High'}),
+        SchoolModel({'address': '161 Walnut St', 'name': 'Wilson High'}),
+        SchoolModel({'address': 'Arcisstraße 21', 'name': 'Technische Universität München'}),
     ]
 
 @pytest.fixture
-def hybrid_storage(random_companies):
+def hybrid_storage(random_schools):
     hybrid_storage = HybridStorage(cold_mode=True)
-    for company in random_companies:
-        hybrid_storage.index_database._db.update({company.id: company})
+    for school in random_schools:
+        hybrid_storage.index_database._db.update({school.id: school})
     return hybrid_storage
 
 ##########
 # PyTest #
 ##########
 
-# @pytest.mark.skip
-@pytest.mark.parametrize('number_of_employees, generate_in_parallel, measure_memory_footprint', [
-    (111111, True, True),
+@pytest.mark.skip
+@pytest.mark.parametrize('number_of_students', [1, 11, 111, 1_111, 11_111, 111_111])
+def test_create_students_parallel(number_of_students,
+                                  random_first_names,
+                                  random_sur_names,
+                                  random_schools,
+                                  hybrid_storage):
+    """
+    Test student creation in parallel and database update.
+    """
+    log('--------------------')
+    
+    db = hybrid_storage.index_database._db
+    if number_of_students == 1:
+        stopwatch('Creating student')
+        student = create_student(0, random_first_names, random_sur_names, random_schools)
+        students = {student[0]: student[1]}
+        stopwatch()
+    else:
+        stopwatch('Creating students in parallel')
+        students = create_students_parallel(number_of_students, random_first_names, random_sur_names, random_schools)
+        stopwatch()
+    println()
+
+    assert isinstance(students, dict)
+    assert len(students.keys()) == number_of_students
+    # Ensure all students are instances of StudentModel
+    for student in students.values():
+        assert isinstance(student, StudentModel)
+
+    stopwatch('Index DB update')
+    # Simulate and verify database update
+    db.update(students)
+    stopwatch()
+    
+    total_database_entries = len(db.keys())
+    println()
+    log(f'Total generated students: {total_database_entries}')
+    
+    log('--------------------')
+
+@pytest.mark.skip
+@pytest.mark.parametrize('number_of_students, generate_in_parallel, measure_memory_footprint', [
+    (11111, False, False),
 ])
-def test_queries(number_of_employees,
+def test_queries(number_of_students,
                  generate_in_parallel,
                  measure_memory_footprint,
                  random_first_names,
                  random_sur_names,
-                 random_companies,
+                 random_schools,
                  hybrid_storage):
     log('--------------------')
 
     stopwatch('Seeding DB data')
     db = hybrid_storage.index_database._db
     if generate_in_parallel:
-        employees = create_employees_parallel(number_of_employees, random_first_names, random_sur_names, random_companies)
+        students = create_students_parallel(number_of_students, random_first_names, random_sur_names, random_schools)
     else:
-        employees = create_employees_sequentially(number_of_employees, random_first_names, random_sur_names, random_companies)
-    db.update(employees)
+        students = create_students_sequentially(number_of_students, random_first_names, random_sur_names, random_schools)
+    db.update(students)
     total_database_entries = len(db.keys())
     stopwatch()
     log(f'Total data: {total_database_entries}')
@@ -265,76 +209,106 @@ def test_queries(number_of_employees,
     log('Test queries:')
     println()
     
-    CompanyModel.query.verbose().all()
-    
-    TeamModel.query.verbose().all()
+    SchoolModel.query.verbose().all()
                       
-    EmployeeModel.query.verbose().all()
+    StudentModel.query.verbose().all()
     
-    EmployeeModel.query.w('height').gt(180).verbose().collect()
+    StudentModel.query.w('height').gt(180).verbose().collect()
     
-    EmployeeModel.query.where('height').less_than(150) \
-                       .where('age').less_than(16) \
-                       .sort_by('name') \
-                       .filter_by('name') \
-                       .verbose() \
-                       .collect()
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .sort_by('name') \
+                      .filter_by('name') \
+                      .verbose() \
+                      .collect()
     
-    EmployeeModel.query.where('height').less_than(150) \
-                       .where('age').less_than(16) \
-                       .verbose() \
-                       .paginate(0, 10)
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .paginate(0, 10)
     
-    EmployeeModel.query.where('height').less_than(150) \
-                       .where('age').less_than(16) \
-                       .verbose() \
-                       .paginate(1, 10)
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .paginate(1, 10)
     
-    EmployeeModel.query.where('height').less_than(150) \
-                       .where('age').less_than(16) \
-                       .verbose() \
-                       .paginate(0, 30)
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .paginate(0, 30)
     
-    EmployeeModel.query.where('height').less_than(150) \
-                       .where('age').less_than(16) \
-                       .verbose() \
-                       .first()
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .first()
     
-    EmployeeModel.query.where('height').less_than(150) \
-                       .where('age').less_than(16) \
-                       .verbose() \
-                       .last()
-    
-    company = CompanyModel({
-        'address': 'Kolonnenstraße 8',
-        'industry': 'Software & Hardware',
-        'name': 'enamentis GmbH',
-        'public': False,
-        'revenue': 0,
+    StudentModel.query.where('height').less_than(150) \
+                      .where('age').less_than(16) \
+                      .verbose() \
+                      .last()
+                      
+    student = StudentModel({
+        'age': 21,
+        'gender': 'male',
+        'height': 181,
+        'name': 'Mark Grayson'
     })
-    employee = EmployeeModel({
-        'age': 30,
-        ''
-    })
-    db.update({employee.id: employee})
-    employee_id = employee.id
-    EmployeeModel.query.verbose().get(id=employee_id)
+    db.update({student.id: student})
+    student_id = student.id
+    StudentModel.query.verbose().get(id=student_id)
     
     log('--------------------')
     
-@pytest.mark.skip
-def test_relations(hybrid_storage):
+@pytest.mark.parametrize('number_of_students, generate_in_parallel, measure_memory_footprint', [
+    (1111, False, False),
+])
+def test_relations(number_of_students,
+                   generate_in_parallel,
+                   measure_memory_footprint,
+                   random_first_names,
+                   random_sur_names,
+                   random_schools,
+                   hybrid_storage):
     log('--------------------')
 
+    stopwatch('Seeding DB data')
     db = hybrid_storage.index_database._db
+    if generate_in_parallel:
+        students = create_students_parallel(number_of_students, random_first_names, random_sur_names, random_schools)
+    else:
+        students = create_students_sequentially(number_of_students, random_first_names, random_sur_names, random_schools)
+    db.update(students)
+    total_database_entries = len(db.keys())
+    stopwatch()
+    log(f'Total data: {total_database_entries}')
+    if measure_memory_footprint:
+        stopwatch('Measuring memory footprint')
+        log(hybrid_storage.index_database.memory_footprint)
+        stopwatch()
+    println()
     
-    enamentis_gmbh = CompanyModel({
-        'address': 'Kolonnenstraße 8',
-        'industry': 'AI Software & Hardware',
-        'name': 'enamtnis GmbH',
-        'public': False,
-        'revenue': 0.0,
+    # Create a query chain that does not execute immediately.
+    log('Test queries:')
+    println()
+
+    tu_berlin = SchoolModel.query.where('name').equals('Technische Universität München').verbose().first()
+    lion_reichl = StudentModel({
+        'age': 30,
+        'gender': 'male',
+        'height': 181,
+        'name': 'Lion Reichl',
+        'school': tu_berlin.id
     })
-    db.update({enamentis_gmbh.id: enamentis_gmbh})
+    db.update({lion_reichl.id: lion_reichl})
+    
+    log('Test relations:')
+    println()
+
+    print(lion_reichl.school)
+    print(lion_reichl.school.all())
+    # print(lion_reichl.school.secondary_keys)
+    # print(lion_reichl.school.relation_type)
+    # print(lion_reichl.school._value.all())
+    # lion_reichl.school.verbose(print=True).all()
     
     log('--------------------')

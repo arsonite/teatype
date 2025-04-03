@@ -84,6 +84,10 @@ class HSDBRelation(HSDBField):
         self.secondary_model = secondary_model
         
         self.relation_name = self._stitch_relation_name(primary_model, secondary_model, relation_type)
+        reverse_relation_type = relation_type
+        if relation_type == 'many-to-one':
+            reverse_relation_type = 'one-to-many'
+        self.reverse_relation_name = self._stitch_relation_name(secondary_model, primary_model, reverse_relation_type)
         if reverse_lookup is not None:
             self.reverse_lookup = reverse_lookup
         else:
@@ -135,10 +139,10 @@ class HSDBRelation(HSDBField):
         self._validate_keys(secondary_keys)
         self._hsdb_reference.index_database._relational_index.add(
             relation_name=self.relation_name,
+            reverse_relation_name=self.reverse_relation_name,
             relation_type=self.relation_type,
             primary_keys=primary_keys,
             secondary_keys=secondary_keys,
-            reverse_lookup=self.reverse_lookup,
         )
         
     ####################
