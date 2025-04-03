@@ -125,7 +125,7 @@ class HSDBQuery:
                     stopwatch('Query runtime')
                 
                 if id:
-                    queryset = [self._hsdb_reference.index_database._db[id]]
+                    queryset = self._hsdb_reference.index_database._db[id]
                 else:
                     def __get_nested_value(entry, attribute_path:str) -> any:
                         """
@@ -198,7 +198,7 @@ class HSDBQuery:
                         start_index = page * page_size
                         end_index = start_index + page_size
                         queryset = queryset[start_index:end_index]
-            
+                        
                     self.already_executed = True
                     
                 if self._verbose:
@@ -215,7 +215,7 @@ class HSDBQuery:
                     println()
             
             # Return list of ids.
-            return queryset if not id else queryset[0]
+            return queryset
         except KeyError as ke:
             self.already_executed = True
             if id:
@@ -301,15 +301,15 @@ class HSDBQuery:
     def get(self, id:str):
         # Get a record with the given id.
         self._executed_hook = 'get'
-        return self._run_query(id)
+        return self._run_query(id)[0]
     
     def first(self):
         self._executed_hook = 'first'
-        return self.paginate(0, 1)
+        return self.paginate(0, 1)[0]
         
     def last(self):
         self._executed_hook = 'last'
-        return self.paginate(-1, 1)
+        return self.paginate(-1, 1)[0]
     
     def paginate(self, page:int, page_size:int):
         self._pagination = (page, page_size)
