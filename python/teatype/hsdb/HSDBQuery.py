@@ -125,7 +125,7 @@ class HSDBQuery:
                     stopwatch('Query runtime')
                 
                 if id:
-                    queryset = self._hsdb_reference.index_database._db[id]
+                    queryset = [self._hsdb_reference.index_database._db[id]]
                 else:
                     def __get_nested_value(entry, attribute_path:str) -> any:
                         """

@@ -176,9 +176,8 @@ def test_create_students_parallel(number_of_students,
     
     log('--------------------')
 
-@pytest.mark.skip
 @pytest.mark.parametrize('number_of_students, generate_in_parallel, measure_memory_footprint', [
-    (11111, False, False),
+    (12_345, False, True),
 ])
 def test_queries(number_of_students,
                  generate_in_parallel,
@@ -213,6 +212,7 @@ def test_queries(number_of_students,
                       
     StudentModel.query.verbose().all()
     
+    # Alternative: Using aliases
     StudentModel.query.w('height').gt(180).verbose().collect()
     
     StudentModel.query.where('height').less_than(150) \
@@ -228,7 +228,7 @@ def test_queries(number_of_students,
                       .paginate(0, 10)
     
     StudentModel.query.where('height').less_than(150) \
-                      .where('age').less_than(16) \
+                      .where('age').greater_than_or_equals(16) \
                       .verbose() \
                       .paginate(1, 10)
     
@@ -251,7 +251,8 @@ def test_queries(number_of_students,
         'age': 21,
         'gender': 'male',
         'height': 181,
-        'name': 'Mark Grayson'
+        'name': 'Mark Grayson',
+        'school': random_schools[0]
     })
     db.update({student.id: student})
     student_id = student.id
@@ -259,6 +260,7 @@ def test_queries(number_of_students,
     
     log('--------------------')
     
+@pytest.mark.skip
 @pytest.mark.parametrize('number_of_students, generate_in_parallel, measure_memory_footprint', [
     (1111, False, False),
 ])

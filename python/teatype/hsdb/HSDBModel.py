@@ -113,15 +113,15 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 attribute_value = data.get(attribute_name)
                 
                 if attribute.type == List[str]:
-                    if not (all(isinstance(item, str) for item in attribute_value) or \
-                            all(isinstance(item, HSDBModel) for item in attribute_value) or \
-                            all(isinstance(item, HSDBField._ValueWrapper) for item in attribute_value)):
+                    if not all(isinstance(item, str) for item in attribute_value) and \
+                       not all(isinstance(item, HSDBModel) for item in attribute_value) and \
+                       not all(isinstance(item, HSDBAttribute._AttributeWrapper) for item in attribute_value):
                         raise ValueError(f'Field "{attribute_name}" must be a list of id strings or HSDBModel instances')
                 else:
-                    if not (isinstance(attribute_value, attribute.type) or \
-                            isinstance(attribute_value, HSDBModel)) or \
-                            isinstance(attribute_value, HSDBField._ValueWrapper):
-                        raise ValueError(f'Field "{attribute_name}" must be of type "{attribute.type.__name__}" or an HSDBModel instance')
+                    if not isinstance(attribute_value, attribute.type) and \
+                       not isinstance(attribute_value, HSDBModel) and \
+                       not isinstance(attribute_value, HSDBAttribute._AttributeWrapper):
+                           raise ValueError(f'Field "{attribute_name}" must be of type "{attribute.type.__name__}" or an HSDBModel instance')
                 
                 # Allowing to pass both model instance and id string
                 if isinstance(attribute_value, HSDBModel):
