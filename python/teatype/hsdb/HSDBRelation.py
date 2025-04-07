@@ -102,7 +102,7 @@ class HSDBRelation(HSDBField, Generic[T]):
                 reverse_lookup_key = f'{reverse_lookup_key}s'
             self.reverse_lookup = reverse_lookup_key
     
-        def _query_closure(self, target_model:type):
+        def _query_closure(self, target_model:'type'):
             query = HSDBQuery(target_model)
             subset = { key:query._index_db_reference[key] for key in query._index_db_reference if key in self.secondary_keys }
             query._index_db_reference = subset
