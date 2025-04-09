@@ -19,6 +19,7 @@ import json as json_util
 
 # From system imports
 from enum import Enum
+from typing import List
 
 # From package imports
 from teatype.logging import err, log, warn
@@ -56,7 +57,7 @@ class _Response:
         self.headers = headers
     
 def _request(crud_method:str,
-             url:str,
+             url:str|List[str],
              data:any=None,
              params:dict=None,
              measure_time:bool=False,
@@ -80,6 +81,13 @@ def _request(crud_method:str,
     Returns:
         requests.Response or aiohttp.ClientResponse or None: The HTTP response object or None if an error occurs.
     """
+    if not isinstance(url, str) and not isinstance(url, list):
+        err('Invalid URL type, expected str or list')
+        return None
+    
+    if isinstance(url, list):
+        url = '/'.join(url) # Join the list of URLs into a single string
+    
     # Parse the request URL to validate its structure
     parsed_url = urlparse(url)
     if not all([parsed_url.scheme, parsed_url.netloc]):
