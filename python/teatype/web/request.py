@@ -64,6 +64,7 @@ def _request(crud_method:str,
              json:bool=True,
              verbose:bool=False,
              headers:dict={},
+             timeout:float=10.0,
              _async:aiohttp.ClientSession=None) -> requests.Response|aiohttp.ClientResponse|None:
     """
     Internal helper function to perform HTTP requests based on CRUD methods.
@@ -106,23 +107,23 @@ def _request(crud_method:str,
     match crud_method:
         case _CRUD_METHOD.DELETE.value:
             # Perform a DELETE request
-            response = call.delete(url, data=data, params=params, headers=headers)
+            response = call.delete(url, data=data, params=params, headers=headers, timeout=timeout)
         case _CRUD_METHOD.GET.value:
             if data:
                 # Maybe construct a response instead?
                 err('GET requests do not support request data')
                 return None
             # Perform a GET request
-            response = call.get(url, params=params, headers=headers)
+            response = call.get(url, params=params, headers=headers, timeout=timeout)
         case _CRUD_METHOD.PATCH.value:
             # Perform a PATCH request
-            response = call.patch(url, data=data, params=params, headers=headers)
+            response = call.patch(url, data=data, params=params, headers=headers, timeout=timeout)
         case _CRUD_METHOD.POST.value:
             # Perform a POST request
-            response = call.post(url, data=data, params=params, headers=headers)
+            response = call.post(url, data=data, params=params, headers=headers, timeout=timeout)
         case _CRUD_METHOD.PUT.value:
             # Perform a PUT request
-            response = call.put(url, data=data, params=params, headers=headers)
+            response = call.put(url, data=data, params=params, headers=headers, timeout=timeout)
         case _:
             err(f'Invalid CRUD method: {crud_method}') # Log an error for invalid CRUD methods
             return None
@@ -155,7 +156,8 @@ def sync_request(crud_method:str,
                  measure_time:bool=False,
                  json:bool=True,
                  verbose:bool=False,
-                 headers:dict={}) -> requests.Response:
+                 headers:dict={},
+                 timeout:float=10.0) -> requests.Response:
     """
     Perform a synchronous HTTP request based on the specified CRUD method.
     This exists as a wrapper function to call the internal _request function and it allows
@@ -174,14 +176,15 @@ def sync_request(crud_method:str,
         requests.Response: The HTTP response object.
     """
     # Call the internal _request function with the provided parameters to perform the synchronous request
-    return _request(crud_method, url, data, params, measure_time, json, verbose, headers)
+    return _request(crud_method, url, data, params, measure_time, json, verbose, headers, timeout)
 
 def get(url:str,
         params:dict=None,
         measure_time:bool=False,
         json:bool=True,
         verbose:bool=False,
-        headers:dict={}) -> requests.Response:
+        headers:dict={},
+        timeout:float=10.0) -> requests.Response:
     """
     Perform a synchronous GET request.
 
@@ -196,7 +199,7 @@ def get(url:str,
         requests.Response: The HTTP response object.
     """
     # Call the internal _request function with the provided parameters to perform the synchronous GET request
-    return _request(_CRUD_METHOD.GET.value, url, None, params, measure_time, json, verbose)
+    return _request(_CRUD_METHOD.GET.value, url, None, params, measure_time, json, verbose, headers, timeout)
 
 def post(url:str,
          data:any=None,
@@ -204,7 +207,8 @@ def post(url:str,
          measure_time:bool=False,
          json:bool=True,
          verbose:bool=False,
-         headers:dict={}) -> requests.Response:
+         headers:dict={},
+         timeout:float=10.0) -> requests.Response:
     """
     Perform a synchronous POST request.
 
@@ -220,7 +224,7 @@ def post(url:str,
         requests.Response: The HTTP response object.
     """
     # Call the internal _request function with the provided parameters to perform the synchronous POST request
-    return _request(_CRUD_METHOD.POST.value, url, data, params, measure_time, json, verbose, headers)
+    return _request(_CRUD_METHOD.POST.value, url, data, params, measure_time, json, verbose, headers, timeout)
 
 def put(url:str,
         data:any=None,
@@ -228,7 +232,8 @@ def put(url:str,
         measure_time:bool=False,
         json:bool=True,
         verbose:bool=False,
-        headers:dict={}) -> requests.Response:
+        headers:dict={},
+        timeout:float=10.0) -> requests.Response:
     """
     Perform a synchronous PUT request.
 
@@ -244,7 +249,7 @@ def put(url:str,
         requests.Response: The HTTP response object.
     """
     # Call the internal _request function with the provided parameters to perform the synchronous PUT request
-    return _request(_CRUD_METHOD.PUT.value, url, data, params, measure_time, json, verbose, headers)
+    return _request(_CRUD_METHOD.PUT.value, url, data, params, measure_time, json, verbose, headers, timeout)
     
 def patch(url:str,
           data:any=None,
@@ -252,7 +257,8 @@ def patch(url:str,
           measure_time:bool=False,
           json:bool=True,
           verbose:bool=False,
-          headers:dict={}) -> requests.Response:
+          headers:dict={},
+          timeout:float=10.0) -> requests.Response:
     """
     Perform a synchronous PATCH request.
 
@@ -268,7 +274,7 @@ def patch(url:str,
         requests.Response: The HTTP response object.
     """
     # Call the internal _request function with the provided parameters to perform the synchronous PATCH request
-    return _request(_CRUD_METHOD.PATCH.value, url, data, params, measure_time, json, verbose, headers)
+    return _request(_CRUD_METHOD.PATCH.value, url, data, params, measure_time, json, verbose, headers, timeout)
 
 def delete(url:str,
            data:any=None,
@@ -276,7 +282,8 @@ def delete(url:str,
            measure_time:bool=False,
            json:bool=True,
            verbose:bool=False,
-           headers:dict={}) -> requests.Response:
+           headers:dict={},
+           timeout:float=10.0) -> requests.Response:
     """
     Perform a synchronous DELETE request.
 
@@ -292,7 +299,7 @@ def delete(url:str,
         requests.Response: The HTTP response object.
     """
     # Call the internal _request function with the provided parameters to perform the synchronous DELETE request
-    return _request(_CRUD_METHOD.DELETE.value, url, data, params, measure_time, json, verbose, headers)
+    return _request(_CRUD_METHOD.DELETE.value, url, data, params, measure_time, json, verbose, headers, timeout)
 
 async def async_request(crud_method:str,
                         url:str,
@@ -301,7 +308,8 @@ async def async_request(crud_method:str,
                         measure_time:bool=False,
                         json:bool=True,
                         verbose:bool=False,
-                        headers:dict={}) -> aiohttp.ClientResponse:
+                        headers:dict={},
+                        timeout:float=10.0) -> aiohttp.ClientResponse:
     """
     Perform an asynchronous HTTP request based on the specified CRUD method.
 
@@ -327,7 +335,9 @@ async def async_request(crud_method:str,
                             measure_time,
                             json,
                             verbose,
-                            session) as response:
+                            headers,
+                            # session,
+                            timeout) as response:
             return response # Return the HTTP response object
 
 def async_get(url:str,
@@ -335,7 +345,8 @@ def async_get(url:str,
               measure_time:bool=False,
               json:bool=True,
               verbose:bool=False,
-              headers:dict={}) -> aiohttp.ClientResponse:
+              headers:dict={},
+              timeout:float=10.0) -> aiohttp.ClientResponse:
     """
     Perform an asynchronous GET request.
 
@@ -350,4 +361,4 @@ def async_get(url:str,
         aiohttp.ClientResponse: The HTTP response object.
     """
     # Call the internal _request function with the provided parameters to perform the asynchronous GET request
-    return _request(_CRUD_METHOD.GET.value, url, None, params, measure_time, json, verbose, _async=aiohttp.ClientSession())
+    return _request(_CRUD_METHOD.GET.value, url, None, params, measure_time, json, verbose, headers, timeout, _async=aiohttp.ClientSession())
