@@ -21,12 +21,18 @@ import shutil
 # As-system imports
 import xml.etree.ElementTree as ET
 
+# As-package imports
+import numpy as np
+
 # From system imports
 from pathlib import PosixPath
-from typing import List
+from typing import Dict, List
 
 # From local imports
 from teatype.logging import err, warn
+
+# From-as system imports
+from builtins import list as list_type
 
 # From-as local imports
 from teatype.io import path as path_functions
@@ -587,6 +593,28 @@ def write(path:str, data:any, force_format:str=None, prettify:bool=False, create
             # Create parent directories if they do not exist
             parent_path = ''.join(subpath + '/' for subpath in path.split('/')[:-1])
             path_functions.create(parent_path)
+            
+        # JSON_DUMP_ENCODERS = {
+        #     np.ndarray: lambda x: x.tolist(),
+        # }
+    
+        class _JSON_DUMP_ENCODERS(json.JSONEncoder):
+            """
+            Custom JSON encoder for NumPy data types.
+            
+            This encoder is used to convert NumPy data types to standard Python data types
+            when serializing to JSON format.
+            """
+            def default(self, value):
+                if isinstance(value, dict):
+                    # Recursively convert NumPy arrays in dictionaries to lists
+                    return {key: self.default(val) for key, val in value.items()}
+                elif isinstance(value, list_type):
+                    # Recursively convert NumPy arrays in lists to lists
+                    return [self.default(item) for item in value]
+                elif isinstance(value, np.ndarray):
+                    return value.tolist()
+                return super().default(value)
         
         # Open the file in write mode
         with open(path, 'w') as f:
@@ -598,7 +626,7 @@ def write(path:str, data:any, force_format:str=None, prettify:bool=False, create
                 if prettify:
                     indent = 4
                 # Write JSON data to the file
-                json.dump(data, f, indent=indent)
+                json.dump(data, f, indent=indent, default=_JSON_DUMP_ENCODERS().default)
             elif path.endswith('.ini') or force_format == 'ini':
                 # Initialize ConfigParser and update with new data
                 config = configparser.ConfigParser()
@@ -618,5 +646,5 @@ def write(path:str, data:any, force_format:str=None, prettify:bool=False, create
         return True
     except Exception as exc:
         # Log an error message if an exception occurs
-        err(f'Error writing to file {path}: {exc}')
+        err(f'Error writing to file {path}: {exc}', traceback=True)
         raise exc
