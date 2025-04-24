@@ -38,7 +38,8 @@ class HSDBField(ABC, Generic[T]):
     key:str                     # Property for the field key
     name:str                    # The field name # TODO: Check if this is needed anymore, maybe refactor in future
     required:bool               # Whether the attribute is required, automatically set to True if computed
-    type:T                     # The type of the attribute
+    shortkey:str                # The short key for the attribute, useful for compression
+    type:T                      # The type of the attribute
     value:any                   # Property for the field value
 
     def __init__(self, editable:bool, indexed:bool, required:bool, SUPPORTED_TYPES:List[Type], type:Type):

@@ -25,6 +25,9 @@ from teatype.util import dt, staticproperty
 # From-as package imports
 from teatype.util import generate_id, kebabify
 
+# TODO: Implement a short-key map for attributes for compression
+#       - automate by implementing a smart algorithm that first checks how many seperations of underscore are there and then abbreviates that way
+#       - it also uses indexing for shortenting attribute names and checks for collisions and adjusts index length accordingly
 # TODO: Implement auto-compute variable for count of reverse lookup models (amount_of_<relation_name>s)
 # TODO: Replace data with kwargs on init
 # TODO: Add allowing to use string literal for relation name to avoid circular imports (need access to hybridstorage to iterate through models)
