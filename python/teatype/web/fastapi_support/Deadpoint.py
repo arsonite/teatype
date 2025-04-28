@@ -106,7 +106,7 @@ class Deadpoint:
         # Default response if nothing matches
         return {'message': f'Default response for {path}'}
 
-def deadpoint(response:Dict[str,any], status:int):
+def deadpoint(response:Dict[str,any]=None, status:int=None):
     """ 
     A decorator that checks for 'testmode' query param and delegates 
     the request to the EndpointSimulator with the specified response and status code.
@@ -114,20 +114,20 @@ def deadpoint(response:Dict[str,any], status:int):
     def decorator(callable:Callable):
         @wraps(callable)
         async def wrapper(caller:object,
-                          request:Request,
-                          response:Response,
+                          initial_request:Request,
+                          initial_response:Response,
                           *args,
                           **kwargs):
             try:
-                print(request.query_params)
                 # Access the 'testmode' query parameter directly from the request, so that it can
                 # be omitted in the call signature of the route handler
-                testmode = request.query_params.get('testmode', 'false').lower() == 'true'
+                testmode = initial_request.query_params.get('testmode', 'false').lower() == 'true'
                 
                 # Check if testmode is enabled in the query parameters
                 if testmode:
-                    # Delegate the request to the singleton instance of the endpoint simulator
-                    simulated_response = Deadpoint().simulate_endpoint(request, request.url.path)
+                    if response is None:
+                        # Delegate the request to the singleton instance of the endpoint simulator
+                        simulated_response = Deadpoint().simulate_endpoint(initial_request, initial_request.url.path)
                     # Set the response status code
                     response.status_code = status
                     # Modify the response body
@@ -135,7 +135,7 @@ def deadpoint(response:Dict[str,any], status:int):
                     return simulated_response
                 # If not testmode, proceed with the actual callable
                 # Ensure to pass all necessary arguments (request, response)
-                return await callable(caller, request, response, *args, **kwargs)
+                return await callable(caller, initial_request, initial_response, *args, **kwargs)
             except:
                 import traceback
                 traceback.print_exc()
