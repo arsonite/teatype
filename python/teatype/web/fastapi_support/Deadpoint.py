@@ -31,6 +31,7 @@ except:
     fastapi_support = None
 
 # TODO: Generalize so that you don't need fastapi support
+# TODO: Change testmode to parameter that tells you what should happen instead of simple true/false
 class Deadpoint:
     _instance = None
 
