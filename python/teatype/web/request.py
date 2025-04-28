@@ -178,7 +178,7 @@ def sync_request(crud_method:str,
                  params:dict=None,
                  force_json:bool=False,
                  measure_time:bool=False,
-                 parse_json_response:bool=False,
+                 parse_json_response:bool=True,
                  timeout:float=10.0,
                  verbose:bool=False) -> requests.Response:
     """
@@ -211,13 +211,14 @@ def sync_request(crud_method:str,
                     measure_time=measure_time,
                     parse_json_response=parse_json_response,
                     timeout=timeout,
-                    verbose=verbose)
+                    verbose=verbose,
+                    _async=False)
 
 def get(url:str,
         headers:dict={},
         params:dict=None,
         measure_time:bool=False,
-        parse_json_response:bool=False,
+        parse_json_response:bool=True,
         timeout:float=10.0,
         verbose:bool=False) -> requests.Response:
     """
@@ -236,16 +237,16 @@ def get(url:str,
     Returns:
         requests.Response or aiohttp.ClientResponse or None: The HTTP response object or None if an error occurs.
     """
-    return _request(_CRUD_METHOD.GET.value,
-                    url=url,
-                    data=None,
-                    headers=headers,
-                    params=params,
-                    force_json=False,
-                    measure_time=measure_time,
-                    parse_json_response=parse_json_response,
-                    timeout=timeout,
-                    verbose=verbose)
+    return sync_request(_CRUD_METHOD.GET.value,
+                        url=url,
+                        data=None,
+                        headers=headers,
+                        params=params,
+                        force_json=False,
+                        measure_time=measure_time,
+                        parse_json_response=parse_json_response,
+                        timeout=timeout,
+                        verbose=verbose)
 
 def post(url:str,
          data:any=None,
@@ -253,7 +254,7 @@ def post(url:str,
          params:dict=None,
          force_json:bool=False,
          measure_time:bool=False,
-         parse_json_response:bool=False,
+         parse_json_response:bool=True,
          timeout:float=10.0,
          verbose:bool=False) -> requests.Response:
     """
@@ -273,25 +274,26 @@ def post(url:str,
     Returns:
         requests.Response or aiohttp.ClientResponse or None: The HTTP response object or None if an error occurs.
     """
-    return _request(_CRUD_METHOD.POST.value,
-                    url=url,
-                    data=data,
-                    headers=headers,
-                    params=params,
-                    force_json=force_json,
-                    measure_time=measure_time,
-                    parse_json_response=parse_json_response,
-                    timeout=timeout,
-                    verbose=verbose)
+    return sync_request(_CRUD_METHOD.POST.value,
+                        url=url,
+                        data=data,
+                        headers=headers,
+                        params=params,
+                        force_json=force_json,
+                        measure_time=measure_time,
+                        parse_json_response=parse_json_response,
+                        timeout=timeout,
+                        verbose=verbose)
 
 def put(url:str,
         data:any=None,
-        params:dict=None,
-        measure_time:bool=False,
-        json:bool=True,
-        verbose:bool=False,
         headers:dict={},
-        timeout:float=10.0) -> requests.Response:
+        params:dict=None,
+        force_json:bool=False,
+        measure_time:bool=False,
+        parse_json_response:bool=True,
+        timeout:float=10.0,
+        verbose:bool=False) -> requests.Response:
     """
     Perform a synchronous PUT request.
     
@@ -309,16 +311,16 @@ def put(url:str,
     Returns:
         requests.Response or aiohttp.ClientResponse or None: The HTTP response object or None if an error occurs.
     """
-    return _request(_CRUD_METHOD.PUT.value,
-                    url=url,
-                    data=data,
-                    headers=headers,
-                    params=params,
-                    force_json=force_json,
-                    measure_time=measure_time,
-                    parse_json_response=parse_json_response,
-                    timeout=timeout,
-                    verbose=verbose)
+    return sync_request(_CRUD_METHOD.PUT.value,
+                        url=url,
+                        data=data,
+                        headers=headers,
+                        params=params,
+                        force_json=force_json,
+                        measure_time=measure_time,
+                        parse_json_response=parse_json_response,
+                        timeout=timeout,
+                        verbose=verbose)
     
 def patch(url:str,
           data:any=None,
@@ -326,7 +328,7 @@ def patch(url:str,
           params:dict=None,
           force_json:bool=False,
           measure_time:bool=False,
-          parse_json_response:bool=False,
+          parse_json_response:bool=True,
           timeout:float=10.0,
           verbose:bool=False) -> requests.Response:
     """
@@ -346,16 +348,16 @@ def patch(url:str,
     Returns:
         requests.Response or aiohttp.ClientResponse or None: The HTTP response object or None if an error occurs.
     """
-    return _request(_CRUD_METHOD.PATCH.value,
-                    url=url,
-                    data=data,
-                    headers=headers,
-                    params=params,
-                    force_json=force_json,
-                    measure_time=measure_time,
-                    parse_json_response=parse_json_response,
-                    timeout=timeout,
-                    verbose=verbose)
+    return sync_request(_CRUD_METHOD.PATCH.value,
+                        url=url,
+                        data=data,
+                        headers=headers,
+                        params=params,
+                        force_json=force_json,
+                        measure_time=measure_time,
+                        parse_json_response=parse_json_response,
+                        timeout=timeout,
+                        verbose=verbose)
 
 def delete(url:str,
            data:any=None,
@@ -363,7 +365,7 @@ def delete(url:str,
            params:dict=None,
            force_json:bool=False,
            measure_time:bool=False,
-           parse_json_response:bool=False,
+           parse_json_response:bool=True,
            timeout:float=10.0,
            verbose:bool=False) -> requests.Response:
     """
@@ -383,16 +385,16 @@ def delete(url:str,
     Returns:
         requests.Response or aiohttp.ClientResponse or None: The HTTP response object or None if an error occurs.
     """
-    return _request(_CRUD_METHOD.DELETE.value,
-                    url=url,
-                    data=data,
-                    headers=headers,
-                    params=params,
-                    force_json=force_json,
-                    measure_time=measure_time,
-                    parse_json_response=parse_json_response,
-                    timeout=timeout,
-                    verbose=verbose)
+    return sync_request(_CRUD_METHOD.DELETE.value,
+                        url=url,
+                        data=data,
+                        headers=headers,
+                        params=params,
+                        force_json=force_json,
+                        measure_time=measure_time,
+                        parse_json_response=parse_json_response,
+                        timeout=timeout,
+                        verbose=verbose)
 
 async def async_request(crud_method:str,
                         url:str,
