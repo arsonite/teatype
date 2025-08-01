@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta-Data -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+
+    <!-- All-inclusive CSS-Master-Stylesheets -->
+    <link rel="stylesheet" href="ui/main/main.css">
+    <link rel="stylesheet" href="ui/main/title.css">
+
+    <!-- Additional CSS-Stylesheets -->
+    <!-- Main-Window -->
+    <link rel="stylesheet" href="ui/main_window/main_window.css">
+    <!-- Stats-Window -->
+    <link rel="stylesheet" href="ui/stats_window/stats_window.css">
+    <link rel="stylesheet" href="ui/stats_window/stats.css">
+    <link rel="stylesheet" href="ui/stats_window/info.css">
+    <!-- Status-Window -->
+    <link rel="stylesheet" href="ui/status_window/status_window.css">
+
+    <!-- Loading core depedencies -->
+    <script src="util/const.js" defer></script>
+    <script src="util/filesystem.js" defer></script>
+    <script src="util/assets.js" defer></script>
+    <script src="util/json.js" defer></script>
+    <script src="util/document.js" defer></script>
+    <script src="util/functions.js" defer></script>
+
+    <!-- Game controllers -->
+    <script src="engine/controller/init.js" defer></script>
+    <script src="engine/controller/world.js" defer></script>
+    <script src="engine/controller/player.js" defer></script>
+    <script src="engine/controller/npcs.js" defer></script>
+
+    <!-- Core scripts -->
+    <script src="util/log.js" defer></script>
+    <script src="util/dom.js" defer></script>
+
+    <!-- Additional functionality -->
+
+    <!-- Main script -->
+    <script src="main.js" defer></script>
+</head>
+
+<body>
+    <!-- Title -->
+    <div id="title">
+        <p id="p_title">Dead Men's Tales</p>
+        <img src="../../res/img/icon/skull_white.png" height="13" width="13">
+    </div>
+
+    <main>
+        <!-- Main-Window -->
+        <div id="main_window" class="window">
+            <div id="main_frame" class="superframe">
+                <div id="out_frame" class="frame">
+                    <div id="out">
+                        <p id="new"></p>
+                        <p id="old"></p>
+                    </div>
+                </div>
+
+                <div id="control_frame" class="frame">
+                    <div id="nav_frame" class="frame">
+                        <!-- Insertion of arrows -->
+                    </div>
+
+                    <div id="enemy_frame" class="frame">
+                        <!-- Insertion of bodyparts -->
+                    </div>
+                </div>
+
+                <div id="in_frame" class="superframe">
+                    <div id="perm_frame">
+                        <!-- Insertion of perm actions -->
+                    </div>
+
+                    <div id="con_frame">
+                        <!-- Insertion of context actions -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats-Window -->
+        <div id="stats_window" class="window">
+            <div id="stats_tab" class="tab">
+                <p>S T A T S</p>
+            </div>
+            
+            <div id="stats_frame" class="superframe">
+                <div id="stats">
+                    <!-- Insertion of mind diagram -->
+                    <div id="mind">
+                        <div id="mind_grid"></div>
+                        <div id="mind_box">
+                            <div>
+                                <span class="tooltip mind"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="own_bars">
+                        <div id="health">
+                            <div id="health_img" class="img_frame">
+                                <img src="res/img/icon/health.png">
+                            </div>
+                            <div id="health_frame" class="bar_frame">
+                                <div id="health_bar" class="bar">
+                                    <p></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="stamina">
+                            <div id="stamina_img" class="img_frame">
+                                <img src="res/img/icon/stamina.png">
+                            </div>
+                            <div id="stamina_frame" class="bar_frame">
+                                <div id="stamina_bar" class="bar">
+                                    <p></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="grant">
+                            <div id="grant_img" class="img_frame">
+                                <img src="res/img/icon/grant.png">
+                            </div>
+                            <div id="grant_frame" class="bar_frame">
+                                <div id="grant_bar" class="bar">
+                                    <p></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="exp">
+                            <p>XP</p>
+                            <div id="exp_frame" class="bar_frame">
+                                <div id="exp_bar" class="bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="info">
+                    <div id="attributes">
+                        <ul id="attributes1"></ul>
+                        <ul id="attributes2"></ul>
+                    </div>
+                    <div id="profile"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status-Window -->
+        <div id="status_window" class="window">
+            <div id="status_tab" class="tab">
+                <p>S T A T U S</p>
+            </div>
+
+            <div id="status_frame" class="superframe"></div>
+        </div>
+
+        <!-- Inventory-Window -->
+        <div id="inventory_window" class="window">
+            <div id="inventory_tab" class="tab">
+                <p>I N V E N T O R Y</p>
+            </div>
+            
+            <div id="inventory_frame" class="superframe"></div>
+        </div>
+
+        <!-- Map-Window -->
+        <div id="map_window" class="window">
+            <div id="map_tab" class="tab">
+                <p>M A P</p>
+            </div>
+            
+            <div id="map_frame" class="superframe"></div>
+        </div>
+    </main>
+</body>
+
+</html>

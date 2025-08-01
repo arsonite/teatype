@@ -1,0 +1,120 @@
+!String!
+#Type#
+-Clothing-
+-Armor-
+-Quest-
+-Shield-
+-Weapon-
+;;
+
+!String!
+#Rarity#
+-Common-
+-Uncommon-
+-Rare-
+-Exceptional-
+-Peculiar-
+-Occult-
+-Forbidden-
+;;
+
+!String!
+#Usability#
+-Destructive-
+-Protective-
+-Sellable-
+-Repairable-
+-Enchantable-
+-Equipable-
+-Lootable-
+-Movable-
+-Owned-
+-Crucial-
+;;
+
+!String!
+#Equipment Slots#
+-Scalp-
+-Face-
+-Eyes-
+-Ears-
+-Neck-
+-Chest-
+-Left Shoulder-
+-Left Arm-
+-Left Hand-
+-Right Shoulder-
+-Right Arm-
+-Right Hand-
+-Back-
+-Belly-
+-Pelvis-
+-Left Upper Leg-
+-Left Lower Leg-
+-Right Upper Leg-
+-Right Lower Leg-
+-Feet-
+;;
+
+!String!
+#Values#
+-Protection-
+-Durability-
+-Weight-
+-Load-
+-Value-
+;;
+
+!String!
+#Damage-Stats#
+-Damage-
+-Critical Chance-
+-Critical Damage-
+;;
+
+!String!
+#Weapon-Type#
+-Bow-
+-Shortbow-
+-Longbow-
+-Giantbow-
+-Knife-
+-Fleshknife-
+-Dagger-
+-Sword-
+-Shortsword-
+-Longsword-
+-Broadsword-
+-Ripping Sword-
+-Two Handed Sword-
+-Greatsword-
+-Heavy Greatsword-
+-Ultra Greatsword-
+-Inhuman Greatsword-
+-Axe-
+-Battleaxe-
+-Two Sided Axe-
+-Greataxe-
+-Hammer-
+-Warhammer-
+-Crushing Hammer-
+;;
+
+!String!
+#Material#
+-Cloth-
+-Fiber-
+-Wood-
+-Stone-
+-Copper-
+-Bronze-
+-Iron-
+-Steel-
+-Starksteel-
+-Meteorite-
+-Gold-
+-Emerald-
+-Ruby-
+-Diamond-
+-Platinum-
+;;

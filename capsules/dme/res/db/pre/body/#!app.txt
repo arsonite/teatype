@@ -1,0 +1,126 @@
+!String!
+#Head#
+-Pointy-
+-Uneven-
+-Boxer-
+-Square-
+-Round-
+-Perfect-
+-Pretty-
+-Ugly-
+;;
+
+!String!
+#Hair Style#
+-Bald-
+-Balding-
+-Enlisted-
+-Wasted-
+-Short-
+-Cool cut-
+-Mid-
+-Sophisticated-
+-Farmer-
+-Long-
+-Prophet-
+-Too long-
+;;
+
+!StringColor!
+#Hair Color#
+-Piano Black .0.0.0.-
+-Chestnut .0.0.0.-
+-Red .0.0.0.-
+-Blonde .0.100.100.-
+-Brown .0.0.0.-
+;;
+
+!String!
+#Eyes#
+-Suspiciously Friendly-
+-Angry-
+-Earnest-
+-Sad View-
+-Pessimistic-
+-Optimistic-
+;;
+
+!StringColor!
+#Eye Color#
+-Pure Black .0.0.0.-
+-Snow White .255.255.255.-
+-Fiery Red .255.0.0.-
+;;
+
+!String!
+#Ears#
+-Elvish-
+-Small-
+-Round-
+-Uneven-
+-Big-
+;;
+
+!String!
+#Nose#
+-Small-
+-Big-
+-Curved-
+-Bulky-
+-Buckled-
+-Inward-
+;;
+
+!String!
+#Mouth#
+-Smiling-
+-Angry-
+-Neutral-
+;;
+
+!String!
+#Beard Style#
+-Clean Shaven-
+-Shaven-
+-Wise Old Man-
+;;
+
+!StringColor!
+#Beard Color#
+-Piano Black .0.0.0.-
+-Chestnut .0.0.0.-
+-Blonde .0.100.100.-
+;;
+
+!String!
+#Torso#
+-Skinny-
+-Large-
+-Fat-
+-Bulky-
+-Buffed-
+-Mountainous-
+-Beastly-
+;;
+
+!String!
+#Arms#
+-Skinny-
+-Large-
+-Fat-
+-Bulky-
+-Buffed-
+-Mountainous-
+-Beastly-
+;;
+
+!String!
+#Legs#
+-Skinny-
+-Large-
+-Fat-
+-Bulky-
+-Buffed-
+-Mountainous-
+-Beastly-
+;;

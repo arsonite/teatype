@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="../css/master.css">
+    <link rel="stylesheet" href="../css/name_gen.css">
+    <script src="../renderer.js" defer></script>
+    <script src="../js/name_gen.js" defer></script>
+</head>
+
+<body>
+    <!-- Mandatory Nav Box -->
+    <nav>
+        <div class="dropdown">
+            <a href="../index.html" id="current">Home</a>
+            <div class="dropdown-list">
+                <a href="k_gen.html">K-Gen</a>
+                <a href="speaker.html">Speaker</a>
+                <a href="name_gen.html" id="selected">Name Generator</a>
+                <a href="localstorage.html">local Storage</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <a href="../html/tha/home.html">• THA •</a>
+            <div class="dropdown-list">
+                <a href="#">Template Link</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <a href="../html/tsz/home.html">▴ TSZ ▴</a>
+            <div class="dropdown-list">
+                <a href="../html/tsz/db.html">Database</a>
+                <a href="../html/tsz/scale.html">Anomaly Scale</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <a href="../html/tws/home.html">▪ TWS ▪</a>
+            <div class="dropdown-list">
+                <a href="#">Template Link</a>
+            </div>
+        </div>
+    </nav>
+    <!----------------------->
+
+    <main>
+        <div id='alerts'></div>
+        <div id="main_header">
+            <p id="p1">Home </p>
+            <p id="p2">Random Name Generator</p>
+        </div>
+        <div id="main_content">
+            <div id="left_container">
+                <form>
+                    <label class="container">Male
+                        <input type="radio" id="radio_m" name="radio">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Female
+                        <input type="radio" id="radio_f" name="radio">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Both
+                        <input type="radio" id="radio_b" checked="checked" name="radio">
+                        <span class="checkmark"></span>
+                    </label>
+                </form>
+                <hr>
+                <form>
+                    <label class="container_check">Include Surnames as Names
+                        <input type="checkbox" id="check_sur">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container_check">Abbreviate the Middle-Names
+                        <input type="checkbox" id="check_mid">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container_check">All Random
+                        <input type="checkbox" id="check_rnd">
+                        <span class="checkmark"></span>
+                    </label>
+                </form>
+                <hr>
+                <form id="form_names">
+                    <input type="text" id="in_number" placeholder="Number of names">
+                    <input type="text" id="in_n" placeholder="n-Generation">
+                </form>
+                <form id="buttons">
+                    <button type="button" id="gen">Generate</button>
+                    <div class="dropdown-btn">
+                        <a>▾ Fill localStorage ▾</a>
+                        <div class="dropdown-btn-list">
+                            <a id="ls_male">Male Names</a>
+                            <a id="ls_female">Female Names</a>
+                            <a id="ls_sur">Sur-Names</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div id="right_container">
+                <ul id="out"></ul>
+            </div>
+        </div>
+    </main>
+
+</html>

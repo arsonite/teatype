@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="../css/master.css">
+    <link rel="stylesheet" href="../css/localstorage.css">
+    <script src="../renderer.js" defer></script>
+    <script src="../js/localstorage.js" defer></script>
+</head>
+
+<body>
+    <!-- Mandatory Nav Box -->
+    <nav>
+        <div class="dropdown">
+            <a href="../index.html" id="current">Home</a>
+            <div class="dropdown-list">
+                <a href="k_gen.html">K-Gen</a>
+                <a href="speaker.html">Speaker</a>
+                <a href="name_gen.html">Name Generator</a>
+                <a href="localstorage.html" id="selected">local Storage</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <a href="../html/tha/home.html">• THA •</a>
+            <div class="dropdown-list">
+                <a href="#">Template Link</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <a href="../html/tsz/home.html">▴ TSZ ▴</a>
+            <div class="dropdown-list">
+                <a href="../html/tsz/db.html">Database</a>
+                <a href="../html/tsz/scale.html">Anomaly Scale</a>
+            </div>
+        </div>
+        <div class="dropdown">
+            <a href="../html/tws/home.html">▪ TWS ▪</a>
+            <div class="dropdown-list">
+                <a href="#">Template Link</a>
+            </div>
+        </div>
+    </nav>
+    <!----------------------->
+
+    <main>
+        <div id='alerts'></div>
+        <div id="main_header">
+            <p id="p1">Home </p>
+            <p id="p2">localStorage</p>
+        </div>
+        <div id="main_content">
+            <div id="left_container">
+                <ul id="out_ls_key"></ul>
+                <textarea id="out_ls_val" rows="18" cols="35" readonly></textarea>
+                <textarea id="in_ls" rows="18" cols="35"></textarea>
+            </div>
+            <hr class="vertical">
+            <div id="right_container">
+                <form>
+                    <label class="container">Unit
+                        <input type="radio" id="check_unit" checked="checked" name="radio">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Array
+                        <input type="radio" id="check_array" name="radio">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container_check">Regex
+                        <input type="checkbox" id="check_regex" disabled>
+                        <span class="checkmark"></span>
+                    </label>
+                    <input type="text" id="in_seperator" placeholder="Array-Seperator" disabled>
+                </form>
+                <hr>
+                <form>
+                    <label class="container">Raw Data
+                        <input type="radio" id="check_data" checked="checked" name="radio">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">JSON
+                        <input type="radio" id="check_json" name="radio">
+                        <span class="checkmark"></span>
+                    </label>
+                    <label class="container">Storage
+                        <input type="radio" id="check_storage" name="radio">
+                        <span class="checkmark"></span>
+                    </label>
+                </form>
+                <hr>
+                <form id="form_names">
+                    <input type="text" id="in_key" placeholder="Key">
+                </form>
+                <form>
+                    <button type="button" id="store">Store</button>
+                    <button type="button" id="emptyAll">Empty All</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+</html>

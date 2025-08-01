@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<!-- Meta-Data -->
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+
+		<!-- All-inclusive CSS-Master-Stylesheet -->
+		<link rel="stylesheet" href="style/hub.css" />
+
+		<!-- Additional Style-Sheets -->
+		<link rel="stylesheet" href="style/custom_checkmark.css" />
+		<link rel="stylesheet" href="style/custom_dropdown.css" />
+		<link rel="stylesheet" href="style/custom_radio.css" />
+		<!-- Home-Section -->
+		<link rel="stylesheet" href="modules/home/style/storage.css" />
+		<link rel="stylesheet" href="modules/home/style/randomNameAllocator.css" />
+		<!-- THA-Section -->
+		<!-- TSZ-Section -->
+		<!-- TWS-Section -->
+		<!-- Dead Men's End -->
+
+		<!-- Pre-Loading dependencies -->
+		<script src="scripts/filesystem.js" defer></script>
+		<script src="scripts/const.js" defer></script>
+		<script src="scripts/document.js" defer></script>
+		<script src="scripts/audio.js" defer></script>
+
+		<!-- Core scripts -->
+		<script src="main.js" defer></script>
+		<script src="renderer.js" defer></script>
+
+		<!-- Additional functionality -->
+		<script src="scripts/alerts.js" defer></script>
+		<script src="scripts/modulator.js" defer></script>
+	</head>
+
+	<body>
+		<!-- Mandatory Nav-Construct -->
+		<nav></nav>
+
+		<!-- Dynamically altered alert box -->
+		<div id="alerts"></div>
+
+		<!-- Mandatory main -->
+		<main>
+			<!-- Dynamically altered main -->
+			<div id="main_header"></div>
+			<div id="main_content"></div>
+		</main>
+
+		<!-- Mandatory background -->
+		<div id="bg">
+			<img src="res/img/hex_bg.png" id="hex_bg" />
+		</div>
+
+		<!-- Mandatory footer -->
+		<footer>
+			<div id="btns_windows">
+				<button id="btn_dom">DOM</button>
+				<button id="btn_log">Log</button>
+			</div>
+		</footer>
+	</body>
+</html>

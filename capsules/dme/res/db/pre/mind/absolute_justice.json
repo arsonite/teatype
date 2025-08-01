@@ -1,0 +1,18 @@
+{
+    "BG": "#92D9F5",
+    "font": "#FFF",
+    "Morality": {
+        "Murder": "",
+        "Theft": "",
+        "Rape": "",
+        "Violence": "",
+        "Adultery": "",
+        "Vigilance": "",
+        "Dishonesty": "I will be honest to everyone and at every time, always",
+        "Resent": "I forgive and forget",
+        "Irrationality": ""
+    },
+    "Mentality": {
+        "Pure": ["Absolute Justice", "Absolute Pale Justice"]
+    }
+}

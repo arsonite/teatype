@@ -1,0 +1,34 @@
+!String!
+#Prefix#
+- -
+-A-
+-The-
+;;
+
+!String!
+#Title#
+- -
+-Magnificient-
+-Raw-
+-Pure-
+-Brutal-
+-Lost-
+-Forgotten-
+;;
+
+!String!
+#Origin#
+- -
+-of-
+-from-
+-by-
+;;
+
+!String!
+##
+- -
+-Knight-
+-Sun-
+-Moon-
+-Stars-
+;;

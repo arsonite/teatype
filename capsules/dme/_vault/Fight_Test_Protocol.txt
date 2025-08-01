@@ -1,0 +1,70 @@
+########################
+# Test-Fight-Number: 1 #
+########################
+
+-------
+-Fight-
+-------
+Beyza Günaydin has 731 Health left. Burak Günaydin strikes with 23,74 Damage! 
+Beyza Günaydin took 12,15 Damage! She has 718 Health left! 
+
+Burak Günaydin has 1047 Health left. Beyza Günaydin strikes with 154,73 Damage! 
+Burak Günaydin took 109,40 Damage! He has 937 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 718 Health left. Ouch! That hurt! Burak Günaydin strikes with 23,49 Critical Damage! 
+Beyza Günaydin took 12,02 Damage! She has 705 Health left! 
+
+Burak Günaydin has 937 Health left. Beyza Günaydin strikes with 136,68 Damage! 
+Burak Günaydin took 96,63 Damage! He has 840 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 705 Health left. Burak Günaydin strikes with 22,55 Damage! 
+Beyza Günaydin took 11,54 Damage! She has 693 Health left! 
+
+Burak Günaydin has 840 Health left. Ouch! That hurt! Beyza Günaydin strikes with 258,74 Critical Damage! 
+Burak Günaydin took 182,94 Damage! He has 657 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 693 Health left. Burak Günaydin strikes with 22,55 Damage! 
+Beyza Günaydin took 11,54 Damage! She has 681 Health left! 
+
+Burak Günaydin has 657 Health left. Beyza Günaydin strikes with 137,30 Damage! 
+Burak Günaydin took 97,08 Damage! He has 559 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 681 Health left. Burak Günaydin strikes with 24,20 Damage! 
+Beyza Günaydin took 12,38 Damage! She has 668 Health left! 
+
+Burak Günaydin has 559 Health left. Beyza Günaydin strikes with 147,12 Damage! 
+Burak Günaydin took 104,02 Damage! He has 454 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 668 Health left. Burak Günaydin strikes with 21,35 Damage! 
+Beyza Günaydin took 10,92 Damage! She has 657 Health left! 
+
+Burak Günaydin has 454 Health left. Beyza Günaydin strikes with 129,36 Damage! 
+Burak Günaydin took 91,46 Damage! He has 362 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 657 Health left. Burak Günaydin strikes with 24,19 Damage! 
+Beyza Günaydin took 12,38 Damage! She has 644 Health left! 
+
+Burak Günaydin has 362 Health left. Beyza Günaydin strikes with 145,95 Damage! 
+Burak Günaydin took 103,19 Damage! He has 258 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 644 Health left. Burak Günaydin strikes with 22,54 Damage! 
+Beyza Günaydin took 11,53 Damage! She has 632 Health left! 
+
+Burak Günaydin has 258 Health left. Beyza Günaydin strikes with 143,26 Damage! 
+Burak Günaydin took 101,29 Damage! He has 156 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 632 Health left. Ouch! That hurt! Burak Günaydin strikes with 24,13 Critical Damage! 
+Beyza Günaydin took 12,35 Damage! She has 619 Health left! 
+
+Burak Günaydin has 156 Health left. Beyza Günaydin strikes with 148,64 Damage! 
+Burak Günaydin took 105,09 Damage! He has 50 Health left! 
+---------------------------------------------------------
+Beyza Günaydin has 619 Health left. Burak Günaydin strikes with 22,70 Damage! 
+Beyza Günaydin took 11,62 Damage! She has 607 Health left! 
+
+Burak Günaydin has 50 Health left. Beyza Günaydin strikes with 144,29 Damage! 
+Burak Günaydin took 102,02 Damage! He has 0 Health left! 
+---------------------------------------------------------
+Fight is over! Beyza Günaydin won!
+__________________________________________________________________________________________________________________________________________________________________
+

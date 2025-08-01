@@ -1,0 +1,72 @@
+body {
+  overflow: hidden !important;
+  background-color: #111;
+}
+body #splash {
+  -webkit-app-region: drag;
+  display: none;
+}
+body #splash #unlock {
+  position: absolute;
+  margin: 5% auto;
+  height: 65%;
+  width: 100%;
+  right: 5px;
+}
+body #splash #unlock {
+  transform: scaleX(1.035);
+}
+body #splash #unlock:hover {
+  cursor: not-allowed;
+  filter: grayscale(0.05);
+  filter: opacity(0.95);
+  filter: brightness(0.95);
+}
+body #splash #frame_in #in {
+  position: absolute;
+  top: 70%;
+  left: 42.5%;
+  z-index: 5;
+}
+body #splash #frame_key .img_key {
+  position: absolute;
+  top: 40%;
+  left: 13%;
+  transform: scale(0.15, 0.15);
+}
+body #splash #frame_key .img_key:hover {
+  cursor: pointer;
+}
+body #splash #frame_key #orange_key {
+  display: none;
+}
+body #splash #frame_key #orange_key:hover {
+  transform: scale(0.2, 0.2);
+}
+body #bars {
+  display: none;
+  justify-content: flex-start;
+  align-content: flex-start;
+  flex-direction: column;
+}
+body #bars #upper_bar,
+body #bars #lower_bar {
+  position: absolute;
+  background-color: #101010;
+  width: 100vw;
+  height: 50vh;
+  z-index: 5;
+  transition: all 1s ease !important;
+}
+body #bars #upper_bar {
+  bottom: 50%;
+}
+body #bars #lower_bar {
+  top: 50%;
+}
+body #bars #upper_bar.move {
+  bottom: 100%;
+}
+body #bars #lower_bar.move {
+  top: 100%;
+}

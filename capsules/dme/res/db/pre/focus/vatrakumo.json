@@ -1,0 +1,13 @@
+{
+    "Type": "Unarmed",
+    "Description": "The art of unarmed combat.",
+    "Focus": {
+        "High Impact Force": {
+            "ID": "#F000001",
+            "Description": "Your punches (and if unlocked kicks) bear such a force behind them, that there is a -1- chance that the knockback is so strong, it sends the enemy flying. When an object is in the trajectory of the flight and the object is not destroyed in the process, it inflicts additional damage on the target. When it breaks it still inflicts damage, just not as great.",
+            "Ascendancy": [
+                ["5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%", "45%", "50%"]
+            ]
+        }
+    }
+}

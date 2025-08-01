@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<!-- Meta-Data -->
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+
+		<!-- All-inclusive CSS-Master-Stylesheet -->
+		<link rel="stylesheet" href="style/hub.css" />
+
+		<!-- One-Time Splash-Stylesheet -->
+		<link rel="stylesheet" href="capsules/splash/splash.css" />
+
+		<!-- Additional Style-Sheets -->
+		<link rel="stylesheet" href="style/checkmark.css" />
+		<link rel="stylesheet" href="style/dropdown.css" />
+		<!-- Home-Section -->
+		<link rel="stylesheet" href="modules/home/style/storage.css" />
+		<link rel="stylesheet" href="modules/home/style/randomNameAllocator.css" />
+		<!-- THA-Section -->
+		<!-- TSZ-Section -->
+		<!-- TWS-Section -->
+		<!-- Dead Men's End -->
+
+		<!-- Pre-Loading dependencies -->
+		<script src="scripts/loader.js" defer></script>
+		<script src="scripts/filesystem.js" defer></script>
+		<script src="scripts/audio.js" defer></script>
+
+		<!-- Core scripts -->
+		<script src="main.js" defer></script>
+		<script src="renderer.js" defer></script>
+
+		<!-- Additional functionality -->
+		<script src="scripts/alerts.js" defer></script>
+		<script src="scripts/document.js" defer></script>
+		<script src="scripts/logger.js" defer></script>
+		<script src="scripts/modulator.js" defer></script>
+
+		<!-- One-Time Splash-Functionality -->
+		<script src="capsules/splash/splash.js" defer></script>
+	</head>
+
+	<body>
+		<!-- Mandatory Nav-Construct -->
+		<nav></nav>
+
+		<!-- Dynamically altered alert box -->
+		<div id="alerts"></div>
+
+		<!-- Mandatory main -->
+		<main>
+			<!-- Dynamically altered main -->
+			<div id="main_header"></div>
+			<div id="main_content"></div>
+		</main>
+
+		<!-- Mandatory background -->
+		<div id="bg">
+			<img src="res/img/hex_bg.png" id="hex_bg" />
+		</div>
+
+		<!-- Mandatory footer -->
+		<footer>
+			<button id="refresher"></button>
+			<div id="btns_windows">
+				<button id="btn_dom">DOM</button>
+				<button id="btn_log">Log</button>
+			</div>
+		</footer>
+
+		<!-- One-Time Splash-HTML -->
+		<div id="splash">
+			<video id="unlock">
+				<source src="res/vid/unlock.mp4" type="video/mp4" />
+			</video>
+			<div id="frame_in">
+				<form id="in">
+					<input type="text" id="in_pass" placeholder="Enter Password" />
+				</form>
+			</div>
+			<div id="frame_key">
+				<img src="res/img/key.png" id="white_key" class="img_key" />
+				<img src="res/img/key_orange.png" id="orange_key" class="img_key" />
+			</div>
+		</div>
+		<div id="bars">
+			<div id="upper_bar"></div>
+			<div id="lower_bar"></div>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,68 @@
+{
+    "Type": "Foreign",
+    "Description": "Displaced techniques that can´t be attributed to known places or times.",
+    "Focus": {
+        "Ittoryu Iai Shishi Sonson": {
+            "ID": "#F100001",
+            "Description": "A powerful slash, ",
+            "Ascendancy": [
+                "5%", "10%", "15%", "20%", "25%", "30%", "35%", "40%", "45%", "50%"
+            ]
+        },
+        "Nitoryu Dai Gekken": {
+            "ID": "#F100002",
+            "Description": "Two simultaneous slashes, ",
+            "Ascendancy": [
+
+            ]
+        },
+        "Santoryu Ogi Sanzen Sekkai": {
+            "ID": "#F100003",
+            "Description": "Three simultaneous slashes, ",
+            "Ascendancy": [
+
+            ]
+        },
+        "Diable Jambe": {
+            "ID": "#F100004",
+            "Description": "A mysterious skill, that allows the user to imbued flames into his legs, resulting in exceptional damage scaling. Utilizing this move, destroys the armor at the said place.",
+            "Ascendancy": [
+
+            ]
+        },
+        "Kenbunshoku Haki": {
+            "ID": "#F100005",
+            "Description": "This inner power temporarily increases your awareness by -1- and decreases your lethargy by -2-",
+            "Ascendancy": [
+                ["30", "10"],
+                ["40", "20"],
+                ["50", "30"]
+            ]
+        },
+        "Busoshoku Haki": {
+            "ID": "#F100006",
+            "Description": "This inner power temporarily increases your armor by -1- and raw attack power by -2-",
+            "Ascendancy": [
+                ["5", "10"],
+                ["10", "20"],
+                ["15", "30"],
+                ["20", "40"],
+                ["25", "50"]
+            ]
+        },
+        "Haoshoku Haki": {
+            "ID": "#F100007",
+            "Description": "This inner power has a -1- chance to knock out every enemy in the field that has health under -2-",
+            "Ascendancy": [
+                ["10", "15"],
+                ["20", "20"],
+                ["30", "25"],
+                ["40", "30"],
+                ["50", "35"]
+            ]
+        },
+        "Supercharged Haoshoku Haki": {
+            
+        }
+    }
+}

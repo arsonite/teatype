@@ -1,0 +1,44 @@
+!String!
+#Buy# 
+-Thank you-
+-Thanks!-
+-Thank you very much.-
+-Here's your money.-
+-This will come in handy.-
+-We should do this again.-
+
+!String!
+#Sell#
+-Here's you item.-
+-Thanks. Go on, take it.-
+-You're welcome.-
+
+!String!
+#TradeSuccess# 
+-Good trade!-
+-Let's do this again, sometime.-
+-Very generous!-
+
+!String!
+#TradeFailure# 
+-Well... uh... it's like... I...-
+-I didn't want to trade this anyway though. This item's like, super rare and stuff. One of a kind.-
+-I didn't want to trade this anyway. This item's like, super rare.-
+-Well, I didn't want to trade this anyway. This item's like, expensive, like you can buy a fucking castle or something.-
+-Ouhh, I didn't want to trade this anyway. This item's like, very personal to me.-
+-Okay, I didn't want to trade this anyway. This item's like, I dunno.-
+-Pff, I didn't want to trade this anyway. This item's like, like... it's...-
+-Oh, you thought I- I wanted to give this to you? Aahhh... ahahahahaha... no no no. Sorry, but you misunderstood me, big time.-
+-Yeah, well, fuck you too.-
+-Sorry we didn't reach an agreement.-
+-I'd hoped, we would reach an agreement.-
+-The greeeeed!-
+-You fat filthy shit.-
+-You fat greedy shit.-
+-You skinny filthy shit.-
+-You skinny greedy shit.-
+-You fat filthy whore.-
+-You fat greedy whore.-
+-You skinny filthy whore.-
+-You skinny greedy whore.-
+-Oh. Well okay then...-

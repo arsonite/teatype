@@ -1,0 +1,210 @@
+/* Author: Arsonite | 2018 */
+
+/* Variables */
+
+@radioDim: 9px;
+@radioDims: 8px;
+
+@lsRadioDim: 5px;
+@lsRradioDims: 5px;
+
+@fontBig: 18px;
+@fontMed: 14px;
+
+@skygrey: #666;
+@grey: #555;
+@spacegrey: #444;
+@anthrazit: #353535;
+@brick: #FF8800;
+@hawk: #EE4433;
+@terminal: #00FF33;
+
+@alertError: #FF4433;
+@alertWarning: #FFCC00;
+@alertInfo: #00CCFF;
+@alertSuccess: #44FF33;
+
+@bodyGreen: #FF2525;
+@bodyYellow: #FF2525;
+@bodyOrange: #FF2525;
+@bodyRed: #FF2525;
+
+@health: #FF2222;
+@stamina: #FFFF4C;
+@grant: #993299;
+
+@z1: 10;
+@z2: 11;
+@z3: 12;
+@z4: 13;
+@z5: 14;
+
+@zBG1: 9;
+@zBG2: 8;
+@zBG3: 6;
+@zBG4: 7;
+
+/* Hard-Reset */
+
+* {
+    display: block;
+    position: relative;
+    user-select: none;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    font-family: Noto Sans;
+}
+
+b {
+    display: inline;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Cursor-Selection Color */
+
+::selection {
+    background-color: #CCC;
+}
+
+/* Custom-Scrollbar */
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #111;
+}
+
+::-webkit-scrollbar-thumb {
+    background: @brick;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #FF6600;
+}
+
+/* Input-Manipulation */
+
+textarea,
+input[type='text'],
+button {
+    outline: none;
+    border: none;
+}
+
+input[type='text'],
+textarea,
+li {
+    user-select: all;
+}
+
+input[type="text"],
+textarea {
+    background-color: #AAA;
+    color: @anthrazit;
+    resize: none;
+    padding: 2px;
+}
+
+input[type="text"]:hover,
+textarea:hover {
+    background-color: #CCC;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+    background-color: @brick;
+}
+
+input[type="text"]:focus::placeholder,
+textarea:focus:placeholder {
+    color: transparent;
+}
+
+::placeholder {
+    padding: 0 2px;
+    opacity: 0.25;
+    color: black;
+    font-style: italic;
+}
+
+/* Button-Style */
+
+button {
+    padding: 5px 10px;
+    background-color: @brick;
+    color: #FFF;
+}
+
+button:hover {
+    cursor: pointer;
+    filter: brightness(120%);
+}
+
+button:active {
+    filter: brightness(90%);
+}
+
+/* Seperators */
+
+hr {
+    height: 1px;
+    border: none;
+    background-color: #777;
+}
+
+.vertical {
+    color: @anthrazit;
+    width: 1px;
+}
+
+/* Tooltip */
+
+.tooltip {
+    visibility: hidden;
+    width: 120px;
+    padding: 5px;
+    margin-left: 10px;
+    text-align: center;
+    position: absolute;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 0.5s;
+}
+
+.tooltip.u {
+    bottom: 150%;
+    left: 50%;
+    margin-left: -60px;
+}
+
+.tooltip.d {
+    top: 150%;
+    left: 50%;
+    margin-left: -60px;
+}
+
+.tooltip.l {
+    top: -5px;
+    right: 110%;
+}
+
+.tooltip.r {
+    top: -5px;
+    left: 110%;
+}
+
+/* Dynamically generated HTML-Content */
+
+body {
+    overflow: hidden !important;
+
+    main {
+        z-index: 0;
+    }
+}

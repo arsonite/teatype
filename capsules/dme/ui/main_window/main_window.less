@@ -1,0 +1,127 @@
+/* Author: Arsonite | 2018 */
+
+/* Variables */
+
+@radioDim: 9px;
+@radioDims: 8px;
+
+@lsRadioDim: 5px;
+@lsRradioDims: 5px;
+
+@fontBig: 18px;
+@fontMed: 14px;
+
+@skygrey: #666;
+@grey: #555;
+@spacegrey: #444;
+@anthrazit: #353535;
+@brick: #FF8800;
+@hawk: #EE4433;
+@terminal: #00FF33;
+
+@alertError: #FF4433;
+@alertWarning: #FFCC00;
+@alertInfo: #00CCFF;
+@alertSuccess: #44FF33;
+
+@bodyGreen: #FF2525;
+@bodyYellow: #FF2525;
+@bodyOrange: #FF2525;
+@bodyRed: #FF2525;
+
+@health: #FF2222;
+@stamina: #FFFF4C;
+@grant: #993299;
+@xp: #92D9F5;
+
+@z1: 10;
+@z2: 11;
+@z3: 12;
+@z4: 13;
+@z5: 14;
+
+@zBG1: 9;
+@zBG2: 8;
+@zBG3: 6;
+@zBG4: 7;
+
+#main_window {
+    background-color: transparent;
+    width: 100vh;
+    margin: 0 auto;
+
+    #main_frame {
+        background-color: #222;
+        padding: 34px 10px 10px 10px;
+        display: flex;
+        flex-direction: row;
+        height: 100vh;
+        z-index: @z1;
+
+        .frame {
+            margin: 5px;
+        }
+
+        #out_frame {
+            height: 90vh;
+
+            #out {
+                background-color: #111;
+                height: 50%;
+                width: 350px;
+                padding: 5px;
+                overflow-y: auto;
+
+                #old {
+                    color: #353535;
+                }
+
+                #new {
+                    color: @terminal;
+                }
+            }
+        }
+
+        #control_frame {
+            height: 92%;
+            width: 44%;
+            background-color: #353535;
+
+            #nav_frame {
+                display: flex;
+                justify-content: flex-start;
+                align-content: flex-start;
+                flex-wrap: wrap;
+                background-color: #454545;
+                height: 20vh;
+                width: 20vh;
+                z-index: @z2;
+                padding-top: 5px;
+                padding-left: 5px;
+
+                img {
+                    height: 35px;
+                    width: 35px;
+                    margin: 5px;
+                    filter: brightness(80%);
+                }
+
+                img:hover {
+                    cursor: pointer;
+                    filter: brightness(100%);
+                }
+
+                img:active {
+                    filter: brightness(70%);
+                }
+            }
+
+            #enemy_frame {
+                background-color: #151515;
+                height: 63%;
+                width: 90%;
+                z-index: @z2;
+            }
+        }
+    }
+}

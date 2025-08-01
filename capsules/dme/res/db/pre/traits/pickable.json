@@ -1,0 +1,21 @@
+{
+    "Revitalization": {
+        "ID": "T000001",
+        "Cost": 1,
+        "Description": "When your health reaches under -1- of your maximum value, there´s a -2- chance your lethargy is reduced by half. Lethargy-buff lasts only in current fight.",
+        "Quote": "Mind over body",
+        "Ascendancy": [
+            [5, 10, 15, 20],
+            [15, 25, 35, 45]
+        ]
+    },
+    "Nature´s Augur": {
+        "ID": "T000002",
+        "Cost": 1,
+        "Description": "-1-",
+        "Quote": "The Augur is in a symbiotic relationship with nature and its offspring.",
+        "Ascendancy": [
+            ["You can sense an animals presence", "You can understand animals", "You can talk to animals", "You can order animals to do something"]
+        ]
+    }
+}

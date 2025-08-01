@@ -1,0 +1,50 @@
+{
+    "Doctrine": {
+        "Apathetic": 0,
+        "Clerical": 1,
+        "Purist": 2,
+        "Humanist": 2,
+        "Materialist": 3,
+        "Spiritualist": 3,
+        "Holistic": 4,
+        "Realist": 4,
+        "Altruist": 5,
+        "Nihilist": 5
+    },
+    "Warfare": {
+        "Conflicted": 0,
+        "Protectionist": 1,
+        "Imperialist": 1,
+        "Militarist": 2,
+        "Pacifist": 2,
+        "Interventionist": 3,
+        "Isolationist": 3
+    },
+    "Theism": {
+        "Uncertain": 0,
+        "Religious": 1,
+        "Agnostic": 1,
+        "Skeptic": 1,
+        "Philosophist": 2
+    },
+    "Civil": {
+        "Unbiased": 0,
+        "Bipartisan": 1,
+        "Partisan": 1,
+        "Lenient": 2,
+        "Radical": 2,
+        "Philanthropic": 3,
+        "Plutocratic": 3
+    },
+    "Civic": {
+        "Neutral": 0,
+        "Anarchist": 1,
+        "Royalist": 1,
+        "Centrist": 2,
+        "Tribalist": 2,
+        "Pragmatist": 3,
+        "Diplomatic": 3,
+        "Reactionary": 4,
+        "Reformist": 4
+    }
+}

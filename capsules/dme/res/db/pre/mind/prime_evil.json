@@ -1,0 +1,18 @@
+{
+    "BG": "#E50012",
+    "font": "#000",
+    "Morality": {
+        "Murder": "",
+        "Theft": "",
+        "Rape": "I will rape everything that crosses my path",
+        "Violence": "",
+        "Adultery": "",
+        "Vigilance": "",
+        "Dishonesty": "I´d rather die than tell the truth",
+        "Resent": "I will chase anyone whoever did me wrong until they die",
+        "Irrationality": ""
+    },
+    "Mentality": {
+        "Dark": ["Prime Evil", "Ultimate Prime Evil"]
+    }
+}

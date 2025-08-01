@@ -1,0 +1,29 @@
+{
+	"name": "TeaType-Collection",
+	"version": "1.0.0",
+	"description": "My personal set of tools",
+	"main": "main.js",
+	"scripts": {
+		"start": "npx electron ."
+	},
+	"repository": "",
+	"keywords": [
+		"Electron",
+		"quick",
+		"start",
+		"tutorial",
+		"demo"
+	],
+	"author": "arsonite",
+	"license": "CC0-1.0",
+	"devDependencies": {
+		"electron": "^4.2.3"
+	},
+	"dependencies": {
+		"npm": "^6.9.0"
+	},
+	"window": {
+		"frame": false,
+		"toolbar": false
+	}
+}

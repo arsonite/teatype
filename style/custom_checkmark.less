@@ -1,0 +1,52 @@
+@import 'global.less';
+
+/* Variables */
+@size: 10px;
+@markerSize: @size / 2;
+
+/* Hiding actual checkbox */
+input[type='checkbox'] {
+	display: none;
+}
+
+/* Custom-Checkbox */
+input[type='checkbox'] + span {
+	padding: @markerSize / 2;
+	border: @markerSize / 2 solid #333;
+}
+
+input[type='checkbox']:checked + span {
+	padding: 0;
+	background-color: #ff8800;
+	border: @markerSize solid #333;
+}
+
+/* Makes entire span clickable */
+.checkbox {
+	position: relative;
+
+	p {
+		margin-left: @size * 3;
+	}
+
+	span {
+		position: absolute;
+		top: 0;
+		left: 0;
+
+		width: @size;
+		height: @size;
+
+		background-color: #333;
+
+		transition: all 0.2s linear;
+	}
+}
+
+.checkbox:hover {
+	cursor: pointer;
+
+	span {
+		background-color: #555;
+	}
+}

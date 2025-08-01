@@ -1,0 +1,296 @@
+/* Author: Arsonite | 2018 */
+
+/* Variables */
+
+@radioDim: 9px;
+@radioDims: 8px;
+
+@lsRadioDim: 5px;
+@lsRradioDims: 5px;
+
+@fontBig: 18px;
+@fontMed: 14px;
+
+@skygrey: #666;
+@grey: #555;
+@spacegrey: #444;
+@anthrazit: #353535;
+@brick: #FF8800;
+@hawk: #EE4433;
+@terminal: #00FF33;
+
+@alertError: #FF4433;
+@alertWarning: #FFCC00;
+@alertInfo: #00CCFF;
+@alertSuccess: #44FF33;
+
+@bodyGreen: #FF2525;
+@bodyYellow: #FF2525;
+@bodyOrange: #FF2525;
+@bodyRed: #FF2525;
+
+@health: #FF2222;
+@stamina: #FFFF4C;
+@grant: #993299;
+@xp: #92D9F5;
+
+@z1: 10;
+@z2: 11;
+@z3: 12;
+@z4: 13;
+@z5: 14;
+
+@zBG1: 9;
+@zBG2: 8;
+@zBG3: 6;
+@zBG4: 7;
+
+#mind_box,
+.mBox {
+    height: 15px;
+    width: 15px;
+
+    div {
+        .tooltip.mind {
+            width: 150px;
+            margin: 10px;
+        }
+    }
+}
+
+#mind_box {
+    height: 7.5px !important;
+
+    div {
+        position: absolute;
+        margin-top: -5px !important;
+        padding-left: 25px;
+    }
+}
+
+#mind_box:hover,
+#mind_grid:hover {
+    cursor: pointer;
+}
+
+#stats {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    height: 80px;
+    user-select: none;
+
+    #mind {
+        height: 45px;
+        width: 45px;
+
+        #mind_grid {
+            display: flex;
+            justify-content: flex-start;
+            align-content: flex-start;
+            flex-wrap: wrap;
+            background-color: @terminal;
+            top: 0;
+            left: 0;
+            z-index: @zBG1;
+        }
+
+        #mind_box {
+            margin-top: 5px;
+            height: 15px;
+            width: 45px;
+            z-index: @zBG2;
+        }
+    }
+
+    #own_bars {
+        display: block;
+        padding-left: 5px;
+        width: 172px;
+
+        .bar_frame {
+            z-index: @zBG3;
+            height: 15px;
+            width: 100%;
+
+            .bar {
+                height: 15px;
+
+                p {
+                    padding-left: 5px;
+                    font-weight: bold;
+                }
+            }
+        }
+
+        #health,
+        #stamina,
+        #grant {
+            display: flex;
+            flex-wrap: nowrap;
+            flex-direction: row;
+
+            .img_frame {
+                height: 15px;
+                width: 2.5vh;
+
+                img {
+                    height: 15px;
+                    width: 15px;
+                }
+            }
+        }
+
+        #health {
+            #health_frame {
+                background-color: darken(@health, 25%);
+
+                #health_bar {
+                    background-color: @health;
+                    color: darken(@health, 20%);
+                }
+            }
+
+            #health_img {
+                background-color: darken(@health, 30%);
+
+                img {
+                    animation: pump;
+                    animation-iteration-count: infinite;
+                }
+
+                @keyframes pump {
+                    0% {
+                        transform: scale(1.0);
+                    }
+                    50% {
+                        transform: scale(0.75);
+                    }
+                    100% {
+                        transform: scale(1.0);
+                    }
+                }
+            }
+        }
+
+        #stamina {
+            #stamina_frame {
+                background-color: darken(@stamina, 30%);
+
+                #stamina_bar {
+                    background-color: @stamina;
+                    color: darken(@stamina, 25%);
+                }
+            }
+
+            #stamina_img {
+                background-color: darken(@stamina, 30%);
+
+                img {
+                    animation: charge;
+                    animation-iteration-count: infinite;
+                    animation-timing-function: ease;
+                }
+
+                @keyframes charge {
+                    0% {
+                        transform: scale(1.0);
+                    }
+                    5% {
+                        transform: rotate(10deg);
+                    }
+                    10% {
+                        transform: rotate(-10deg);
+                    }
+                    15% {
+                        transform: rotate(10deg);
+                    }
+                    20% {
+                        transform: rotate(-10deg);
+                    }
+                }
+            }
+        }
+
+        #grant {
+            #grant_frame {
+                background-color: darken(@grant, 30%);
+
+                #grant_bar {
+                    background-color: @grant;
+                    color: darken(@grant, 15%);
+                }
+            }
+
+            #grant_img {
+                background-color: darken(@grant, 30%);
+
+                img {
+                    height: 13px;
+                    width: 13px;
+                    margin-left: 1px;
+                    transform-origin: 50% 58%;
+                    animation: rotate;
+                    animation-iteration-count: infinite;
+                    animation-timing-function: ease-in-out;
+                }
+
+                @keyframes rotate {
+                    0% {
+                        transform: rotate(0deg);
+                    }
+                    100% {
+                        transform: rotate(360deg);
+                    }
+                }
+            }
+        }
+
+        #exp {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: nowrap;
+            padding-top: 3px;
+            color: @xp;
+            z-index: @zBG3;
+
+            p {
+                padding-left: 2.5px;
+                height: 15px;
+                width: 15px;
+                font-weight: bold;
+                font-size: 8px;
+            }
+
+            #exp_frame {
+                display: block;
+                background-color: #AAA;
+                margin-top: 3.4px;
+                height: 5px;
+                z-index: @zBG2;
+
+                #exp_bar {
+                    height: 100%;
+                    background-color: @xp;
+                    z-index: @zBG1;
+                }
+
+                div {
+                    .tooltip.xp {
+                        padding: 0;
+                        margin: 0;
+                        background-color: @xp;
+                        color: #000;
+                        width: 100%;
+                        font-size: 10px;
+                        text-align: center;
+                    }
+                }
+            }
+
+            #exp_frame:hover {
+                cursor: pointer;
+            }
+        }
+    }
+}

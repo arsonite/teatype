@@ -1,0 +1,54 @@
+@import 'global.less';
+
+/* Variables */
+@size: 10px;
+@markerSize: @size / 2;
+
+/* Hiding actual radio checkbox */
+input[type='radio'] {
+	display: none;
+}
+
+/* Custom-Radio-Button */
+input[type='radio'] + span {
+	border-radius: 50%;
+	padding: @markerSize / 2;
+	border: @markerSize / 2 solid #333;
+}
+
+input[type='radio']:checked + span {
+	padding: 0;
+	background-color: #ff8800;
+	border: @markerSize solid #333;
+}
+
+/* Makes entire span clickable */
+.radio {
+	position: relative;
+
+	p {
+		margin-left: @size * 3;
+	}
+
+	/* Custom-Radio */
+	span {
+		position: absolute;
+		top: 0;
+		left: 0;
+
+		width: @size;
+		height: @size;
+
+		background-color: #333;
+
+		transition: all 0.2s linear;
+	}
+}
+
+.radio:hover {
+	cursor: pointer;
+
+	span {
+		background-color: #555;
+	}
+}

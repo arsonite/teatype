@@ -1,0 +1,199 @@
+/* Author: Arsonite | 2018 */
+
+/* Variables */
+@brick: #ff8800;
+@hot: #ffb4d9;
+@anthrazit: #353535;
+
+#namealloc {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+
+	height: 80vh;
+	width: 100%;
+
+	p,
+	.label  {
+		font-size: 14px;
+	}
+
+	.label {
+		padding: 5px 10px;
+
+		color: #aaa;
+		background-color: #555;
+	}
+
+	#hr {
+		width: 1px;
+	}
+
+	.box {
+		width: 47.5%;
+
+		#selectors {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+
+			.selector {
+				color: #aaa;
+			}
+
+			.selector:hover {
+				cursor: pointer;
+
+				color: #fff;
+			}
+
+			.selector.selected {
+				color: #ff8800;
+			}
+		}
+
+		#template {
+			display: flex;
+			flex: 1 1 0;
+			justify-content: space-between;
+			flex-wrap: wrap;
+
+			.input {
+				display: flex;
+				flex-direction: column;
+				margin: 10px 0;
+				height: fit-content;
+				width: 45%;
+
+				input {
+					height: 20px;
+				}
+			}
+
+			button {
+				margin: 10px 0;
+			}
+		}
+
+		.container {
+			width: 100%;
+
+			.table.hidden {
+				display: none;
+			}
+
+			.table {
+				display: flex;
+				flex: 1 1 0;
+				flex-wrap: wrap;
+				margin: 10px 0;
+				height: fit-content;
+
+				.label {
+					margin-bottom: 10px;
+				}
+
+				form {
+					display: flex;
+					flex-direction: column;
+					width: fit-content;
+					margin-right: 10px;
+					margin-bottom: 10px;
+
+					border: 1px solid #555;
+
+					.radio,
+					.checkbox {
+						margin: 0 10px;
+
+						p {
+							margin: 0 20px 20px 30px;
+						}
+					}
+				}
+			}
+		}
+
+		.container,
+		hr,
+		ul {
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+
+			padding: 0;
+			margin: 0 auto;
+			width: 100%;
+		}
+
+		hr,
+		ul {
+			height: 100%;
+		}
+
+		hr {
+			background-color: #353535;
+		}
+
+		ul {
+			overflow-y: scroll;
+
+			background-color: #151515;
+			list-style-type: none;
+			border: none;
+
+			li {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+				padding: 5px 10px;
+				margin: 0;
+				height: fit-content;
+				width: 100%;
+
+				color: #fff;
+
+				span {
+					padding: 0 5px;
+					margin-right: 20px;
+				}
+
+				.white {
+					color: #000;
+					background-color: #fff;
+				}
+
+				.black {
+					color: #fff;
+					background-color: #000;
+				}
+
+				.hispanic {
+					color: #fff;
+					background-color: #ff9300;
+				}
+
+				.indian {
+					color: #fff;
+					background-color: #aa7942;
+				}
+			}
+
+			.male {
+				color: #aaccf7;
+			}
+
+			.female {
+				color: #f7bbc5;
+			}
+
+			li:hover {
+				cursor: cursor;
+
+				color: #000;
+				background-color: @brick;
+			}
+		}
+	}
+}

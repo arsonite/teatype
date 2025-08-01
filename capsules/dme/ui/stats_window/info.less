@@ -1,0 +1,122 @@
+/* Author: Arsonite | 2018 */
+
+/* Variables */
+
+@radioDim: 9px;
+@radioDims: 8px;
+
+@lsRadioDim: 5px;
+@lsRradioDims: 5px;
+
+@fontBig: 18px;
+@fontMed: 14px;
+
+@skygrey: #666;
+@grey: #555;
+@spacegrey: #444;
+@anthrazit: #353535;
+@brick: #FF8800;
+@hawk: #EE4433;
+@terminal: #00FF33;
+
+@alertError: #FF4433;
+@alertWarning: #FFCC00;
+@alertInfo: #00CCFF;
+@alertSuccess: #44FF33;
+
+@bodyGreen: #FF2525;
+@bodyYellow: #FF2525;
+@bodyOrange: #FF2525;
+@bodyRed: #FF2525;
+
+@health: #FF2222;
+@stamina: #FFFF4C;
+@grant: #993299;
+@xp: #92D9F5;
+
+@z1: 10;
+@z2: 11;
+@z3: 12;
+@z4: 13;
+@z5: 14;
+
+@zBG1: 9;
+@zBG2: 8;
+@zBG3: 6;
+@zBG4: 7;
+
+ul {
+    li {
+        user-select: none !important;
+        color: @terminal !important;
+        padding: 2px 5px;
+    }
+
+    li:hover {
+        background-color: #222 !important;
+        cursor: pointer;
+    }
+
+    li:nth-child(odd) {
+        background-color: #111;
+    }
+
+    li:nth-child(even) {
+        background-color: #151515;
+    }
+
+    li:last-child {
+        margin-bottom: 0;
+    }
+}
+
+#info {
+    display: flex;
+    position: absolute;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    padding: 10px 0 0 5px;
+    top: 60px;
+    left: 0;
+    color: @terminal;
+
+    #attributes {
+        display: flex;
+        height: 100%;
+        list-style-type: none;
+        border: none;
+        overflow: hidden;
+    }
+
+    #attributes1 {
+        text-align: left;
+    }
+
+    #attributes2 {
+        text-align: right;
+    }
+
+    #profile {
+        height: 143px;
+        width: 80px;
+        background-color: #111;
+        margin-left: 7px;
+        padding: 2px 5px;
+        
+        #p_lvl {
+            color: @xp;
+        }
+        
+        #p_copper {
+            color: #CD7F32;
+        }
+        
+        #p_silver {
+            color: #D2D2D2;
+        }
+        
+        #p_gold {
+            color: #ECC714;
+        }
+    }
+}
