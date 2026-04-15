@@ -255,11 +255,14 @@ def prompt(text:str,
             err(f'An error occurred while prompting the user for input', pad_after=1, exit=True, traceback=True)
 
 def shell(command:str,
+          *,
+          append_to_log:bool=False,
           cwd:str=False,
           combine_stdout_and_stderr:bool=False,
           detached:bool=False,
           env:dict=None,
           format_stdout:bool=True,
+          log_path:str=None,
           mute:bool=False,
           return_output:bool=False,
           return_stdout:bool=False,
@@ -297,18 +300,27 @@ def shell(command:str,
         ) if 'exit code: 1' in stderr else None, # Apply this lambda only if the specific error is detected
     ]
     
-    if combine_stdout_and_stderr:
-        # If combine_stdout_and_stderr is True, redirect stderr to stdout
-        command += ' 2>&1'
-    
-    if detached:
-        # If detached is True, run the command in a new process group
-        # This allows the command to run independently of the parent process
-        command += ' &'
+    if log_path is not None:
+        log_path_quoted = shlex.quote(log_path)
+        redirect_op = '>>' if append_to_log else '>'
+        tee_flag = ' -a' if append_to_log else ''
+        if detached:
+            # Detached with log: redirect all output to log file only, run in background
+            command += f' {redirect_op} {log_path_quoted} 2>&1 &'
+        else:
+            # Not detached with log: output to both terminal and log file via tee
+            if combine_stdout_and_stderr:
+                command += ' 2>&1'
+            command += f' | tee{tee_flag} {log_path_quoted}'
+    else:
+        if combine_stdout_and_stderr:
+            # If combine_stdout_and_stderr is True, redirect stderr to stdout
+            command += ' 2>&1'
+        if detached:
+            # If detached is True, run the command in a new process group
+            # This allows the command to run independently of the parent process
+            command += ' &'
         
-    # if detached and 'sudo' in command:
-    #     command = command.replace('sudo ', 'sudo -S ')  # Use -n to avoid prompting for password in detached mode
-    
     # If sudo is True, prepend 'sudo' to the command
     if sudo:
         # Asking for sudo permissions before script executes any further and suppresses usage information
