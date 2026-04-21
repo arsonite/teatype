@@ -19,6 +19,7 @@ from teatype.logging import *
 
 _DEFAULT_ROOT_PATH = '/var/lib'
 _FS = {
+    'audits': {},
     'backups': {
         'indexdb': {},
         'migration': {},
@@ -43,7 +44,8 @@ _FS = {
     'rejectpile': {
         'indexdb': {},
         'rawfiles': {}
-    }
+    },
+    'reports': {},
 }
 
 class _FSProxy:
