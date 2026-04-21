@@ -18,6 +18,7 @@ import json
 import os
 import re
 from typing import List
+
 # Third-party imports
 from teatype.cli import BaseCLI
 from teatype.enum import EscapeColor
