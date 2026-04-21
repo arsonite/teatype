@@ -12,11 +12,13 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# Third-party imports
-import itertools
+# System imports
 import sys
 import threading
 import time
+
+# Third-party imports
+import itertools
 from teatype import colorwrap
 from teatype.ai import __GPU_SUPPORT__
 from teatype.cli import BaseCLI
