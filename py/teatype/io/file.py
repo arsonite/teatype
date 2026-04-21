@@ -15,6 +15,7 @@ import builtins
 import configparser
 import csv
 import json
+import math
 import os
 import re
 import shutil
@@ -562,6 +563,20 @@ def read(file:File|PosixPath|str,
                         config.read(path_string)
                         content = config
                     elif file_extension == '.json' or force_format == 'json':
+                        def _sanitize_floats(obj):
+                            """
+                            Replace non-finite float values (Infinity, -Infinity, NaN) with None for JSON compliance.
+                            """
+                            if isinstance(obj, float):
+                                if math.isinf(obj) or math.isnan(obj):
+                                    return None
+                                return obj
+                            if isinstance(obj, dict):
+                                return {k: _sanitize_floats(v) for k, v in obj.items()}
+                            if isinstance(obj, List):
+                                return [_sanitize_floats(v) for v in obj]
+                            return obj
+                        
                         dirty_content = f.read()
                         # Remove comments denoted by '//' to ensure valid JSON
                         clean_content = re.sub(
@@ -570,10 +585,7 @@ def read(file:File|PosixPath|str,
                             dirty_content,
                             flags=re.MULTILINE
                         )
-                        content = json.loads(clean_content)
-                    elif file_extension == '.json' or force_format == 'json':
-                        # Load and return JSON data from the file
-                        content = json.load(f)
+                        content = _sanitize_floats(json.loads(clean_content))
                     elif file_extension == '.csv' or force_format == 'csv':
                         # Read and return CSV data as a list of rows
                         content = list(csv.reader(f))
