@@ -81,7 +81,7 @@ class XTerm(Enum):
 
         This method is useful for iterating over all colors in terminal output.
         """
-        colors = [color for color in XTerm if not color.name.startswith('LIGHT_') and color.name not in ['BOLD', 'ITALIC', 'RESET', 'STRIKETHROUGH', 'UNDERLINE', 'NC']]
+        colors = [color for color in XTerm if not color.name.startswith('LIGHT_') and color.name not in ['BOLD', 'Colors', 'ITALIC', 'RESET', 'STRIKETHROUGH', 'UNDERLINE', 'NC']]
         if exclude_black:
             colors = [color for color in colors if color.name != 'BLACK']
         if exclude_gray:
