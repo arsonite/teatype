@@ -36,8 +36,21 @@ export const getBaseViteConfig = (): UserConfig => ({
     resolve: {
         alias: {
             '@': resolve(__dirname, 'src'),
-            '@teatype/style': resolve(__dirname, '../../ts/style'),
+            '@teatype/api': resolve(__dirname, '../../ts/api'),
+            '@teatype/apps': resolve(__dirname, '../../ts/apps'),
+            '@teatype/baseconfig': resolve(__dirname, '../../ts/baseconfig'),
             '@teatype/components': resolve(__dirname, '../../ts/components'),
+            '@teatype/hooks': resolve(__dirname, '../../ts/hooks'),
+            '@teatype/icons': resolve(__dirname, '../../ts/icons'),
+            '@teatype/style': resolve(__dirname, '../../ts/style'),
+            '@teatype/toolkit': resolve(__dirname, '../../ts/toolkit'),
+        },
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                additionalData: `@use "${resolve(__dirname, '../../ts/style/globvars').replace(/\\/g, '/')}" as *;\n`,
+            },
         },
     },
     server: {
