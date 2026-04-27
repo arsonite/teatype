@@ -21,7 +21,7 @@ from typing import List, Optional
 # Third-party imports
 from prompt_toolkit import prompt as pt_prompt
 from prompt_toolkit.completion import WordCompleter
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.logging import *
 from teatype.io import env as current_env
 
@@ -90,14 +90,14 @@ def enable_sudo(max_fail_count:int=3, print_padding:bool=True) -> None:
             return passwd
 
         for attempt in range(1, max_fail_count + 1):
-            log(f'{EscapeColor.LIGHT_GREEN}Elevated privileges required. Please enter your password:')
+            log(f'{XTerm.LIGHT_GREEN}Elevated privileges required. Please enter your password:')
             password = _getpass_masked('Password: ')
             # Validate password without leftover output
             cmd = f'echo {shlex.quote(password)} | sudo -S -v >/dev/null 2>&1'
             ret = subprocess.run(cmd, shell=True).returncode
             if ret == 0:
                 println()
-                log(f'{EscapeColor.LIGHT_GREEN}Privileges elevated successfully.')
+                log(f'{XTerm.LIGHT_GREEN}Privileges elevated successfully.')
                 return
             else:
                 remaining = max_fail_count - attempt
@@ -116,7 +116,7 @@ def enable_sudo(max_fail_count:int=3, print_padding:bool=True) -> None:
             cmd = f'sudo -S -v >/dev/null 2>&1'
             ret = subprocess.run(cmd, shell=True).returncode
             if ret == 0:
-                log(f'{EscapeColor.LIGHT_GREEN}Privileges elevated successfully.')
+                log(f'{XTerm.LIGHT_GREEN}Privileges elevated successfully.')
                 return
             else:
                 log(f'Automatic sudo elevation failed.', pad_before=1, pad_after=1)
@@ -169,19 +169,19 @@ def prompt(text:str,
                         err('Cannot return a boolean value for more than two choices.', exit=True)
 
             # Apply color to the prompt
-            display_text = f'{EscapeColor.LIGHT_GREEN}{text}{EscapeColor.RESET}' if colorize else text
+            display_text = f'{XTerm.LIGHT_GREEN}{text}{XTerm.RESET}' if colorize else text
             
             if default is not None:
                 default_text = f' [Default: {default}]'
                 if colorize:
-                    default_text = f'{EscapeColor.RESET}{default_text}'
+                    default_text = f'{XTerm.RESET}{default_text}'
                 display_text += default_text
 
             # Build choices string for display (only when not using use_index)
             if choices and not use_index:
                 choices_string = '(' + '/'.join(choices) + '): '
                 if colorize:
-                    choices_string = f'{EscapeColor.GRAY}{choices_string}{EscapeColor.RESET}'
+                    choices_string = f'{XTerm.GRAY}{choices_string}{XTerm.RESET}'
                 display_text += ' ' + choices_string
 
             # Log the prompt

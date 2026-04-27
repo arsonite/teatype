@@ -14,14 +14,14 @@
 
 # Third-party imports
 from teatype.cli import MainCLI
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 
 class TeaTypeCLI(MainCLI):
     def meta(self):
         return {
             'name': 'teatype-cli',
             'shorthand': 'tt',
-            'help': f'{EscapeColor.GRAY}TeaType CLI - Command Line Interface for the TeaType package\n (c) 2024-2026 @arsonite\n{EscapeColor.RESET}',
+            'help': f'{XTerm.GRAY}TeaType CLI - Command Line Interface for the TeaType package\n (c) 2024-2026 @arsonite\n{XTerm.RESET}',
         }
 
 if __name__ == '__main__':

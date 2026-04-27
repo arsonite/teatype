@@ -19,7 +19,7 @@ from typing import List
 # Third-party imports
 from pathlib import Path
 from teatype.cli import Argument, Command, Flag
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.io import clear_shell, merge_dicts
 from teatype.logging import *
 
@@ -230,7 +230,7 @@ class BaseCLI(ABC):
             def _override_pre_validation():
                 println()
                 err('This CLI is not available.', include_symbol=True, use_prefix=False, verbose=False)
-                log(f'   {EscapeColor.RED}Reason: {EscapeColor.MAGENTA}{self.NOT_AVAILABLE_REASON}.')
+                log(f'   {XTerm.RED}Reason: {XTerm.MAGENTA}{self.NOT_AVAILABLE_REASON}.')
                 println()
                 sys.exit(1)
             self.pre_validate = _override_pre_validation

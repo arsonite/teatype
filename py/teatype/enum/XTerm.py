@@ -14,7 +14,7 @@
 from enum import Enum
 from typing import Literal
 
-class EscapeColor(Enum):
+class XTerm(Enum):
     Colors = Literal['black',
                      'blue',
                      'cyan',
@@ -34,7 +34,10 @@ class EscapeColor(Enum):
                      'light_yellow']
     
     BOLD = '\033[1m'
-    NC   = '\033[0m'
+    ITALIC = '\033[3m'
+    RESET = '\033[0m'
+    STRIKETHROUGH = '\033[9m'
+    UNDERLINE = '\033[4m'
         
     BLACK = '\033[30m'
     BLUE = '\033[34m'
@@ -43,7 +46,6 @@ class EscapeColor(Enum):
     GREEN = '\033[32m'
     MAGENTA = '\033[35m'
     RED = '\033[31m'
-    RESET = '\033[0m'
     WHITE = '\033[37m'
     YELLOW = '\033[33m'
     LIGHT_BLACK = '\033[90m'
@@ -75,11 +77,11 @@ class EscapeColor(Enum):
     @classmethod
     def COLORS(cls, exclude_black:bool=False, exclude_gray:bool=False) -> list[str]:
         """
-        Returns a list of all color codes from the EscapeColor enum.
+        Returns a list of all color codes from the XTerm enum.
 
         This method is useful for iterating over all colors in terminal output.
         """
-        colors = [color for color in EscapeColor if not color.name.startswith('LIGHT_') and color.name != 'RESET']
+        colors = [color for color in XTerm if not color.name.startswith('LIGHT_') and color.name not in ['BOLD', 'ITALIC', 'RESET', 'STRIKETHROUGH', 'UNDERLINE', 'NC']]
         if exclude_black:
             colors = [color for color in colors if color.name != 'BLACK']
         if exclude_gray:
@@ -90,35 +92,36 @@ class EscapeColor(Enum):
     @classmethod
     def LIGHT_COLORS(cls, exclude_black:bool=False) -> list[str]:
         """
-        Returns a list of light color codes from the EscapeColor enum.
+        Returns a list of light color codes from the XTerm enum.
 
         This method is useful for iterating over light colors in terminal output.
         """
-        light_colors = [color for color in EscapeColor if 'LIGHT_' in color.name and color.name != 'RESET']
+        light_colors = [color for color in XTerm if 'LIGHT_' in color.name and color.name not in ['BOLD', 'ITALIC', 'RESET', 'STRIKETHROUGH', 'UNDERLINE', 'NC']]
         if exclude_black:
             light_colors = [color for color in light_colors if color.name != 'LIGHT_BLACK']
         light_colors.sort(key=lambda c: c.name)  # Sort light colors by name for consistent ordering
         return light_colors
     
-    def N(exclude_black:bool=False, exclude_gray:bool=False) -> int:
+    @classmethod
+    def N(cls, exclude_black:bool=False, exclude_gray:bool=False) -> int:
         """
-        Returns the number of colors defined in the EscapeColor enum.
+        Returns the number of colors defined in the XTerm enum.
 
         This property can be used to determine how many colors are available for use.
         """
-        return len(EscapeColor.COLORS(exclude_black, exclude_gray))
+        return len(XTerm.COLORS(exclude_black, exclude_gray))
     
     @classmethod
     def N_LIGHT(cls, exclude_black:bool=False) -> int:
         """
-        Returns the number of light colors defined in the EscapeColor enum.
+        Returns the number of light colors defined in the XTerm enum.
 
         This property can be used to determine how many light colors are available for use.
         """
-        return len(EscapeColor.LIGHT_COLORS(exclude_black))
+        return len(XTerm.LIGHT_COLORS(exclude_black))
     
     @classmethod
-    def lighten(cls, color:'EscapeColor.Colors') -> str:
+    def lighten(cls, color:'XTerm.Colors') -> str:
         """
         Returns the light version of a given color.
 
@@ -128,9 +131,9 @@ class EscapeColor(Enum):
         Returns:
             str: The light version of the specified color.
         """
-        if color.name.upper() not in [c.name for c in EscapeColor.COLORS()]:
-            raise ValueError(f'Invalid color: {color}. Must be one of {list(EscapeColor.COLORS())}.')
+        if color.name.upper() not in [c.name for c in XTerm.COLORS()]:
+            raise ValueError(f'Invalid color: {color}. Must be one of {list(XTerm.COLORS())}.')
         light_color_name = f'LIGHT_{color.name.upper()}'
-        if light_color_name not in EscapeColor.__members__:
+        if light_color_name not in XTerm.__members__:
             raise ValueError(f'No light version available for color: {color}.')
-        return EscapeColor[light_color_name].value
+        return XTerm[light_color_name].value

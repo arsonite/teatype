@@ -16,7 +16,7 @@ from typing import Dict, List, Set
 
 # Third-party imports
 from pympler import asizeof
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.db.hsdb.indices import FieldsIndex, Index, ModelIndex, RelationalIndex
 from teatype.logging import *
 
@@ -338,16 +338,16 @@ class IndexDatabase:
         for entry in self._db:
             println()
             json_entry = json.dumps(entry.model.serialize(entry), indent=4)
-            print(f'{EscapeColor.GREEN}{entry.id} {EscapeColor.GRAY}[{entry.id.key}]{EscapeColor.RESET}:')
+            print(f'{XTerm.GREEN}{entry.id} {XTerm.GRAY}[{entry.id.key}]{XTerm.RESET}:')
             string_entry = str(json_entry).replace('{', '').replace('}', '').replace('"', '').replace(',', '').strip()
             string_entries = string_entry.split('\n')
             
-            print(f'    {EscapeColor.RED}model: {EscapeColor.LIGHT_RED}{entry.model_name}{EscapeColor.RESET}')
+            print(f'    {XTerm.RED}model: {XTerm.LIGHT_RED}{entry.model_name}{XTerm.RESET}')
             for sub_string_entry in string_entries:
                 sub_string_entries = sub_string_entry.strip().split(':')
                 if sub_string_entries[0] == 'id':
                     continue
-                print(f'    {EscapeColor.BLUE}{sub_string_entries[0]}: {EscapeColor.LIGHT_CYAN}{sub_string_entries[1]}{EscapeColor.RESET}')
+                print(f'    {XTerm.BLUE}{sub_string_entries[0]}: {XTerm.LIGHT_CYAN}{sub_string_entries[1]}{XTerm.RESET}')
             
             if limit > 0:
                 counter += 1

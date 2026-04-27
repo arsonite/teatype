@@ -18,7 +18,7 @@ from typing import Optional, Union
 
 # Third-party imports
 from teatype.comms.ipc.redis import *
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.logging import *
 from teatype.toolkit import generate_id, kebabify
 
@@ -52,11 +52,11 @@ def print_designation(designation:str) -> None:
         designation: The designation string to print. 
     """
     info = parse_designation(designation)
-    log(f'  {EscapeColor.MAGENTA}Name: {EscapeColor.CYAN}{info["name"]}')
-    log(f'  {EscapeColor.MAGENTA}Type: {EscapeColor.CYAN}{info["type"]}')
-    log(f'  {EscapeColor.MAGENTA}ID:   {EscapeColor.CYAN}{info["id"]}')
-    log(f'  {EscapeColor.MAGENTA}Pod:  {EscapeColor.CYAN}{info["pod"]}')
-    log(f'  {EscapeColor.MAGENTA}Designation: {EscapeColor.CYAN}{designation}')
+    log(f'  {XTerm.MAGENTA}Name: {XTerm.CYAN}{info["name"]}')
+    log(f'  {XTerm.MAGENTA}Type: {XTerm.CYAN}{info["type"]}')
+    log(f'  {XTerm.MAGENTA}ID:   {XTerm.CYAN}{info["id"]}')
+    log(f'  {XTerm.MAGENTA}Pod:  {XTerm.CYAN}{info["pod"]}')
+    log(f'  {XTerm.MAGENTA}Designation: {XTerm.CYAN}{designation}')
 
 class CoreUnit(threading.Thread):
     """

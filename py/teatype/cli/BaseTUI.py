@@ -16,7 +16,7 @@ from prompt_toolkit.completion import Completer, Completion, WordCompleter
 from teatype import colorwrap
 from teatype.cli import BaseCLI
 from teatype.cli.args import Action
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.io import clear_shell
 from teatype.logging import *
 
@@ -39,12 +39,12 @@ class _StopOnSpaceCompleter(Completer):
 def _modified_prompt(prompt_text:str, options:list[str]=None) -> any:
     try:
         # Apply color to the prompt
-        display_text = f'{EscapeColor.LIGHT_GREEN}{prompt_text}{EscapeColor.RESET}'
+        display_text = f'{XTerm.LIGHT_GREEN}{prompt_text}{XTerm.RESET}'
 
         # Build options string for display
         if options:
             options_string = '(' + '/'.join(options) + '): '
-            options_string = f'{EscapeColor.GRAY}{options_string}{EscapeColor.RESET}'
+            options_string = f'{XTerm.GRAY}{options_string}{XTerm.RESET}'
 
         # Log the prompt
         log(display_text)
@@ -113,7 +113,7 @@ class BaseTUI(BaseCLI):
                          auto_execute,
                          env_path)
         self.actions = [Action(**action) for action in self.meta().get('actions', [])]
-        self.actions.append(Action(name='exit', help=f'{EscapeColor.GRAY}(or CRTL+C){EscapeColor.RESET} Leave the TUI.'))
+        self.actions.append(Action(name='exit', help=f'{XTerm.GRAY}(or CRTL+C){XTerm.RESET} Leave the TUI.'))
                 
         self.on_init()
         
@@ -196,13 +196,13 @@ class BaseTUI(BaseCLI):
                     self.no_option = False
                     
                 if self.output:
-                    log(f'{EscapeColor.GREEN}Output:')
-                    log(f'{EscapeColor.GREEN}-------')
+                    log(f'{XTerm.GREEN}Output:')
+                    log(f'{XTerm.GREEN}-------')
                     for line in self.output.split('\n'):
                         # if line.strip() == '':
                         #     continue
                         log('   ' + line)
-                    log(f'{EscapeColor.GREEN}-------')
+                    log(f'{XTerm.GREEN}-------')
                     println()
                     self.output = None
                 

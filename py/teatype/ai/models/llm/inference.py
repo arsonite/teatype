@@ -20,7 +20,7 @@ from typing import Generator, Optional
 # Third-party imports
 from llama_cpp import Llama
 from teatype.ai.models.llm import load_model, PromptBuilder
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.io import env, file, path
 from teatype.logging import *
 from teatype.toolkit import colorwrap
@@ -74,7 +74,7 @@ class Inferencer():
     def __call__(self,
                  user_prompt:str,
                  artificial_delay:float=0.0,
-                 colorized_output:EscapeColor.Colors=None,
+                 colorized_output:XTerm.Colors=None,
                  decorator:str=None,
                  show_thinking:bool=True,
                  stream_response:bool=True,

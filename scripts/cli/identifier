@@ -17,7 +17,7 @@ import time
 
 # Third-party imports
 from teatype.cli import BaseCLI
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.io import file, path, clear_shell
 from teatype.logging import *
 from teatype.toolkit import generate_id as proto_generate_id
@@ -90,7 +90,7 @@ class Identifier(BaseCLI):
             try:
                 history = []
                 last_copied = None
-                color_cycle = [EscapeColor.MAGENTA, EscapeColor.BLUE]
+                color_cycle = [XTerm.MAGENTA, XTerm.BLUE]
                 color_index = 0
                 while True:
                     new_id = _generate()
@@ -114,14 +114,14 @@ class Identifier(BaseCLI):
                     # Print all but last in gray
                     for item in history[:-1]:
                         marker = ' (copied)' if item == last_copied else ''
-                        log(f'    {EscapeColor.GRAY}{item}{marker}{EscapeColor.RESET}')
+                        log(f'    {XTerm.GRAY}{item}{marker}{XTerm.RESET}')
 
                     # Print the current ID in color
                     current_color = color_cycle[color_index]
                     color_index = (color_index + 1) % len(color_cycle)
 
-                    marker = f' {EscapeColor.YELLOW}(last copied){EscapeColor.RESET}' if history[-1] == last_copied else ''
-                    log(f'    {current_color}{history[-1]}{EscapeColor.RESET}{marker}')
+                    marker = f' {XTerm.YELLOW}(last copied){XTerm.RESET}' if history[-1] == last_copied else ''
+                    log(f'    {current_color}{history[-1]}{XTerm.RESET}{marker}')
 
                     time.sleep(0.1)
             except KeyboardInterrupt:
@@ -149,10 +149,10 @@ class Identifier(BaseCLI):
                 log('Generated ID:')
             printed = 0
             for generated_id in generated_ids:
-                log(f'{EscapeColor.MAGENTA}  {generated_id}')
+                log(f'{XTerm.MAGENTA}  {generated_id}')
                 printed += 1
                 if printed == 10:
-                    log(f'{EscapeColor.GRAY}  ... and {len(generated_ids) - printed} more.{EscapeColor.RESET}')
+                    log(f'{XTerm.GRAY}  ... and {len(generated_ids) - printed} more.{XTerm.RESET}')
                     break
             
             if PYPERCLIP_AVAILABLE:

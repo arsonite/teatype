@@ -21,7 +21,7 @@ from typing import List
 
 # Third-party imports
 from teatype.cli import BaseCLI
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.io import env, file, path, shell
 from teatype.logging import *
 
@@ -108,9 +108,9 @@ class Aliases(BaseCLI):
         
         for filename, aliases in grouped_aliases.items():
             println()
-            log(f'{EscapeColor.MAGENTA}{filename.replace(".json", "")}:')
+            log(f'{XTerm.MAGENTA}{filename.replace(".json", "")}:')
             for alias in aliases:
-                log(f'{EscapeColor.LIGHT_CYAN}  {alias.name}: {alias.description}') # Log each alias name and description
+                log(f'{XTerm.LIGHT_CYAN}  {alias.name}: {alias.description}') # Log each alias name and description
 
     def inject_all_aliases(self, aliases_list:List[_Alias], refresh:bool=True):
         """

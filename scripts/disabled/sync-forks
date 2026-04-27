@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Any
 
 # Third-party imports
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.cli import BaseCLI
 from teatype.io import path, shell
 from teatype.logging import *
@@ -329,7 +329,7 @@ class SyncForks(BaseCLI):
         if show_hint and not (cfg_a and cfg_b):
             print()
             # Only show this until both A and B are filled in
-            print(f'{EscapeColor.LIGHT_CYAN}HINT - {EscapeColor.RESET}config file at "{self.commandsconfig_path}"')
+            print(f'{XTerm.LIGHT_CYAN}HINT - {XTerm.RESET}config file at "{self.commandsconfig_path}"')
             print('You can store your repo paths there so you don\'t need arguments:')
             print('  A=/absolute/path/to/repo1')
             print('  B=/absolute/path/to/repo2')
@@ -352,18 +352,18 @@ class SyncForks(BaseCLI):
 
         if not self.path_a or not self.path_b:
             print(
-                f'{EscapeColor.RED}ERROR:{EscapeColor.RESET} Provide both repo paths as arguments '
+                f'{XTerm.RED}ERROR:{XTerm.RESET} Provide both repo paths as arguments '
                 f'or set A= and B= in {self.config_path}',
                 file=sys.stderr,
             )
             raise SystemExit(1)
 
         if not os.path.isdir(self.path_a):
-            print(f'{EscapeColor.RED}ERROR:{EscapeColor.RESET} {self.path_a!r} is not a directory', file=sys.stderr)
+            print(f'{XTerm.RED}ERROR:{XTerm.RESET} {self.path_a!r} is not a directory', file=sys.stderr)
             raise SystemExit(1)
 
         if not os.path.isdir(self.path_b):
-            print(f'{EscapeColor.RED}ERROR:{EscapeColor.RESET} {self.path_b!r} is not a directory', file=sys.stderr)
+            print(f'{XTerm.RED}ERROR:{XTerm.RESET} {self.path_b!r} is not a directory', file=sys.stderr)
             raise SystemExit(1)
 
         result = self.compare_repos(self.path_a, self.path_b, excludes)
@@ -383,15 +383,15 @@ class SyncForks(BaseCLI):
         print(f'Repo B: {abs_b}\n')
 
         print('Summary:')
-        print(f'  Only in A: {EscapeColor.CYAN}{len(only_in_a)}{EscapeColor.RESET}')
-        print(f'  Only in B: {EscapeColor.CYAN}{len(only_in_b)}{EscapeColor.RESET}')
-        print(f'  Different in both: {EscapeColor.CYAN}{len(diff)}\n{EscapeColor.RESET}')
+        print(f'  Only in A: {XTerm.CYAN}{len(only_in_a)}{XTerm.RESET}')
+        print(f'  Only in B: {XTerm.CYAN}{len(only_in_b)}{XTerm.RESET}')
+        print(f'  Different in both: {XTerm.CYAN}{len(diff)}\n{XTerm.RESET}')
 
         print('Legend:')
-        print(f'  {EscapeColor.GREEN}+{EscapeColor.RESET} copy (file missing on target)')
-        print(f'  {EscapeColor.YELLOW}~{EscapeColor.RESET} overwrite (newer wins)\n')
+        print(f'  {XTerm.GREEN}+{XTerm.RESET} copy (file missing on target)')
+        print(f'  {XTerm.YELLOW}~{XTerm.RESET} overwrite (newer wins)\n')
 
-        print(f'Sync plan {EscapeColor.GRAY}(newer always wins){EscapeColor.RESET}:')
+        print(f'Sync plan {XTerm.GRAY}(newer always wins){XTerm.RESET}:')
         if not sync_actions:
             print('  (nothing to do)')
         else:
@@ -406,7 +406,7 @@ class SyncForks(BaseCLI):
 
                 if reason in ('only_in_a', 'only_in_b'):
                     # file only exists on one side -> copy to other
-                    print(f'  {EscapeColor.GREEN}+ {path}{EscapeColor.RESET} (copy {SRC} -> {DST})')
+                    print(f'  {XTerm.GREEN}+ {path}{XTerm.RESET} (copy {SRC} -> {DST})')
                 else:
                     if newer == 'a':
                         newer_str = f'{label_a} newer'
@@ -414,7 +414,7 @@ class SyncForks(BaseCLI):
                         newer_str = f'{label_b} newer'
                     else:
                         newer_str = 'same mtime (tie -> A wins)'
-                    print(f'  {EscapeColor.YELLOW}~ {path}{EscapeColor.RESET} (copy {SRC} -> {DST}, {newer_str})')
+                    print(f'  {XTerm.YELLOW}~ {path}{XTerm.RESET} (copy {SRC} -> {DST}, {newer_str})')
         print()
 
         if not (only_in_a or only_in_b or diff):

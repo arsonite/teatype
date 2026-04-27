@@ -11,9 +11,9 @@
 # all copies or substantial portions of the Software.
 
 # Third-party imports
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 
-def colorwrap(string:str, color:EscapeColor.Colors) -> str:
+def colorwrap(string:str, color:XTerm.Colors) -> str:
     """
     Wraps a string with the specified color escape code.
 
@@ -24,7 +24,7 @@ def colorwrap(string:str, color:EscapeColor.Colors) -> str:
     Returns:
         str: The wrapped string with ANSI escape codes for coloring.
     """
-    if color.upper() not in [c.name for c in EscapeColor.COLORS()]:
-        raise ValueError(f'Invalid color: {color}. Must be one of {list(EscapeColor)}.')
-    escape_color = EscapeColor[color.upper()]
-    return f'{escape_color}{string}{EscapeColor.RESET}' # Wrap the string with the specified color and reset code
+    if color.upper() not in [c.name for c in XTerm.COLORS()]:
+        raise ValueError(f'Invalid color: {color}. Must be one of {list(XTerm)}.')
+    escape_color = XTerm[color.upper()]
+    return f'{escape_color}{string}{XTerm.RESET}' # Wrap the string with the specified color and reset code

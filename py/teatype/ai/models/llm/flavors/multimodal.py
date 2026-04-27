@@ -18,7 +18,7 @@ from typing import List, Dict, Optional
 # Third-party imports
 from llama_cpp import Llama
 from teatype.ai.models.llm import Inferencer, PromptBuilder
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.io import env, path
 from teatype.logging import *
 
@@ -87,7 +87,7 @@ class MultimodalInferencer(Inferencer):
                  user_prompt: str,
                  images: Optional[List[str]] = None,
                  artificial_delay: float = 0.0,
-                 colorized_output: EscapeColor.Colors = None,
+                 colorized_output: XTerm.Colors = None,
                  decorator: str = None,
                  show_thinking: bool = True,
                  stream_response: bool = True,

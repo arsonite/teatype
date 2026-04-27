@@ -18,7 +18,7 @@ import re
 import subprocess
 # Third-party imports
 from teatype.cli import BaseCLI
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.io import env, enable_sudo, file, path
 from teatype.logging import *
 
@@ -133,11 +133,11 @@ class Environment(BaseCLI):
 
     def list_available_env_vars(self, env_vars:dict):
         println()
-        log(f'Available {EscapeColor.GRAY}(custom TeaType){EscapeColor.RESET} environment variables:')
+        log(f'Available {XTerm.GRAY}(custom TeaType){XTerm.RESET} environment variables:')
         max_line_width = max([len(k) for k in env_vars.keys()])
         for key, value in env_vars.items():
             value = value or 'null'
-            log(f'   {EscapeColor.MAGENTA}{key.ljust(max_line_width)}    {EscapeColor.CYAN}{value}')
+            log(f'   {XTerm.MAGENTA}{key.ljust(max_line_width)}    {XTerm.CYAN}{value}')
 
     def status_system_env_vars(self):
         log('Checking whether environment variable blocks exist or not:')

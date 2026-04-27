@@ -17,10 +17,11 @@ import inspect
 import shutil
 import sys
 from importlib import util as iutil
+
 # Third-party imports
 from teatype.cli import BaseCLI, Command
-from teatype.enum import EscapeColor, Textile
-from teatype.io import clear_shell, file, path
+from teatype.enum import XTerm
+from teatype.io import file, path
 from teatype.logging import *
 from teatype.io import TemporaryDirectory as TempDir
 
@@ -152,16 +153,16 @@ class MainCLI(BaseCLI):
             script = self.scripts[script_key]
             script_name = script.shorthand + ', ' + script.name
             if script.NOT_AVAILABLE:
-                script_info = f'    {EscapeColor.RED}{Textile.STRIKETHROUGH}{script_name}{Textile.RESET}{"".ljust(max_line_width - len(script_name))}    {EscapeColor.LIGHT_RED}(Not available){EscapeColor.RESET}'
+                script_info = f'    {XTerm.RED}{XTerm.STRIKETHROUGH}{script_name}{XTerm.RESET}{"".ljust(max_line_width - len(script_name))}    {XTerm.LIGHT_RED}(Not available){XTerm.RESET}'
             else:
                 script_info = f'    {script_name.ljust(max_line_width)}    {script.help}'
             help_message += f'{script_info}\n'
-        help_message += f'\nTUIs: {EscapeColor.GRAY}(Terminal User-Interfaces)\n{EscapeColor.RESET}'
+        help_message += f'\nTUIs: {XTerm.GRAY}(Terminal User-Interfaces)\n{XTerm.RESET}'
         for _, tui_key in enumerate(self.tuis):
             tui = self.tuis[tui_key]
             tui_name = tui.shorthand + ', ' + tui.name
             if tui.NOT_AVAILABLE:
-                tui_info = f'    {EscapeColor.RED}{Textile.STRIKETHROUGH}{tui_name}{Textile.RESET}{"".ljust(max_line_width - len(tui_name))}    {EscapeColor.LIGHT_RED}(Not available){EscapeColor.RESET}'
+                tui_info = f'    {XTerm.RED}{XTerm.STRIKETHROUGH}{tui_name}{XTerm.RESET}{"".ljust(max_line_width - len(tui_name))}    {XTerm.LIGHT_RED}(Not available){XTerm.RESET}'
             else:
                 tui_info = f'    {tui_name.ljust(max_line_width)}    {tui.help}'
             help_message += f'{tui_info}\n'

@@ -21,7 +21,7 @@ from datetime import datetime
 from pprint import pformat
 from typing import Literal
 # Third-party imports
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.toolkit import colorwrap
 
 SymbolPosition = Literal['start', 'center', 'end', None]
@@ -289,7 +289,7 @@ def hint(message:str,
 # TODO: Allow args like in print and the rest as kwargs
 def log(message:any,
         *,
-        color:EscapeColor.Colors='default',
+        color:XTerm.Colors='default',
         pad_after:int=None,
         pad_before:int=None,
         prettify:bool=False,
@@ -346,7 +346,7 @@ def log(message:any,
     if color and color != 'default':
         log_message = colorwrap(log_message, color)
     # Log the final message at the INFO level using the global logger
-    logger.info(f'{log_message}{EscapeColor.RESET}') # Log the message as is and reset the color
+    logger.info(f'{log_message}{XTerm.RESET}') # Log the message as is and reset the color
 
     # Add a blank line after the message if pad_after is specified and greater than 0
     if pad_after:
@@ -382,7 +382,7 @@ def success(message:str='',
                               symbol_position=symbol_position,
                               use_prefix=False,
                               verbose=False)
-    logger.info(f'{EscapeColor.GREEN}{success_message}{EscapeColor.RESET}') # Log the success message
+    logger.info(f'{XTerm.GREEN}{success_message}{XTerm.RESET}') # Log the success message
     # Add a blank line after the message if pad_after is specified and greater than 0
     if pad_after:
         println(pad_after) # Print a blank line to add padding below the message
@@ -465,7 +465,7 @@ def whisper(message:str='',
                       pad_before=pad_before,
                       use_prefix=False,
                       verbose=False)
-    logger.info(f'{EscapeColor.GRAY}\033[3m{whisper}{EscapeColor.RESET}')
+    logger.info(f'{XTerm.GRAY}\033[3m{whisper}{XTerm.RESET}')
     
     # Add a blank line after the message if pad_after is specified and greater than 0
     if pad_after:

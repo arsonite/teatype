@@ -10,5 +10,4 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-from .xterm.EscapeColor import EscapeColor
-from .xterm.Textile import Textile
+from .XTerm import *

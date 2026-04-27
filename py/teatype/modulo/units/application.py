@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 # Third-party imports
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 from teatype.io import path, shell
 from teatype.logging import err, hint, log, println, success, warn, whisper
 from teatype.modulo.units.backend import BackendUnit, find_random_available_port
@@ -483,28 +483,28 @@ class ApplicationUnit(CoreUnit):
         Print startup banner with clickable URLs.
         """
         println()
-        log(f'{EscapeColor.GREEN}╔══════════════════════════════════════════════════════════╗{EscapeColor.RESET}')
-        log(f'{EscapeColor.GREEN}║{EscapeColor.RESET}  {EscapeColor.CYAN}TeaType Modulo Application Unit Started{EscapeColor.RESET}                 {EscapeColor.GREEN}║{EscapeColor.RESET}')
-        log(f'{EscapeColor.GREEN}╠══════════════════════════════════════════════════════════╣{EscapeColor.RESET}')
-        log(f'{EscapeColor.GREEN}║{EscapeColor.RESET}  {EscapeColor.MAGENTA}Application:{EscapeColor.RESET} {self.name:<43} {EscapeColor.GREEN}║{EscapeColor.RESET}')
-        log(f'{EscapeColor.GREEN}╠══════════════════════════════════════════════════════════╣{EscapeColor.RESET}')
+        log(f'{XTerm.GREEN}╔══════════════════════════════════════════════════════════╗{XTerm.RESET}')
+        log(f'{XTerm.GREEN}║{XTerm.RESET}  {XTerm.CYAN}TeaType Modulo Application Unit Started{XTerm.RESET}                 {XTerm.GREEN}║{XTerm.RESET}')
+        log(f'{XTerm.GREEN}╠══════════════════════════════════════════════════════════╣{XTerm.RESET}')
+        log(f'{XTerm.GREEN}║{XTerm.RESET}  {XTerm.MAGENTA}Application:{XTerm.RESET} {self.name:<43} {XTerm.GREEN}║{XTerm.RESET}')
+        log(f'{XTerm.GREEN}╠══════════════════════════════════════════════════════════╣{XTerm.RESET}')
         
         # Backend URL - clickable in most terminals
         backend_url = f'http://{self.backend_host}:{self.backend_port}'
-        log(f'{EscapeColor.GREEN}║{EscapeColor.RESET}  {EscapeColor.YELLOW}Backend API:{EscapeColor.RESET}     {EscapeColor.BLUE}{backend_url:<35}{EscapeColor.RESET} {EscapeColor.GREEN}║{EscapeColor.RESET}')
+        log(f'{XTerm.GREEN}║{XTerm.RESET}  {XTerm.YELLOW}Backend API:{XTerm.RESET}     {XTerm.BLUE}{backend_url:<35}{XTerm.RESET} {XTerm.GREEN}║{XTerm.RESET}')
         
         # Dashboard URL - clickable in most terminals
         dashboard_url = f'http://{self.backend_host}:{self.backend_port}/dashboard'
-        log(f'{EscapeColor.GREEN}║{EscapeColor.RESET}  {EscapeColor.YELLOW}Dashboard:{EscapeColor.RESET}       {EscapeColor.BLUE}{dashboard_url:<35}{EscapeColor.RESET} {EscapeColor.GREEN}║{EscapeColor.RESET}')
+        log(f'{XTerm.GREEN}║{XTerm.RESET}  {XTerm.YELLOW}Dashboard:{XTerm.RESET}       {XTerm.BLUE}{dashboard_url:<35}{XTerm.RESET} {XTerm.GREEN}║{XTerm.RESET}')
         
         # Vite dev server URL if enabled
         if self.include_dashboard:
             vite_url = f'http://{self.dashboard_host}:{self.dashboard_port}'
-            log(f'{EscapeColor.GREEN}║{EscapeColor.RESET}  {EscapeColor.YELLOW}Vite Dev:{EscapeColor.RESET}        {EscapeColor.BLUE}{vite_url:<35}{EscapeColor.RESET} {EscapeColor.GREEN}║{EscapeColor.RESET}')
+            log(f'{XTerm.GREEN}║{XTerm.RESET}  {XTerm.YELLOW}Vite Dev:{XTerm.RESET}        {XTerm.BLUE}{vite_url:<35}{XTerm.RESET} {XTerm.GREEN}║{XTerm.RESET}')
         
-        log(f'{EscapeColor.GREEN}╠══════════════════════════════════════════════════════════╣{EscapeColor.RESET}')
-        log(f'{EscapeColor.GREEN}║{EscapeColor.RESET}  {EscapeColor.WHITE}Press Ctrl+C to stop{EscapeColor.RESET}                                    {EscapeColor.GREEN}║{EscapeColor.RESET}')
-        log(f'{EscapeColor.GREEN}╚══════════════════════════════════════════════════════════╝{EscapeColor.RESET}')
+        log(f'{XTerm.GREEN}╠══════════════════════════════════════════════════════════╣{XTerm.RESET}')
+        log(f'{XTerm.GREEN}║{XTerm.RESET}  {XTerm.WHITE}Press Ctrl+C to stop{XTerm.RESET}                                    {XTerm.GREEN}║{XTerm.RESET}')
+        log(f'{XTerm.GREEN}╚══════════════════════════════════════════════════════════╝{XTerm.RESET}')
         println()
     
     ##############

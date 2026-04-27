@@ -14,7 +14,7 @@
 import time
 from typing import Union
 # Third-party imports
-from teatype.enum import EscapeColor
+from teatype.enum import XTerm
 
 class GLOBAL_STOPWATCH_CONFIG:
     """
@@ -107,7 +107,7 @@ def stopwatch(label:str=None, pad:Union[int,int]=(0,0), tab:int=0):
                 # Default to seconds if time conversion is disabled
                 elapsed = f'{elapsed:.4f} seconds'
             
-            elapsed_mesage = f'{EscapeColor.BLUE}Stopwatch {EscapeColor.LIGHT_CYAN}[{last_label}]{EscapeColor.LIGHT_GREEN}: {elapsed}.'
+            elapsed_mesage = f'{XTerm.BLUE}Stopwatch {XTerm.LIGHT_CYAN}[{last_label}]{XTerm.LIGHT_GREEN}: {elapsed}.'
             # Log the elapsed time with appropriate color formatting
             if tab > 0:
                 elapsed_mesage = f'{"    " * tab}{elapsed_mesage}'
