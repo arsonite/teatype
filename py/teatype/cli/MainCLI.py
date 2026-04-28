@@ -241,10 +241,11 @@ class MainCLI(BaseCLI):
             else:
                 # If command not found, display help
                 err(f'Unknown command: {self.parsed_command}. Use "{self.shorthand}" for help.', exit=True, pad_before=1, pad_after=1)
-        except SystemExit:
-            pass
-        except Exception as e:
-            err(f'Error executing script: {e}', exit=True, traceback=True)
+        except SystemExit as sysexc:
+            if sysexc.code and sysexc.code != 0:
+                raise
+        except Exception as exc:
+            err(f'Error executing script: {exc}', exit=True, traceback=True)
 
 if __name__ == '__main__':
     MainCLI()
