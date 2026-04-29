@@ -380,6 +380,10 @@ def list(directory:str,
         # Check if a depth greater than 1 is specified without enabling recursive walking
         if depth is not None and walk == False:
             warn('Cannot specify depth without walking through subdirectories. Ignoring depth parameter.')
+            
+        if walk and depth is None:
+            # If walk is enabled but depth is not specified, set depth to infinity
+            depth = math.inf
         
         # Initialize an empty list to store the results of files and directories
         results = []
@@ -424,6 +428,8 @@ def list(directory:str,
         # Return the compiled list of files and directories with their details
         return results
     except Exception as exc:
+        import traceback
+        traceback.print_exc()
         # Log an error message if an exception occurs during directory walking
         err(f'Error walking through directory "{directory}": {exc}')
         # Re-raise the exception to allow further handling upstream
