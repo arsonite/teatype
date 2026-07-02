@@ -15,6 +15,7 @@ import os
 from abc import ABC
 from collections import deque
 from typing import List, Dict, Optional
+
 # Third-party imports
 from llama_cpp import Llama
 from teatype.ai.models.llm import Inferencer, PromptBuilder
@@ -38,8 +39,7 @@ class ConversationalAI(Inferencer):
                  surpress_output:bool=True,
                  top_p:float=0.9,
                  verbose:bool=False):
-        super().__init__(model=model,
-                         model_directory=model_directory,
+        super().__init__(model_path=path.join(model_directory, model),
                          max_tokens=max_tokens,
                          context_size=context_size,
                          temperature=temperature,

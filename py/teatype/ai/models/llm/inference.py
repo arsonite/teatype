@@ -17,6 +17,7 @@ import sys
 import threading
 import time
 from typing import Generator, Optional
+
 # Third-party imports
 from llama_cpp import Llama
 from teatype.ai.models.llm import load_model, PromptBuilder

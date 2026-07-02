@@ -19,7 +19,8 @@ import sys
 from importlib import util as iutil
 
 # Third-party imports
-from teatype.cli import BaseCLI, Command
+from teatype.cli import BaseCLI, BaseTUI, Command
+from teatype.cli.args import Action
 from teatype.enum import XTerm
 from teatype.io import file, path
 from teatype.logging import *
@@ -114,6 +115,12 @@ class MainCLI(BaseCLI):
                                 script_instance.name = meta.get('name')
                                 script_instance.shorthand = meta.get('shorthand')
                                 script_instance.help = meta.get('help')
+                                if issubclass(script_class, BaseTUI):
+                                    # BaseTUI.__init__ normally builds this, but it's bypassed here since
+                                    # the instance is created via __new__ to avoid running init hooks at
+                                    # discovery time. Replicate it so selected TUIs work at real execution.
+                                    script_instance.actions = [Action(**action) for action in meta.get('actions', [])]
+                                    script_instance.actions.append(Action(name='exit', help=f'{XTerm.GRAY}(or CRTL+C){XTerm.RESET} Leave the TUI.'))
                                 module_registry[script_instance.name] = script_instance
                         except Exception as exc:
                             # print(script_class.AVAILABLE)
