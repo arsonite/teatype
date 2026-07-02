@@ -14,6 +14,7 @@
 import asyncio
 import inspect
 import json
+import ssl
 import threading
 
 # Third-party imports
@@ -42,17 +43,25 @@ class Websocket:
     _task:asyncio.Task
     _ws:websockets.WebSocketClientProtocol
     
+    has_secure_connection:bool=False
     hook:callable
+    ssl_verify:bool
     url:str
     
-    def __init__(self, url:str, hook:callable, *, auto_connect:bool=True):
+    def __init__(self, url:str, hook:callable, *, auto_connect:bool=True, ssl_verify:bool=False):
         self.hook = hook
+        self.ssl_verify = ssl_verify
         self.url = url
         
         self._bg_loop = None
         self._bg_thread = None
         self._task = None
         self._ws = None
+        
+        if not ssl_verify:
+            self.has_secure_connection = False
+        elif ssl_verify and url.startswith('wss://'):
+            self.has_secure_connection = True
         
         if auto_connect:
             asyncio.create_task(self.start())
@@ -116,7 +125,12 @@ class Websocket:
 
     async def start(self) -> bool:
         try:
-            self._ws = await websockets.connect(self.url)
+            ssl_context = None
+            if not self.ssl_verify:
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+            self._ws = await websockets.connect(self.url, ssl=ssl_context)
         except Exception as exc:
             print(f'[WS] Connection failed: {exc}')
             return False
