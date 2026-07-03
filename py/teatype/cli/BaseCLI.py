@@ -27,8 +27,8 @@ class GLOBAL_CLI_CONFIG:
     """
     Global configuration for the CLI utility.
     """
-    DEBUG_MODE = False
-    META_TYPE = dict[
+    DEBUG_MODE=False
+    META_TYPE=dict[
         'name':str,
         'shorthand':str,
         'help':str,
@@ -36,8 +36,8 @@ class GLOBAL_CLI_CONFIG:
         'commands':List[Command],
         'flags':List[Flag]
     ]
-    TAB = ' ' * 4
-    USE_HELP_MESSAGE_ON_FAIL = True
+    TAB=' ' * 4
+    USE_HELP_MESSAGE_ON_FAIL=True
 
 # TODO: Non-existing flags not throwing error?
 # TODO: Write hooks with proper sysntax to make hooks more obvious

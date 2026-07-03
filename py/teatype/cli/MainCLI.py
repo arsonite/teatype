@@ -223,6 +223,9 @@ class MainCLI(BaseCLI):
                 selected_script = self.scripts[script_name]
                 # DEPRECATED: Not having to call proxy_mode since hook-call is integrated with base function
                     # selected_script.proxy_mode = False # Disable auto-call to restore default functionality of script
+                # The discovery instance was created via __new__ and only has name/shorthand/help populated.
+                # Re-run init() now so arguments, commands and flags declared in meta() actually exist before parsing.
+                selected_script.init()
                 # Not having to call pre_parse since hook-call is integrated with base function
                 selected_script.parse() 
                 del selected_script.parsed_arguments[0] # Remove script name from arguments
@@ -245,6 +248,9 @@ class MainCLI(BaseCLI):
                 selected_tui = self.tuis[tui_name]
                 # DEPRECATED: Not having to call proxy_mode since hook-call is integrated with base function
                     # selected_tui.proxy_mode = False # Disable auto-call to restore default functionality of tui
+                # The discovery instance was created via __new__ and only has name/shorthand/help populated.
+                # Re-run init() now so arguments, commands and flags declared in meta() actually exist before parsing.
+                selected_tui.init()
                 # Not having to call pre_parse since hook-call is integrated with base function
                 selected_tui.parse() 
                 del selected_tui.parsed_arguments[0] # Remove tui name from arguments

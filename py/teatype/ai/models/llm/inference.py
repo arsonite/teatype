@@ -28,7 +28,15 @@ from teatype.toolkit import colorwrap
 
 APPLY_WHITESPACE_PATCH = True
 
+# Reasoning-model chat templates (Qwen3, DeepSeek-R1, etc.) wrap their internal
+# reasoning in these tags. We detect them in the raw token stream to color
+# reasoning content in gray (or hide it) without needing per-model knowledge.
+THINK_OPEN_TAG = '<think>'
+THINK_CLOSE_TAG = '</think>'
+
+
 class Inferencer():
+    chat_format:Optional[str]
     enable_kv_cache:bool
     max_tokens:int
     model:Optional[Llama]
@@ -46,13 +54,14 @@ class Inferencer():
                  max_tokens:int=2048, # The maximum number of tokens to generate in the output - affects length of responses
                  context_size:int=4096, # The context window size of the model - Affects how much text the model can "see" at once
                  temperature:float=0.7, # Affects randomness. Lowering results in less random completions
+                 chat_format:Optional[str]=None, # Force a chat template (e.g. 'chatml', 'llama-2', 'mistral-instruct') instead of auto-detecting one from the model's gguf metadata
                  cpu_cores:int=os.cpu_count(),
                  gpu_layers:int=-1,
                  auto_init:bool=True,
                  enable_kv_cache:bool=True,
                  surpress_output:bool=True,
                  top_p:float=0.9, # nucleus sampling - Affects diversity. Lower values makes output more focused
-                 unlock_full_potential:bool=False,
+                 unlock_full_potential:bool=True,
                  verbose:bool=False):
         """
         Base class for LLM inferencers.
@@ -63,6 +72,7 @@ class Inferencer():
                     max_tokens=max_tokens,
                     context_size=context_size,
                     temperature=temperature,
+                    chat_format=chat_format,
                     cpu_cores=cpu_cores,
                     gpu_layers=gpu_layers,
                     auto_init=auto_init,
@@ -72,11 +82,63 @@ class Inferencer():
                     unlock_full_potential=unlock_full_potential,
                     verbose=verbose)
     
+    def _build_messages(self, user_prompt:str, use_prompt_builder:bool) -> list[dict]:
+        """
+        Builds the chat `messages` list. Turn structure (system/user/assistant) is applied
+        by the model's own chat template in `create_chat_completion`, so no manual
+        'User:'/'Assistant:' framing or stop-string guessing is needed here.
+        """
+        messages = []
+        if use_prompt_builder:
+            messages.append({'role': 'system', 'content': PromptBuilder(unlock_full_potential=self.unlock_full_potential)})
+        messages.append({'role': 'user', 'content': user_prompt})
+        return messages
+
+    def _stream_tokens(self, messages:list[dict], show_thinking:bool) -> Generator[str, None, None]:
+        # NOTE: this must be the only place emitting `yield` in the streaming
+        # path - if `__call__` itself contained a `yield`, Python would turn
+        # the whole method into a generator function, so calling it would
+        # never actually run any inference (it'd just hand back an inert
+        # generator object) unless the caller iterated it.
+        first_token = True
+        if show_thinking:
+            stop_event = threading.Event()
+            spinner_thread = threading.Thread(target=self._spinner, args=(stop_event,))
+            spinner_thread.start()
+
+        for output in self.model.create_chat_completion(
+            messages=messages,
+            max_tokens=self.max_tokens,
+            stream=True,
+            temperature=self.temperature,
+            top_p=self.top_p
+        ):
+            token = output['choices'][0].get('delta', {}).get('content')
+            if not token:
+                continue # role-only or empty delta chunks
+
+            if first_token:
+                if show_thinking:
+                    stop_event.set() # stop spinner when first token arrives
+                    spinner_thread.join()
+
+                first_token = False
+                if APPLY_WHITESPACE_PATCH:
+                    token = token.lstrip() # Strip leading whitespace only once at the start
+
+            yield token
+
+        if show_thinking and first_token:
+            # No tokens were ever produced - make sure the spinner still stops
+            stop_event.set()
+            spinner_thread.join()
+
     def __call__(self,
-                 user_prompt:str,
+                 user_prompt:str=None,
                  artificial_delay:float=0.0,
                  colorized_output:XTerm.Colors=None,
                  decorator:str=None,
+                 messages:list[dict]=None, # pass a pre-built multi-turn messages list (e.g. from ConversationalAI) instead of a single user_prompt
                  show_thinking:bool=True,
                  stream_response:bool=True,
                  use_prompt_builder:bool=True,
@@ -85,28 +147,9 @@ class Inferencer():
         Generate text from LLaMA model with optional streaming.
         Shows a spinner until the first token or response is available.
         """
-        def _spinner(stop_event):
-            for symbol in itertools.cycle('|/-\\'):
-                if stop_event.is_set():
-                    break
-                sys.stdout.write('\rThinking ' + symbol)
-                sys.stdout.flush()
-                time.sleep(0.1)
-            sys.stdout.write('\r' + ' ' * 20 + '\r') # clear line
-            
-        response = ''
-        if use_prompt_builder:
-            input = PromptBuilder(user_prompt, unlock_full_potential=self.unlock_full_potential)
-        else:
-            input = user_prompt
+        if messages is None:
+            messages = self._build_messages(user_prompt, use_prompt_builder)
 
-        first_token = True
-        if show_thinking:
-            # Spinner setup
-            stop_event = threading.Event()
-            spinner_thread = threading.Thread(target=_spinner, args=(stop_event,))
-            spinner_thread.start()
-        
         if artificial_delay > 0:
             time.sleep(artificial_delay)
 
@@ -114,65 +157,54 @@ class Inferencer():
             self.model.reset()
         if decorator:
             print(decorator + ':', end=' ', flush=True)
-        if stream_response:
-            for output in self.model(
-                input,
-                max_tokens=self.max_tokens,
-                stop=['User:', '\nUser:', '\n\nUser:'], # Stop generation when user prompt is detected again
-                stream=True,
-                temperature=self.temperature,
-                top_p=self.top_p
-            ):
-                token = output['choices'][0]['text']
-                    
-                if first_token: 
-                    if show_thinking:
-                        stop_event.set() # stop spinner when first token arrives
-                        spinner_thread.join()
-                        
-                    first_token = False
-                    if APPLY_WHITESPACE_PATCH:
-                        token = token.lstrip() # Strip leading whitespace only once at the start
 
-                if yield_token:
-                    yield token
+        if stream_response and yield_token:
+            return self._stream_tokens(messages, show_thinking)
+
+        if stream_response:
+            response = ''
+            for token in self._stream_tokens(messages, show_thinking):
+                if colorized_output:
+                    print(colorwrap(token, colorized_output), end='', flush=True)
                 else:
-                    if colorized_output:
-                        print(colorwrap(token, colorized_output), end='', flush=True)
-                    else:
-                        print(token, end='', flush=True)
-                    response += token
+                    print(token, end='', flush=True)
+                response += token
             println()
-        else:
-            raw_output = self.model(
-                input,
-                max_tokens=self.max_tokens,
-                stop=['User:', '\nUser:', '\n\nUser:'], # Stop generation when user prompt is detected again
-                stream=False,
-                temperature=self.temperature,
-                top_p=self.top_p
-            )
-            if show_thinking:
-                stop_event.set()
-                spinner_thread.join()
-            response = raw_output['choices'][0]['text']
+            return response.lstrip()
+
+        stop_event = threading.Event()
+        if show_thinking:
+            spinner_thread = threading.Thread(target=self._spinner, args=(stop_event,))
+            spinner_thread.start()
+        raw_output = self.model.create_chat_completion(
+            messages=messages,
+            max_tokens=self.max_tokens,
+            stream=False,
+            temperature=self.temperature,
+            top_p=self.top_p
+        )
+        if show_thinking:
+            stop_event.set()
+            spinner_thread.join()
 
         # Strip leading newlines/whitespace only once at the start
-        return response.lstrip()
+        return raw_output['choices'][0]['message']['content'].lstrip()
     
     def reload(self,
                model_path:str,
                max_tokens:int=2048,
                context_size:int=4096,
                temperature:float=0.7,
+               chat_format:Optional[str]=None,
                cpu_cores:int=os.cpu_count(),
                gpu_layers:int=-1,
                auto_init:bool=True,
                enable_kv_cache:bool=True,
                surpress_output:bool=True,
                top_p:float=0.9,
-               unlock_full_potential:bool=False,
+               unlock_full_potential:bool=True,
                verbose:bool=False):
+        self.chat_format = chat_format
         self.enable_kv_cache = enable_kv_cache
         self.model_path = model_path
         self.max_tokens = max_tokens
@@ -211,6 +243,7 @@ class Inferencer():
                                     context_size=context_size,
                                     cpu_cores=cpu_cores,
                                     gpu_layers=gpu_layers,
+                                    chat_format=self.chat_format,
                                     surpress_output=surpress_output,
                                     verbose=verbose)
             self.model_loaded = True
