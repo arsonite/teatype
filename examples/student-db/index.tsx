@@ -18,7 +18,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 
 // Components
-import StudentDB from './src/StudentDB';
+import StudentDB from '@/StudentDB';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <React.StrictMode>

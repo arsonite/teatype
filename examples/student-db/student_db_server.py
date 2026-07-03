@@ -20,11 +20,11 @@ from teatype.logging import *
 from teatype.toolkit import stopwatch
 
 # Local imports
-from api.models import *
+from server.models import *
 
 # Define your apps
 APPS = [
-    'api'
+    'server'
 ]
 
 MODELS = [

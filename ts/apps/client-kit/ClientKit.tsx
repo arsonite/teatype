@@ -14,10 +14,10 @@
  */
 
 // Components
-import { TeaButton, TeaPanel } from '../../../../components';
+import { TeaButton, TeaPanel } from '../../components';
 
 // Icons
-import { ModelsIcon, SettingsIcon } from '../../../../icons';
+import { ModelsIcon, SettingsIcon } from '../../icons';
 
 // Style
 import './style/ClientKit.scss';

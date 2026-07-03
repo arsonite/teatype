@@ -35,7 +35,7 @@ export const getBaseViteConfig = (): UserConfig => ({
     plugins: [react(), eslint()],
     resolve: {
         alias: {
-            '@': resolve(__dirname, 'src'),
+            '@': resolve(__dirname, 'client'),
             '@teatype/api': resolve(__dirname, '../../ts/api'),
             '@teatype/apps': resolve(__dirname, '../../ts/apps'),
             '@teatype/baseconfig': resolve(__dirname, '../../ts/baseconfig'),

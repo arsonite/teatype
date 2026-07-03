@@ -22,6 +22,7 @@
         "@teatype/components": "workspace:*",
         "@teatype/hooks": "workspace:*",
         "@teatype/icons": "workspace:*",
+        "@teatype/toolkit": "workspace:*",
         "@teatype/style": "workspace:*",
         "@types/react": "^19.0.1",
         "@types/react-dom": "^19.0.2",

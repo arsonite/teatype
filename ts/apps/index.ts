@@ -13,5 +13,6 @@
  * all copies or substantial portions of the Software.
  */
 
+export { ClientKitApp } from './client-kit/ClientKit';
 export { HSDBAdmin } from './hsdb-admin/src/App';
 export { QueryBuilder } from './query-builder/src/App';
