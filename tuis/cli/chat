@@ -42,6 +42,18 @@ class Chat(BaseTUI):
                     'name': 'ignore-default',
                     'help': 'Ignore the default model and select a new one',
                     'required': False
+                },
+                {
+                    'shorthand': 'nt',
+                    'name': 'no-thinking',
+                    'help': 'Hide model reasoning (<think>...</think>) content instead of showing it in gray',
+                    'required': False
+                },
+                {
+                    'shorthand': 'nr',
+                    'name': 'no-reasoning',
+                    'help': 'Disable model reasoning/thinking entirely at generation time (no-op for models that don\'t support it)',
+                    'required': False
                 }
             ]
         }
@@ -133,6 +145,8 @@ class Chat(BaseTUI):
                             return_input=True)
             default_model = available_local_models[int(selection)-1]
             
+        show_thinking = not self.get_flag('no-thinking')
+        enable_thinking = not self.get_flag('no-reasoning')
         llm = ConversationalAI(model=default_model,
                                model_directory=conversational_model_directory,
                                temperature=0.9,
@@ -140,7 +154,10 @@ class Chat(BaseTUI):
                                verbose=True)
         println()
         log(colorwrap('[LLM]:', 'cyan'))
-        response = llm.chat('Instruction: Greet the user.', stream_response=stream)
+        response = llm.chat('Instruction: Greet the user.',
+                            enable_thinking=enable_thinking,
+                            show_thinking=show_thinking,
+                            stream_response=stream)
         try:
             while True:
                 user_input = prompt('[You]:', return_input=True)
@@ -149,7 +166,7 @@ class Chat(BaseTUI):
                     break
                 println()
                 log(colorwrap('[LLM]:', 'cyan'))
-                response = llm.chat(user_input, stream_response=stream)
+                response = llm.chat(user_input, enable_thinking=enable_thinking, show_thinking=show_thinking, stream_response=stream)
                 if not stream:
                     print(response)
         except KeyboardInterrupt:

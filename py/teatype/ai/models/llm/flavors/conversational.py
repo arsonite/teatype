@@ -74,7 +74,8 @@ class ConversationalAI(Inferencer):
     def chat(self,
              user_prompt:str,
              artificial_delay:float=0.0,
-             show_thinking:bool=True,
+             enable_thinking:bool=True, # actually enable/disable the model's reasoning step at generation time (no-op for templates that don't support it)
+             show_thinking:bool=True, # print <think>...</think> reasoning content in gray; set False to hide it entirely
              stream_response:bool=True) -> str:
         """
         One conversational turn. Tracks history automatically.
@@ -83,9 +84,11 @@ class ConversationalAI(Inferencer):
         response = super().__call__(
             messages=messages,
             artificial_delay=artificial_delay,
+            enable_thinking=enable_thinking,
             show_thinking=show_thinking,
             stream_response=stream_response
         )
-        # Save to history
-        self.chat_history.append({"user": user_prompt, "assistant": response})
+        # Save to history without reasoning content, so the model doesn't
+        # keep re-reading its own previous <think> blocks as context.
+        self.chat_history.append({"user": user_prompt, "assistant": self.strip_thinking(response)})
         return response
