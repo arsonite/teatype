@@ -16,4 +16,10 @@ from .http.trequest import get, post, put, patch, delete
 from .url import encode as encode_url
 from .url import decode as decode_url
 from .url import join as join_uris
-from .ws.Websocket import Websocket
+
+try:
+    from .ws.Websocket import Websocket
+    WEBSOCKET_SUPPORT = True
+except ImportError:
+    Websocket = None
+    WEBSOCKET_SUPPORT = False
