@@ -13,11 +13,16 @@
  * all copies or substantial portions of the Software.
  */
 
+// React imports
 import { useState } from 'react';
 import { Toaster } from 'react-hot-toast';
-import { TeaConfirmProvider } from '@teatype/components';
-import { useAPIRegistry } from '@teatype/hooks';
+
+// Components
 import { DynamicResourceView } from './DynamicResourceView';
+import { TeaConfirmProvider, TeaPanel } from '@teatype/components';
+
+// Hooks
+import { useAPIRegistry } from '@teatype/hooks';
 
 /**
  * A dynamic dashboard that auto-generates views for all resources
@@ -59,26 +64,35 @@ export function DynamicDashboard() {
                 <div className='hsdb-dashboard'>
                     <div className='hsdb-dashboard__stats'>
                         {apiInfos.map((info) => (
-                            <div
-                                key={info.resource}
-                                className='stat-card stat-card--clickable'
-                                onClick={() => setSelectedResource(info.resource)}
-                            >
-                                <p className='stat-card__label'>{info.name}s</p>
-                                <h2 className='stat-card__value'>{info.count}</h2>
-                                <div className='stat-card__methods'>
-                                    {info.allowedMethods.collection.map((m) => (
-                                        <span key={m} className='method-badge method-badge--collection'>
-                                            {m}
-                                        </span>
-                                    ))}
-                                    {info.allowedMethods.resource.map((m) => (
-                                        <span key={m} className='method-badge method-badge--resource'>
-                                            {m}
-                                        </span>
-                                    ))}
+                            <>
+                                <div
+                                    key={info.resource}
+                                    className='stat-card stat-card--clickable'
+                                    onClick={() => setSelectedResource(info.resource)}
+                                >
+                                    <p className='stat-card__label'>{info.name}s</p>
+                                    <h2 className='stat-card__value'>{info.count}</h2>
+                                    <div className='stat-card__methods'>
+                                        {info.allowedMethods.collection.map((m) => (
+                                            <span key={m} className='method-badge method-badge--collection'>
+                                                {m}
+                                            </span>
+                                        ))}
+                                        {info.allowedMethods.resource.map((m) => (
+                                            <span key={m} className='method-badge method-badge--resource'>
+                                                {m}
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
+                                <TeaPanel
+                                    tags={info.allowedMethods.resource.map((m) => ({ name: m }))}
+                                    title={info.name}
+                                    variant='stat'
+                                >
+                                    {info.count}
+                                </TeaPanel>
+                            </>
                         ))}
                     </div>
                 </div>

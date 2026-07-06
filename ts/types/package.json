@@ -1,0 +1,14 @@
+{
+    "name": "@teatype/types",
+    "version": "1.0.0",
+    "description": "Shared React types for Teatype apps",
+    "private": true,
+    "type": "module",
+    "main": "./index.ts",
+    "exports": {
+        ".": "./index.ts",
+        "./*": "./*.ts"
+    },
+    "dependencies": {},
+    "peerDependencies": {}
+}

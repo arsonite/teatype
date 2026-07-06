@@ -44,6 +44,7 @@ export const getBaseViteConfig = (): UserConfig => ({
             '@teatype/icons': resolve(__dirname, '../../ts/icons'),
             '@teatype/style': resolve(__dirname, '../../ts/style'),
             '@teatype/toolkit': resolve(__dirname, '../../ts/toolkit'),
+            '@teatype/types': resolve(__dirname, '../../ts/types'),
         },
     },
     css: {
