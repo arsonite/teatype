@@ -11,6 +11,7 @@
 # all copies or substantial portions of the Software.
 
 # Standard-library imports
+import os
 import shlex
 import subprocess
 import sys
@@ -337,7 +338,7 @@ def shell(command:str,
                                 shell=True, # Execute the command through the shell
                                 cwd=None if not cwd else cwd,
                                 env=env if not env else current_env.get(),
-                                # preexec_fn=os.setsid if detached else None,
+                                preexec_fn=os.setsid if detached else None,
                                 text=return_stdout,
                                 timeout=timeout,
                                 stdout=subprocess.PIPE if mute or return_stdout else None,
