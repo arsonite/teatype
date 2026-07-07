@@ -77,12 +77,13 @@ try:
         """
         return Response({'error': error}, status.HTTP_406_NOT_ACCEPTABLE, content_type=CONTENT_TYPE)
 
-    def NotAllowed(error:any, allowed_methods):
+    def NotAllowed(error:any, allowed_methods=None):
         """
         Return a response with HTTP 405 Method Not Allowed status.
         """
         response = Response({'error': error}, status.HTTP_405_METHOD_NOT_ALLOWED, content_type=CONTENT_TYPE)
-        response['Allow'] = ', '.join(map(str, allowed_methods))
+        if allowed_methods:
+            response['Allow'] = ', '.join(map(str, allowed_methods))
         return response
 
     def NotFound(error:any):

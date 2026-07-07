@@ -18,4 +18,5 @@ export type tTeaTag = {
     description?: string;
     icon?: string;
     name: string;
+    textColor?: string | 'theme';
 }

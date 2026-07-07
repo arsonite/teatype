@@ -2,7 +2,7 @@
  * @license
  * Copyright (C) 2024-2026 Burak Günaydin
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, free of charge, to unknown person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
@@ -14,7 +14,7 @@
  */
 
 // React imports
-import { useState } from 'react';
+import { SetStateAction, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 
 // Components
@@ -63,37 +63,36 @@ export function DynamicDashboard() {
             <TeaConfirmProvider>
                 <div className='hsdb-dashboard'>
                     <div className='hsdb-dashboard__stats'>
-                        {apiInfos.map((info) => (
-                            <>
-                                <div
-                                    key={info.resource}
-                                    className='stat-card stat-card--clickable'
-                                    onClick={() => setSelectedResource(info.resource)}
-                                >
-                                    <p className='stat-card__label'>{info.name}s</p>
-                                    <h2 className='stat-card__value'>{info.count}</h2>
-                                    <div className='stat-card__methods'>
-                                        {info.allowedMethods.collection.map((m) => (
-                                            <span key={m} className='method-badge method-badge--collection'>
-                                                {m}
-                                            </span>
-                                        ))}
-                                        {info.allowedMethods.resource.map((m) => (
-                                            <span key={m} className='method-badge method-badge--resource'>
-                                                {m}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
+                        {apiInfos.map(
+                            (info: {
+                                endpoint: string;
+                                allowedMethods: { resource: unknown[]; collection: unknown[] };
+                                name: unknown;
+                                resource: SetStateAction<string | null>;
+                                count: unknown;
+                            }) => (
                                 <TeaPanel
-                                    tags={info.allowedMethods.resource.map((m) => ({ name: m }))}
-                                    title={info.name}
+                                    tags={info.allowedMethods.resource
+                                        .map((m: unknown) => ({
+                                            color: '#e3f2fd',
+                                            name: m,
+                                            textColor: '#1565c0',
+                                        }))
+                                        .concat(
+                                            info.allowedMethods.collection.map((m: unknown) => ({
+                                                color: '#fce4ec',
+                                                name: m,
+                                                textColor: '#c62828',
+                                            })),
+                                        )}
+                                    title={info.endpoint.replace('\/', '')}
                                     variant='stat'
+                                    onClick={() => setSelectedResource(info.resource)}
                                 >
                                     {info.count}
                                 </TeaPanel>
-                            </>
-                        ))}
+                            ),
+                        )}
                     </div>
                 </div>
             </TeaConfirmProvider>

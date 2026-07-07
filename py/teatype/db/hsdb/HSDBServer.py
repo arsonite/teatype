@@ -400,13 +400,16 @@ class HSDBServer():
         from django.core.wsgi import get_wsgi_application
         return get_wsgi_application()
     
-    def create_urlpatterns(self, base_endpoint:str=None, include_admin:bool=False):
+    def create_urlpatterns(self, base_endpoint:str=None, include_admin:bool=False, auto_model_routes:bool=True):
         """
         Create URL patterns dynamically for registered apps.
         
         Args:
             base_endpoint: Base API endpoint prefix (e.g., 'v1', 'api')
             include_admin: Whether to include Django admin interface
+            auto_model_routes: Whether to auto-register Collection/Resource routes
+                                for every model in `self.models` that doesn't already
+                                have a hand-written resource defined in an app
             
         Returns:
             List of URL patterns
@@ -416,7 +419,7 @@ class HSDBServer():
         from pathlib import Path
         from django.urls import path
         from django.conf.urls.static import static
-        from teatype.db.hsdb.django_support.urlpatterns import parse_dynamic_routes
+        from teatype.db.hsdb.django_support.urlpatterns import create_auto_model_routes, parse_dynamic_routes
         
         # Store base endpoint for API registry
         self._base_endpoint = base_endpoint or ''
@@ -486,6 +489,19 @@ class HSDBServer():
                     warn(f'No resources directory found for app: {app_name}')
             except Exception as e:
                 err(f'Could not register URLs for app {app_name}', traceback=True)
+        
+        # Auto-register Collection/Resource routes for models without a hand-written
+        # resource. Placed after app routes so a manually defined resource for the
+        # same path always takes precedence over the auto-generated one.
+        if auto_model_routes and self.models:
+            existing_routes = {pattern.pattern._route for pattern in urlpatterns}
+            auto_urlpatterns = create_auto_model_routes(self.models, verbose=True)
+            
+            if base_endpoint:
+                for pattern in auto_urlpatterns:
+                    pattern.pattern._route = f'{base_endpoint}/{pattern.pattern._route}'
+            
+            urlpatterns.extend(pattern for pattern in auto_urlpatterns if pattern.pattern._route not in existing_routes)
         
         # Add static files
         if hasattr(settings, 'STATIC_URL'):

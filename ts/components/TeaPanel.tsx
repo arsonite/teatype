@@ -58,7 +58,7 @@ const TeaPanel: React.FC<iTeaPanelProps> = (props) => {
     };
 
     return (
-        <div className={classes}>
+        <div className={classes} id={props.id} onClick={props.onClick}>
             {wrapComponent(
                 <>
                     {props.title && <legend className='title'>{props.title}</legend>}
@@ -90,8 +90,8 @@ const TeaPanel: React.FC<iTeaPanelProps> = (props) => {
                                     return '#' + lightNum.toString(16).padStart(6, '0');
                                 };
 
-                                const bgColor = tag.color || lightenColor('var(--accent)');
-                                const textColor = darkenColor(bgColor);
+                                const bgColor = tag.color || 'var(--accent)';
+                                const textColor = tag.textColor || darkenColor(bgColor);
 
                                 return (
                                     <span

@@ -59,6 +59,62 @@ def create_students_sequentially(number_of_students, random_first_names, random_
         students[student[0]] = student[1]
     return students
 
+def create_professor(random_first_names, random_sur_names, random_schools):
+    """
+    Creates a professor object with random attributes.
+    """
+    random.seed()
+    gender = random.choice(['male', 'female'])
+    professor = Professor({
+        'age': random.randint(28, 70),
+        'gender': gender,
+        'height': random.randint(150, 200),
+        'name': f'{random.choice(random_first_names[0] if gender == "male" else random_first_names[1])} {random.choice(random_sur_names)}',
+        'university': random.choice([random_school.id for random_school in random_schools])
+    })
+    return professor.id, professor
+
+def create_professors_sequentially(number_of_professors, random_first_names, random_sur_names, random_schools):
+    """
+    Creates professors sequentially.
+    """
+    professors = {}
+    for i in range(number_of_professors):
+        professor = create_professor(random_first_names, random_sur_names, random_schools)
+        professors[professor[0]] = professor[1]
+    return professors
+
+def random_class_name():
+    subjects = [
+        'Algebra', 'Biology', 'Chemistry', 'Physics', 'History', 'Literature',
+        'Computer Science', 'Economics', 'Philosophy', 'Statistics',
+    ]
+    sections = ['A', 'B', 'C', '101', '201', '301']
+    return f'{random.choice(subjects)} {random.choice(sections)}'
+
+def create_class(random_professors, random_students):
+    """
+    Creates a class object with a random professor and a random subset of students.
+    """
+    random.seed()
+    class_students = random.sample(random_students, k=min(len(random_students), random.randint(5, 15)))
+    class_ = Class({
+        'name': random_class_name(),
+        'professor': random.choice(random_professors).id,
+        'students': [student.id for student in class_students]
+    })
+    return class_.id, class_
+
+def create_classes_sequentially(number_of_classes, random_professors, random_students):
+    """
+    Creates classes sequentially.
+    """
+    classes = {}
+    for i in range(number_of_classes):
+        class_ = create_class(random_professors, random_students)
+        classes[class_[0]] = class_[1]
+    return classes
+
 def random_first_names():
         return [[
             'Bob', 'Charlie', 'David', 'Frank', 'Ivan', 'Kevin', 'Michael', 'Oscar',
@@ -114,6 +170,16 @@ if __name__ == '__main__':
     NUMBER_OF_STUDENTS = 1234
     students = create_students_sequentially(NUMBER_OF_STUDENTS, random_first_names(), random_sur_names(), schools)
     index_db.update_directly(students)
+    
+    # Then create professors linked to the persisted universities
+    NUMBER_OF_PROFESSORS = 40
+    professors = create_professors_sequentially(NUMBER_OF_PROFESSORS, random_first_names(), random_sur_names(), schools)
+    index_db.update_directly(professors)
+    
+    # Finally create classes, each with a professor (many-to-one) and students (many-to-many)
+    NUMBER_OF_CLASSES = 60
+    classes = create_classes_sequentially(NUMBER_OF_CLASSES, list(professors.values()), list(students.values()))
+    index_db.update_directly(classes)
     stopwatch()
     
     stopwatch('Measuring memory footprint')
@@ -138,6 +204,8 @@ if __name__ == '__main__':
     # Model.count() - O(1) using model index
     print(f'Total students: {Student.count()}')
     print(f'Total universities: {University.count()}')
+    print(f'Total professors: {Professor.count()}')
+    print(f'Total classes: {Class.count()}')
     
     # Model.all() with relation serialization
     print('\n--- Student with expanded university ---')
