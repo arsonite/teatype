@@ -54,8 +54,10 @@
     &:hover {
         cursor: pointer;
 
-        svg {
-            transform: rotate(45deg);
+        &.icon-rotation {
+            svg {
+                transform: rotate(45deg);
+            }
         }
     }
 
@@ -126,67 +128,66 @@
     }
 
     // Color variants
-    &.theme-default {
-        background: var(--surface-card);
-        border-color: var(--border);
+    &.variant-default {
+        &.theme-default {
+            background: var(--surface-card);
+            border-color: var(--border);
 
-        &:hover:not(:disabled) {
-            background: var(--surface-elevated);
-            border-color: var(--accent);
-            color: var(--accent);
-
-            svg {
+            &:hover:not(:disabled) {
+                background: var(--surface-elevated);
+                border-color: var(--accent);
                 color: var(--accent);
+
+                svg {
+                    color: var(--accent);
+                }
+            }
+        }
+
+        &.theme-filled {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+
+            &:hover:not(:disabled) {
+                background: color-mix(in srgb, var(--accent) 85%, #000);
+                border-color: color-mix(in srgb, var(--accent) 85%, #000);
+            }
+        }
+
+        &.theme-success {
+            // background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+
+            &:hover:not(:disabled) {
+                // background: color-mix(in srgb, var(--success) 85%, #000);
+                border-color: color-mix(in srgb, var(--success) 85%, #000);
+            }
+        }
+
+        &.theme-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+
+            &:hover:not(:disabled) {
+                background: rgba(239, 68, 68, 0.25);
+                border-color: #ef4444;
+            }
+        }
+
+        &.theme-ghost {
+            background: transparent;
+            border-color: transparent;
+
+            &:hover:not(:disabled) {
+                background: var(--surface-card);
+                border-color: var(--border);
             }
         }
     }
 
-    &.theme-filled {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #fff;
-
-        &:hover:not(:disabled) {
-            background: color-mix(in srgb, var(--accent) 85%, #000);
-            border-color: color-mix(in srgb, var(--accent) 85%, #000);
-        }
-    }
-
-    &.theme-success {
-        // background: var(--success);
-        border-color: var(--success);
-        color: #fff;
-
-        &:hover:not(:disabled) {
-            // background: color-mix(in srgb, var(--success) 85%, #000);
-            border-color: color-mix(in srgb, var(--success) 85%, #000);
-        }
-    }
-
-    &.theme-danger {
-        background: rgba(239, 68, 68, 0.15);
-        border-color: rgba(239, 68, 68, 0.3);
-        color: #ef4444;
-
-        &:hover:not(:disabled) {
-            background: rgba(239, 68, 68, 0.25);
-            border-color: #ef4444;
-        }
-    }
-
-    &.theme-ghost {
-        background: transparent;
-        border-color: transparent;
-
-        &:hover:not(:disabled) {
-            background: var(--surface-card);
-            border-color: var(--border);
-        }
-    }
-
-    // =========================================
-    // Ripple effect (Material UI style)
-    // =========================================
     &__ripple {
         position: absolute;
         border-radius: 50%;
@@ -215,6 +216,18 @@
     // Filled theme gets a white ripple that stands out on the accent bg
     &.theme-filled &__ripple {
         background: rgba(255, 255, 255, 0.32);
+    }
+
+    &.variant-borderless {
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 8px;
+
+        &:hover {
+            background: var(--surface-card);
+            border-color: var(--border);
+            color: var(--text-primary);
+        }
     }
 
     @keyframes tea-button-ripple {

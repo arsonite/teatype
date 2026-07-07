@@ -17,13 +17,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // Icons
-import { FlagEN, FlagDE, FlagTR } from '@teatype/icons';
+import { FlagEN, FlagDE, FlagTR, XIcon } from '@teatype/icons';
 
 // Components
 import { TeaSlider } from '../TeaInput/TeaSlider';
 
 // Utility
 import { Store } from '@teatype/toolkit/Store';
+import XButton from '../TeaInput/XButton';
 
 export type tLanguage = 'en' | 'de' | 'tr';
 export type tTheme = 'dark' | 'flow' | 'light';
@@ -244,11 +245,8 @@ export const TeaSettingsPanel: React.FC<TeaSettingsPanelProps> = ({ onClose }) =
         <div className='tea-settings-panel'>
             <div className='tea-settings-header'>
                 <h2>Settings</h2>
-                <button className='tea-settings-close' onClick={onClose} aria-label='Close settings'>
-                    <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
-                        <path d='M18 6L6 18M6 6l12 12' />
-                    </svg>
-                </button>
+
+                <XButton onClick={onClose} />
             </div>
 
             <div className='tea-settings-content'>

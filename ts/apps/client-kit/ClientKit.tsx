@@ -14,7 +14,7 @@
  */
 
 // Components
-import { TeaButton, TeaPanel } from '../../components';
+import { TeaButton, TeaPanel, XButton } from '../../components';
 
 // Icons
 import { ModelsIcon, SettingsIcon } from '../../icons';
@@ -57,6 +57,8 @@ const ClientKit = () => {
                 <TeaButton>
                     <SettingsIcon />
                 </TeaButton>
+
+                <XButton />
             </TeaPanel>
 
             {/* <TeaPanel title='Containers' variant='framed'>

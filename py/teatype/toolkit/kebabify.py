@@ -14,6 +14,9 @@
 import re
 from typing import Union
 
+# Local imports
+from teatype.toolkit.pluralize import pluralize
+
 KEBAB_STORE = {
     'CAPITAL': '_',
     'SPACE': '+',
@@ -21,6 +24,7 @@ KEBAB_STORE = {
 }
 
 def kebabify(raw_name:str,
+             *,
              plural:bool=False,
              preserve_capitals:bool=False,
              remove:str=None,
@@ -51,8 +55,8 @@ def kebabify(raw_name:str,
         # Perform a single replace operation: replace[0] → replace[1]
         parsed_name = parsed_name.replace(replace[0], replace[1])
     if plural:
-        # Append 's' if it doesn't already end with 's', otherwise append 'es'
-        parsed_name = parsed_name + 's' if not parsed_name.endswith('s') else parsed_name + 'es'
+        # Use the pluralize function to convert the name to its plural form
+        parsed_name = pluralize(parsed_name)
     return parsed_name # Return the final kebabified (and possibly modified) string
 
 def unkebabify(kebab_name:str, insert_spaces:bool=False) -> str:

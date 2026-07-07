@@ -13,15 +13,22 @@
  * all copies or substantial portions of the Software.
  */
 
-.tea-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+// Components
+import { TeaIcon } from '../components';
 
-    svg {
-        display: inherit;
+// Types
+import type { iTeaIconProps } from '../components/TeaIcon';
 
-        height: 100%;
-        width: 100%;
-    }
-}
+const XIcon: React.FC<iTeaIconProps> = (props) => {
+    return (
+        <TeaIcon {...props}>
+            <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+                <path d='M18 6L6 18M6 6l12 12' />
+            </svg>
+        </TeaIcon>
+    );
+};
+
+export default XIcon;
+
+export { XIcon };

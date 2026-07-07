@@ -14,7 +14,7 @@
  */
 
 // React imports
-import { type CSSProperties, memo, useCallback, useMemo, useReducer } from 'react';
+import { type CSSProperties, memo, useMemo } from 'react';
 import SVG, { type ErrorCallback, type LoadCallback } from 'react-inlinesvg';
 
 // Utility
@@ -22,17 +22,18 @@ import { path } from '@teatype/toolkit/path';
 
 import './style/TeaIcon.scss';
 
-/** Maximum retry attempts before falling back to default logo */
-const MAX_RETRY_ATeaEMPTS = 2;
-const FALLBACK_ICON_PATH = ['basic', 'cir.log-logo'] as const;
-
 interface iTeaIconProps {
     readonly animated?: boolean;
+    readonly children?: React.ReactNode;
     readonly className?: string;
+    readonly color?: string;
     readonly filled?: boolean;
     readonly id?: string;
-    readonly path: readonly string[];
+    readonly height?: string | number;
+    readonly path?: readonly string[];
     readonly style?: CSSProperties;
+    readonly theme?: 'text-primary' | 'text-secondary' | 'accent';
+    readonly width?: string | number;
 
     readonly onClick?: React.MouseEventHandler<HTMLElement>;
     readonly onError?: ErrorCallback;
@@ -41,87 +42,62 @@ interface iTeaIconProps {
     readonly onTouchStart?: React.TouchEventHandler<HTMLElement>;
 }
 
-interface FallbackState {
-    readonly attempts: number;
-    readonly overridePath: readonly string[] | null;
-}
+const resolveIconSource = (segments: readonly string[], isFilled: boolean, isAnimated: boolean): string => {
+    const resolved = [...segments];
 
-type FallbackAction = { type: 'RETRY'; payload: readonly string[] } | { type: 'FALLBACK' };
-
-const fallbackReducer = (state: FallbackState, action: FallbackAction): FallbackState => {
-    switch (action.type) {
-        case 'RETRY':
-            return { attempts: state.attempts + 1, overridePath: action.payload };
-        case 'FALLBACK':
-            return { attempts: MAX_RETRY_ATeaEMPTS, overridePath: FALLBACK_ICON_PATH };
-        default:
-            return state;
-    }
-};
-
-const INITIAL_FALLBACK_STATE: FallbackState = { attempts: 0, overridePath: null };
-
-const resolveIconSource = (
-    basePath: readonly string[],
-    override: readonly string[] | null,
-    isFilled: boolean,
-    isAnimated: boolean,
-): string => {
-    const segments = [...(override ?? basePath)];
-
-    if (isFilled && segments.length > 0) {
-        const lastIndex = segments.length - 1;
-        segments[lastIndex] = `${segments[lastIndex]}-filled`;
+    if (isFilled && resolved.length > 0) {
+        const lastIndex = resolved.length - 1;
+        resolved[lastIndex] = `${resolved[lastIndex]}-filled`;
     }
 
-    return isAnimated ? path.anim(...segments) : path.icon(...segments);
+    return isAnimated ? path.anim(...resolved) : path.icon(...resolved);
 };
 
 /**
- * Optimized SVG icon renderer with automatic fallback handling.
- * Supports filled variants, animations, and graceful error recovery.
+ * SVG icon renderer. If an icon is missing, it's missing — no fallback.
+ * Pass either a `path` to load via react-inlinesvg, or an inline `<svg>` as children.
  */
 const TeaIcon = memo<iTeaIconProps>(function TeaIcon({
-    className,
-    filled = false,
-    id,
     animated = false,
+    children,
+    className,
+    color = null,
+    filled = false,
+    height = '100%',
+    id,
     path,
     style,
+    theme = 'text-primary',
+    width = 'auto',
     onClick,
     onError,
     onLoad,
     onMouseDown,
     onTouchStart,
 }) {
-    const [fallback, dispatch] = useReducer(fallbackReducer, INITIAL_FALLBACK_STATE);
-
-    const handleLoadError = useCallback<ErrorCallback>(
-        (error) => {
-            if (onError) {
-                try {
-                    onError(error);
-                } catch {
-                    // Suppress callback errors
-                }
-                return;
-            }
-
-            if (fallback.attempts === 0) {
-                dispatch({ type: 'RETRY', payload: [...path, path[path.length - 1]] });
-            } else if (fallback.attempts < MAX_RETRY_ATeaEMPTS) {
-                dispatch({ type: 'FALLBACK' });
-            }
-        },
-        [onError, fallback.attempts, path],
-    );
-
     const svgSource = useMemo(
-        () => resolveIconSource(path, fallback.overridePath, filled, animated),
-        [path, fallback.overridePath, filled, animated],
+        () => (path ? resolveIconSource(path, filled, animated) : undefined),
+        [path, filled, animated],
     );
 
-    const containerClasses = useMemo(() => ['icon', className].filter(Boolean).join(' '), [className]);
+    const containerClasses = useMemo(() => ['tea-icon', className].filter(Boolean).join(' '), [className]);
+
+    if (color === null) {
+        color = `var(--${theme})`;
+    }
+    style = useMemo(
+        () => ({
+            ...style,
+            height,
+            width,
+            svg: {
+                color: color,
+                fill: color,
+                stroke: color,
+            },
+        }),
+        [style, height, color, width],
+    );
 
     return (
         <picture
@@ -132,7 +108,7 @@ const TeaIcon = memo<iTeaIconProps>(function TeaIcon({
             onMouseDown={onMouseDown}
             onTouchStart={onTouchStart}
         >
-            <SVG cacheRequests src={svgSource} onError={handleLoadError} onLoad={onLoad} />
+            {svgSource ? <SVG cacheRequests src={svgSource} onError={onError} onLoad={onLoad} /> : children}
         </picture>
     );
 });

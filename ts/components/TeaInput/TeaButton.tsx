@@ -24,15 +24,16 @@ import './style/TeaButton.scss';
 
 type tButtonSize = 'small' | 'medium' | 'large';
 type tButtonTheme = 'default' | 'filled' | 'success' | 'danger' | 'ghost';
-type tButtonVariant = 'default';
+type tButtonVariant = 'default' | 'borderless';
 
 interface iTeaButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children?: React.ReactNode;
+    /** Disable ripple effect (default: false) */
+    disableIconRotation?: boolean;
+    disableRipple?: boolean;
     icon?: React.ReactNode;
     iconPosition?: 'left' | 'right';
     loading?: boolean;
-    /** Disable ripple effect (default: false) */
-    disableRipple?: boolean;
     size?: tButtonSize;
     theme?: tButtonTheme;
     variant?: tButtonVariant;
@@ -41,6 +42,7 @@ interface iTeaButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 const TeaButton: React.FC<iTeaButtonProps> = (props) => {
     // Default props
     const iconPosition = props.iconPosition ?? 'left';
+    const disableIconRotation = props.disableIconRotation ?? false;
     const loading = props.loading ?? false;
     const disableRipple = props.disableRipple ?? false;
     const size = props.size ?? 'medium';
@@ -129,6 +131,8 @@ const TeaButton: React.FC<iTeaButtonProps> = (props) => {
         () =>
             [
                 'tea-button',
+                !disableRipple && 'ripple',
+                !disableIconRotation && 'icon-rotation',
                 isIconOnlyChild ? 'size-icon-only' : `size-${size}`,
                 `theme-${theme}`,
                 `variant-${variant}`,
@@ -165,6 +169,8 @@ const TeaButton: React.FC<iTeaButtonProps> = (props) => {
         </button>
     );
 };
+
+export type { iTeaButtonProps, tButtonSize, tButtonTheme, tButtonVariant };
 
 export default TeaButton;
 

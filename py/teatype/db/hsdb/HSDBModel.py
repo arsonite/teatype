@@ -21,35 +21,24 @@ from teatype.db.hsdb import HSDBAttribute, HSDBMeta, HSDBQuery, HSDBRelation
 from teatype.toolkit import dt, staticproperty
 from teatype.toolkit import generate_id, kebabify
 
-# TODO: Implement a short-key map for attributes for compression
-#       - automate by implementing a smart algorithm that first checks how many seperations of underscore are there and then abbreviates that way
-#       - it also uses indexing for shortenting attribute names and checks for collisions and adjusts index length accordingly
 # TODO: Implement auto-compute variable for count of reverse lookup models (amount_of_<relation_name>s)
-# TODO: Replace data with kwargs on init
-# TODO: Add allowing to use string literal for relation name to avoid circular imports (need access to hybridstorage to iterate through models)
-# TODO: Add validation method inside model
-# TODO: Add language supports
+#       - blocked: HSDBRelation._RelationWrapper only resolves 'many-to-one' lookups today;
+#         one-to-many/many-to-many resolution needs to be finished in HSDBRelation.py first
+# TODO: Add allowing to use string literal for relation name to avoid circular imports
+#       - belongs in HSDBRelation._RelationFactory (resolve secondary_model via HybridStorage.index_db.models)
+# TODO: Add language supports (needs a concrete i18n spec: which fields, storage format, fallback rules)
 class HSDBModel(ABC, metaclass=HSDBMeta):
     # Private class variables
-    # _app_name:str # TODO: Implement these as computed properties
-    _attribute_cache = {} # Cache to store attributes once for each class # TODO: Set to None and then initialize on first access -> lazy initialization
-    # _overwrite_path:str
-    # _overwrite_name:str
-    # _overwrite_plural_name:str
-    # _relations:dict
+    _attribute_cache = {} # Attributes cached per-class on first instantiation (lazy init)
+    _short_key_cache = {} # Compact per-attribute short keys, keyed by class then attribute name
     
     # Public class variables
-    # is_cached:bool=True # Describes whether the model entries are permanently cached in memory
-    # is_fixture:bool=False # Describes whether the model instance is a fixture
     model:type['HSDBModel']
     model_name:str
     path:str
     resource_name:str
     resource_name_plural:str
-    # migrated_at:dt
-    # migration_app_name:str
     migration_id:int
-    # migration_name:str
     
     # HSDB attributes
     created_at = HSDBAttribute(dt,  computed=True)
@@ -57,9 +46,12 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     updated_at = HSDBAttribute(dt,  computed=True)
     
     def __init__(self,
-                 data:dict,
+                 data:dict=None,
                  include_base_attributes:bool=True,
-                 overwrite_path:str=None):
+                 overwrite_path:str=None,
+                 **kwargs):
+        data = {**(data or {}), **kwargs} # Fields may be passed as a dict, kwargs, or both
+        
         # For every class variable that is an HSDBAttribute,
         # create an instance deepcopy, assign its key to the variable name,
         # and, if the field is provided in the data dict, set its value.
@@ -69,12 +61,13 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         if self.__class__ not in self._attribute_cache:
             self._cache_attributes()
             
-        # TODO: Make this more efficient since only class needs to know this information
-        # Model name and pluralization
-        self.model_name = type(self).__name__
-        self.model = self.__class__
-        self.resource_name = kebabify(self.model_name, remove='-model', plural=False)
-        self.resource_name_plural = kebabify(self.model_name, remove='-model', plural=True)
+        # Model name and pluralization: computed once per class, then cached as class attributes
+        cls = self.__class__
+        self.model = cls
+        if 'model_name' not in cls.__dict__:
+            cls.model_name = cls.__name__
+            cls.resource_name = kebabify(cls.model_name, remove='-model', plural=False)
+            cls.resource_name_plural = kebabify(cls.model_name, remove='-model', plural=True)
         
         # Create a dict to hold instance-specific field values
         self._fields = {}
@@ -95,8 +88,6 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                     raise ValueError(f'{attribute_name} is computed and cannot be set')
                 setattr(self, attribute_name, data.get(attribute_name))
         
-        # TODO: Find a more elegant solution than this ugly a** hack
-        # self.id.instance.__computational_override__(generate_id(truncate=5))
         self.id = generate_id()
                 
         # Having to initalize lazily, because needing id to properly intialize relations
@@ -139,13 +130,11 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         if overwrite_path:
             self.path = overwrite_path
         self.path = f'{self.resource_name_plural}/{self.id}.json'
-        
-        # TODO: Make this dynamic
-        # self.app_name = 'raw'
-        # self.migration_id = 1
     
     def __repr__(self):
-        """Return a readable string representation of the model instance."""
+        """
+        Return a readable string representation of the model instance.
+        """
         try:
             id_val = self.id._value if hasattr(self.id, '_value') else str(self.id)
             # Get a few key fields for preview
@@ -215,10 +204,11 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         else:
             super().__setattr__(name, value)
     
-    # TODO: Optimization
     def _cache_attributes(self):
         """
         Cache the attributes for this class (including its ancestors).
+        Runs once per class (result is memoized in `_attribute_cache`), then
+        assigns each attribute a compact `shortkey` for optional compression.
         """
         self._attribute_cache[self.__class__] = {}
         seen = set()
@@ -231,6 +221,41 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 if isinstance(attribute, HSDBAttribute) or isinstance(attribute, HSDBRelation._RelationFactory):
                     seen.add(attribute_name)
                     self._attribute_cache[self.__class__][attribute_name] = attribute
+
+        self._assign_short_keys(self.__class__, self._attribute_cache[self.__class__])
+
+    @classmethod
+    def _assign_short_keys(cls, model:type, attributes:dict) -> None:
+        """
+        Compute a compact short key for every attribute by abbreviating each
+        underscore-separated segment to its first letter (e.g. `created_at` -> `ca`).
+        Collisions are resolved with a numeric suffix, growing its width as needed.
+        Stored separately from the attribute descriptor (rather than as a `shortkey`
+        attribute on it) so it doesn't interfere with instance field reconstruction
+        in `__setattr__`. Purely additive metadata; does not affect serialize()/save().
+        """
+        short_keys = {}
+        used_short_keys = set()
+        for attribute_name, attribute in attributes.items():
+            if isinstance(attribute, HSDBRelation._RelationFactory):
+                continue # Relations don't carry a short key
+            base_short_key = ''.join(segment[0] for segment in attribute_name.split('_') if segment)
+            short_key = base_short_key
+            suffix_length = 1
+            suffix = 0
+            while short_key in used_short_keys:
+                suffix += 1
+                if suffix >= 10 ** suffix_length:
+                    suffix_length += 1
+                short_key = f'{base_short_key}{suffix:0{suffix_length}d}'
+            used_short_keys.add(short_key)
+            short_keys[attribute_name] = short_key
+        cls._short_key_cache[model] = short_keys
+
+    @classmethod
+    def short_key(cls, attribute_name:str) -> str:
+        """Return the compact short key computed for a given attribute name."""
+        return cls._short_key_cache.get(cls, {}).get(attribute_name)
                     
     @property
     def serializer(self) -> dict:
@@ -256,32 +281,20 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
     def print(self):
         pprint.pprint(self.model.serialize(self))
     
-    # TODO: Optimization
-    # TODO: Group data with key and base data into index data
     @classmethod
     def serialize(cls,
                   instance:'HSDBModel',
-                  fuse_data:bool=False,
-                  include_migration:bool=False,
-                  include_model:bool=False,
                   include_relations:bool=False,
                   expand_relations:bool=False,
-                  json_dump:bool=False,
-                  strip_attributes:bool=False,
-                  use_data_key:bool=False) -> dict|str:
+                  json_dump:bool=False) -> dict|str:
         """
         Serialize a model instance to a dictionary.
         
         Args:
             instance: The model instance to serialize
-            fuse_data: Whether to merge base_data and data into a flat dict
-            include_migration: Whether to include migration data
-            include_model: Whether to include model metadata
             include_relations: Whether to include relations (as IDs)
             expand_relations: Whether to expand relations to full serialized objects
             json_dump: Whether to return a JSON string instead of dict
-            strip_attributes: Whether to strip attribute metadata
-            use_data_key: Whether to use resource-specific data key
             
         Returns:
             Serialized dict or JSON string
@@ -405,6 +418,36 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         storage.index_db._index_entry_fields(self)
         
         return self
+    
+    def validate(self) -> bool:
+        """
+        Re-validate every cached attribute of this instance against its
+        constraints (required, type, max_size). Raises ValueError on the
+        first violation found; returns True if everything checks out.
+        
+        Returns:
+            True if the instance is valid
+        """
+        for attribute_name, attribute in self._attribute_cache.get(self.__class__, {}).items():
+            if isinstance(attribute, HSDBRelation._RelationFactory):
+                if attribute.required and attribute_name not in self._fields:
+                    raise ValueError(f'Model "{self.model_name}" validation error: "{attribute_name}" is required')
+                continue
+            
+            if attribute_name not in self._fields:
+                if attribute.required and not attribute.computed:
+                    raise ValueError(f'Model "{self.model_name}" validation error: "{attribute_name}" is required')
+                continue
+            
+            if attribute.computed:
+                continue # Computed fields are system-managed, not user input; skip re-validation
+            
+            value = getattr(self, attribute_name)._value
+            if value is not None and not isinstance(value, attribute.type):
+                raise ValueError(f'Field "{attribute_name}" must be of type {attribute.type.__name__}')
+            if attribute.type is str and value is not None and len(value) > attribute.max_size:
+                raise ValueError(f'Field "{attribute_name}" exceeds maximum size ({attribute.max_size})')
+        return True
     
     #######
     # ORM #
