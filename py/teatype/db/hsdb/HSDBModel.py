@@ -189,7 +189,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 instance_attribute.key = attribute.name
                 instance_attribute.value = value
             elif isinstance(attribute, HSDBRelation._RelationFactory):
-                if attribute.type == list:
+                if attribute.type == List[str]:
                     instance_value = [v.instance if isinstance(v.instance, object) else v.instance for v in value]
                 else:
                     instance_value = [value.instance] if isinstance(value.instance, object) else value.instance
