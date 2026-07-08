@@ -203,35 +203,32 @@ class HSDBServer():
         
         for model in self.models:
             resource_name = kebabify(model.__name__, remove='-model', plural=True)
+            model_schema = model.schema() if hasattr(model, 'schema') else {'attributes': {}, 'relations': {}}
             
             # Build field schema
             fields = {}
-            if hasattr(model, 'attributes'):
-                for attr in model.attributes():
-                    attr_name = attr.key
-                    if attr_name in ['id', 'created_at', 'updated_at', 'model', 'model_name', 
-                                     'path', 'resource_name', 'resource_name_plural', 'migration_id']:
-                        continue  # Skip base/computed fields
-                    fields[attr_name] = {
-                        'type': attr.type.__name__ if hasattr(attr.type, '__name__') else str(attr.type),
-                        'required': not attr.nullable,
-                        'indexed': attr.indexed,
-                        'unique': attr.unique,
-                        'computed': attr.computed,
-                    }
-                    if attr.default is not None:
-                        fields[attr_name]['default'] = attr.default
+            for attr_name, attr in model_schema['attributes'].items():
+                if attr_name in ['id', 'created_at', 'updated_at', 'model', 'model_name', 
+                                 'path', 'resource_name', 'resource_name_plural', 'migration_id']:
+                    continue  # Skip base/computed fields
+                fields[attr_name] = {
+                    'type': attr['type'],
+                    'required': attr['required'],
+                    'indexed': attr['indexed'],
+                    'unique': attr['unique'],
+                    'computed': attr['computed'],
+                }
+                if attr['default'] is not None:
+                    fields[attr_name]['default'] = attr['default']
             
             # Build relations schema
             relations = {}
-            if hasattr(model, 'relations') and callable(model.relations):
-                for rel in model.relations():
-                    rel_name = rel.key
-                    relations[rel_name] = {
-                        'model': rel.model.__name__ if hasattr(rel.model, '__name__') else str(rel.model),
-                        'type': 'many' if rel.is_list else 'one',
-                        'backref': rel.backref,
-                    }
+            for rel_name, rel in model_schema['relations'].items():
+                relations[rel_name] = {
+                    'model': rel['target_model'],
+                    'type': 'many' if rel['type'] == 'many-to-many' else 'one',
+                    'backref': None,
+                }
             
             # Default allowed methods for auto views
             allowed_methods = {

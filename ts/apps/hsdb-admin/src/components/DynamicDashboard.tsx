@@ -24,6 +24,9 @@ import { TeaConfirmProvider, TeaPanel } from '@teatype/components';
 // Hooks
 import { useAPIRegistry } from '@teatype/hooks';
 
+/** Fields to hide from the table per resource, on top of computed fields (e.g. noisy/internal attributes) */
+const ATTRIBUTE_BLACKLIST: Record<string, string[]> = {};
+
 /**
  * A dynamic dashboard that auto-generates views for all resources
  * registered in the HSDB API Registry.
@@ -38,14 +41,6 @@ export function DynamicDashboard() {
     const { loading, error, apiInfos, refresh } = useAPIRegistry();
     const [selectedResource, setSelectedResource] = useState<string | null>(null);
 
-    if (loading) {
-        return (
-            <div className='hsdb-dashboard hsdb-dashboard--loading'>
-                <div className='loading'>Loading API Registry...</div>
-            </div>
-        );
-    }
-
     if (error) {
         return (
             <div className='hsdb-dashboard hsdb-dashboard--error'>
@@ -53,6 +48,14 @@ export function DynamicDashboard() {
                     Failed to load API Registry: {error}
                     <button onClick={refresh}>Retry</button>
                 </div>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className='hsdb-dashboard hsdb-dashboard--loading'>
+                <div className='loading'>Loading API Registry...</div>
             </div>
         );
     }
@@ -111,7 +114,10 @@ export function DynamicDashboard() {
                     </button>
                 </div>
 
-                <DynamicResourceView resource={selectedResource} />
+                <DynamicResourceView
+                    resource={selectedResource}
+                    attributeBlacklist={ATTRIBUTE_BLACKLIST[selectedResource]}
+                />
             </div>
         </TeaConfirmProvider>
     );

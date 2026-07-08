@@ -22,6 +22,8 @@ import { DynamicEditModal } from './DynamicEditModal';
 interface DynamicResourceViewProps {
     /** Resource name (e.g., 'students') */
     resource: string;
+    /** Field names to hide from the table, on top of computed fields */
+    attributeBlacklist?: string[];
 }
 
 /**
@@ -39,7 +41,10 @@ interface DynamicResourceViewProps {
  * <DynamicResourceView resource="universities" />
  * ```
  */
-export function DynamicResourceView<E extends HSDBEntity = HSDBEntity>({ resource }: DynamicResourceViewProps) {
+export function DynamicResourceView<E extends HSDBEntity = HSDBEntity>({
+    resource,
+    attributeBlacklist,
+}: DynamicResourceViewProps) {
     const { data, loading, error, apiInfo, exists, refresh, create, update, remove, isMethodAllowed } =
         useDynamicResource<E>(resource);
 
@@ -110,6 +115,7 @@ export function DynamicResourceView<E extends HSDBEntity = HSDBEntity>({ resourc
                 <DynamicResourceTable
                     apiInfo={apiInfo}
                     data={data}
+                    attributeBlacklist={attributeBlacklist}
                     onEdit={handleEdit}
                     onDelete={remove}
                     isMethodAllowed={isMethodAllowed}

@@ -11,7 +11,6 @@
 # all copies or substantial portions of the Software.
 
 # Standard-library imports
-import traceback
 from abc import ABCMeta
 from typing import List, Type
 
@@ -47,7 +46,9 @@ class HSDBDjangoView(APIView):
         return [method for method in dir(self) if method.upper() in _RESOURCE_METHODS]
     
     def _parse_bool_param(self, value:any) -> bool:
-        """Parse a query parameter value to a boolean."""
+        """
+        Parse a query parameter value to a boolean.
+        """
         if value is None:
             return False
         if isinstance(value, bool):

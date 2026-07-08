@@ -14,7 +14,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { TeaTable, TeaTableColumn, TeaTablePagination } from '@teatype/components';
+import { TeaTable, iTeaTableColumn, TeaTablePagination } from '@teatype/components';
 import { TeaButton } from '@teatype/components';
 import { useConfirm } from '@teatype/components';
 import { HSDBEntity, HSDBAPIInfo } from '@teatype/api';
@@ -24,6 +24,8 @@ interface DynamicResourceTableProps<E extends HSDBEntity> {
     apiInfo: HSDBAPIInfo;
     /** Data to display */
     data: E[];
+    /** Field names to hide from the table, on top of computed fields (e.g. per-model blacklist) */
+    attributeBlacklist?: string[];
     /** Called when edit is requested */
     onEdit?: (entity: E) => void;
     /** Called when delete is requested */
@@ -43,6 +45,7 @@ type SortDirection = 'asc' | 'desc' | null;
 export function DynamicResourceTable<E extends HSDBEntity>({
     apiInfo,
     data,
+    attributeBlacklist = [],
     onEdit,
     onDelete,
     isMethodAllowed = () => true,
@@ -54,12 +57,13 @@ export function DynamicResourceTable<E extends HSDBEntity>({
     const confirm = useConfirm();
 
     // Generate columns from API info fields
-    const columns = useMemo((): TeaTableColumn<E>[] => {
-        const cols: TeaTableColumn<E>[] = [];
+    const columns = useMemo((): iTeaTableColumn<E>[] => {
+        const cols: iTeaTableColumn<E>[] = [];
 
         // Add columns for each field in the schema
         for (const [fieldName, fieldSchema] of Object.entries(apiInfo.fields)) {
             if (fieldSchema.computed) continue; // Skip computed fields
+            if (attributeBlacklist.includes(fieldName)) continue; // Skip blacklisted fields
 
             cols.push({
                 key: fieldName,
@@ -121,7 +125,7 @@ export function DynamicResourceTable<E extends HSDBEntity>({
         }
 
         return cols;
-    }, [apiInfo, onEdit, onDelete, isMethodAllowed, confirm]);
+    }, [apiInfo, attributeBlacklist, onEdit, onDelete, isMethodAllowed, confirm]);
 
     // Sort data
     const sortedData = useMemo(() => {
