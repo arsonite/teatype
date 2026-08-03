@@ -17,7 +17,7 @@ from abc import ABC
 from typing import List
 
 # Third-party imports
-from teatype.db.hsdb import HSDBAttribute, HSDBMeta, HSDBQuery, HSDBRelation
+from teatype.db.hsdb.core import HSDBAttribute, HSDBMeta, HSDBQuery, HSDBRelation
 from teatype.toolkit import dt, staticproperty
 from teatype.toolkit import generate_id, kebabify
 
@@ -552,7 +552,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         Returns:
             Dictionary describing the model structure
         """
-        from teatype.db.hsdb import HSDBAttribute, HSDBRelation
+        from teatype.db.hsdb.core import HSDBAttribute, HSDBRelation
         from teatype.toolkit import kebabify
         
         schema = {

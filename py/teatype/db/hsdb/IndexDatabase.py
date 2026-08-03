@@ -81,7 +81,7 @@ class IndexDatabase:
         Get all indexed fields for a given model.
         Returns a dict of field_name -> HSDBAttribute for fields with indexed=True.
         """
-        from teatype.db.hsdb import HSDBAttribute
+        from teatype.db.hsdb.core import HSDBAttribute
         indexed = {}
         for attr_name in dir(model):
             attr = getattr(model, attr_name, None)
@@ -167,7 +167,7 @@ class IndexDatabase:
     
     def _index_entry_fields(self, entry:object) -> None:
         """Index all indexed fields for an entry."""
-        from teatype.db.hsdb import HSDBAttribute
+        from teatype.db.hsdb.core import HSDBAttribute
         model_name = entry.model_name
         
         # Get cached attributes for this model
@@ -184,7 +184,7 @@ class IndexDatabase:
     
     def _unindex_entry_fields(self, entry:object) -> None:
         """Remove all indexed fields for an entry from indices."""
-        from teatype.db.hsdb import HSDBAttribute
+        from teatype.db.hsdb.core import HSDBAttribute
         model_name = entry.model_name
         
         if entry.__class__ in entry._attribute_cache:

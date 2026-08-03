@@ -11,16 +11,7 @@
 # all copies or substantial portions of the Software.
 
 # Local imports
-# WARNING: Do not change the order of the imports, it will break the code
 from .RawFileStructure import RawFileStructure
 from .RawFileHandler import RawFileHandler
 from .IndexDatabase import IndexDatabase
 from .HybridStorage import HybridStorage
-
-from .core.HSDBQuery import HSDBQuery
-from .core.HSDBField import HSDBField
-from .core.HSDBAttribute import HSDBAttribute
-from .core.HSDBRelation import HSDBRelation
-from .core.HSDBMigration import HSDBMigration
-from .core.HSDBMeta import HSDBMeta
-from .core.HSDBModel import HSDBModel

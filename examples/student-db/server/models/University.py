@@ -11,7 +11,7 @@
 # all copies or substantial portions of the Software.
 
 # Third-party imports
-from teatype.db.hsdb import HSDBAttribute, HSDBModel
+from teatype.db.hsdb.core import HSDBAttribute, HSDBModel
 
 class University(HSDBModel):
     address = HSDBAttribute(str, required=True)
