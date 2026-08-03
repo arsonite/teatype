@@ -166,17 +166,6 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
         return object.__getattribute__(self, name)
 
     def __setattr__(self, name, value):
-        # if attribute_name in data:
-        #     instance_relation = attribute.lazy_init(
-        #         self.id,
-                
-        #         data.get(attribute_name),
-        #     )
-        #     instance_relation.key = attribute_name
-            
-        #     instance_relation.value = attribute._query_closure
-        #     setattr(self, attribute_name, attribute_value)
-        
         _cache = self.__class__._attribute_cache.get(self.__class__, {})
         if name in _cache:
             attribute = _cache[name]

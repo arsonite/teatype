@@ -1,1 +1,12 @@
-{}
+{
+    "background_color": "#1c1b42",
+    "display": "standalone",
+    "display_override": ["standalone", "window-controls-overlay"],
+    "icons": [],
+    "name": "Student DB",
+    "orientation": "landscape",
+    "scope": "/",
+    "short_name": "Student DB",
+    "start_url": "/index.html",
+    "theme_color": "#1c1b42"
+}

@@ -33,8 +33,6 @@ _SUPPORTED_TYPES = [bool, dt, float, int, str]
 # Type alias for attribute types
 T = TypeVar('T')
 
-# TODO: Try to do automatic type checking and assignment in ValueWrapper as well
-# TODO: Implement support for dicts and lists (potentially dangerous though)
 class HSDBAttribute(HSDBField):
     computed:bool         # Whether the attribute is computed, more of a flavour attribute, laxily enforced
     default:Type[T]       # Default value for the attribute, if any
@@ -86,8 +84,7 @@ class HSDBAttribute(HSDBField):
 
     def __get__(self, instance, owner):
         if self._wrapper is None: # Lazy loading of the wrapper
-            value = instance.__dict__['_fields'].get(self.key)
-            self._wrapper = self._AttributeWrapper(value.value, self)
+            self._wrapper = self._AttributeWrapper(self.value, self)
         return self._wrapper
     
     def _validate_key(self, key):

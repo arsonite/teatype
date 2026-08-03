@@ -13,30 +13,32 @@
  * all copies or substantial portions of the Software.
  */
 
+// React imports
 import { useState, useMemo } from 'react';
+
+// Components
 import { TeaTable, iTeaTableColumn, TeaTablePagination } from '@teatype/components';
 import { TeaButton } from '@teatype/components';
 import { useConfirm } from '@teatype/components';
+
+// API
 import { HSDBEntity, HSDBAPIInfo } from '@teatype/api';
 
-interface DynamicResourceTableProps<E extends HSDBEntity> {
+interface iDynamicResourceTableProps<E extends HSDBEntity> {
     /** API info for this resource */
     apiInfo: HSDBAPIInfo;
     /** Data to display */
     data: E[];
     /** Field names to hide from the table, on top of computed fields (e.g. per-model blacklist) */
     attributeBlacklist?: string[];
-    /** Called when edit is requested */
-    onEdit?: (entity: E) => void;
-    /** Called when delete is requested */
-    onDelete?: (id: string) => void;
-    /** Check if a method is allowed */
-    isMethodAllowed?: (method: string, isCollection?: boolean) => boolean;
     /** Page size for pagination */
     pageSize?: number;
+    onDelete?: (id: string) => void;
+    onEdit?: (entity: E) => void;
+    isMethodAllowed?: (method: string, isCollection?: boolean) => boolean;
 }
 
-type SortDirection = 'asc' | 'desc' | null;
+type tSortDirection = 'asc' | 'desc' | null;
 
 /**
  * A dynamic table component that renders data based on HSDBAPIInfo schema.
@@ -50,9 +52,9 @@ export function DynamicResourceTable<E extends HSDBEntity>({
     onDelete,
     isMethodAllowed = () => true,
     pageSize = 100,
-}: DynamicResourceTableProps<E>) {
+}: iDynamicResourceTableProps<E>) {
     const [sortKey, setSortKey] = useState<string | null>(null);
-    const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+    const [sortDirection, setSortDirection] = useState<tSortDirection>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const confirm = useConfirm();
 

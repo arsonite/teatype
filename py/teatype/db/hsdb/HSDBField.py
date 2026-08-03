@@ -37,7 +37,7 @@ class HSDBField(ABC, Generic[T]):
     editable:bool               # Whether the attribute can be edited, automatically set to False if computed
     indexed:bool                # Whether the attribute is indexed
     key:str                     # Property for the field key
-    name:str                    # The field name # TODO: Check if this is needed anymore, maybe refactor in future
+    name:str                    # The field name, used by HSDBModel to key values in `_fields`
     required:bool               # Whether the attribute is required, automatically set to True if computed
     shortkey:str                # The short key for the attribute, useful for compression
     type:T                      # The type of the attribute
@@ -71,8 +71,9 @@ class HSDBField(ABC, Generic[T]):
         self.name = None
         
     def __set_name__(self, owner, name):
-        """Automatically assigns the field name when the class is created."""
+        """Automatically assigns the field name and default key when the class is created."""
         self.name = name
+        self._key = name # Set the key to the field name by default
         
     ##############
     # Properties #
@@ -90,81 +91,67 @@ class HSDBField(ABC, Generic[T]):
     def key(self):
         return self._key
 
-    @property
-    def value(self):
-        return self._value
-        
-    ######################
-    # Descriptor Methods #
-    ######################
-    
-    def __set__(self, instance, value):
-        # Set the value and cache it
-        # TODO: Fix validation
-        # self._validate_value(value)
-        # instance.__dict__[self.name] = value
-        self._wrapper = None # Invalidate the cached wrapper
-
-    def __set_name__(self, owner, name):
-        self.name = name # Store the field name for later use in the instance
-        self._key = name # Set the key to the field name by default
-        
-    ##################
-    # Setter Methods #
-    ##################
-
     @key.setter
     def key(self, new_key:str):
         if not isinstance(new_key, str) or not new_key:
             raise ValueError('key must be a string')
         self._key = new_key
 
+    @property
+    def value(self):
+        return self._value
+
     @value.setter
     def value(self, new_value:any):
-        # self._validate_value(new_value)
+        # Validation is intentionally skipped here: HSDBModel assigns values to
+        # computed attributes (e.g. id, created_at) directly, which would otherwise
+        # always fail the "computed attributes are read-only" check in _validate_value.
         self._value = new_value
+        
+    ######################
+    # Descriptor Methods #
+    ######################
+    
+    def __set__(self, instance, value):
+        # Same validation caveat as the `value` setter above applies here.
+        self._value = value
+        self._wrapper = None # Invalidate the cached wrapper
         
     #############
     # Internals #
     #############
 
     class _ValueWrapper(ABC):
-        cache_values:dict = {} # Cache for the field values
         """
         Wrapper that stores both the value and the field pointer reference.
         """
+        cache_values:dict # Cache for the field values, populated per-instance in __init__
+
         def __init__(self, value:any,
-                     field:str,
+                     field:'HSDBField',
                      additional_available_fields:List[str]=[],
                      available_functions:List[str]=[]):
             self._value = value
-            # DEPRECATED: This is no longer needed since we are using lazy loading and caching
-                # The field metadata (e.g., type, required), no longer keeping reference to the original HSDBField
             self._field = field
             
             self.cache_values = {}
             self._cached_metadata = None
             self._metadata_loaded = False
             
-            # Dynamically create properties that fetch from metadata
-            for prop in (_AVAILABLE_FIELDS + additional_available_fields):
+            available_fields = _AVAILABLE_FIELDS + additional_available_fields
+            for prop in available_fields:
                 self.cache_values[prop] = getattr(self._field, prop)
-                # Create a property for each available field
-                # This allows us to access the metadata without needing to call a method
-                setattr(self.__class__, prop, property(lambda self, p=prop: self._load_metadata().get(p)))
-                
-            # Dynamically create function aliases
-            for func in available_functions:
-                # Create a function alias for each available function
-                # This allows us to access the metadata without needing to call a method
-                setattr(self.__class__, func, lambda self, f=func: getattr(self._field, f)())
-
-        # DEPRECATED: This method is not needed anymore since lazy loading and caching optimization
-            # def __getattr__(self, item):
-            #     """
-            #     If we access metadata (e.g., `student_A.id.type`), return it from the field.
-            #     """
-            #     return getattr(self._field, item)
+            
+            # The properties/aliases are the same for every instance of a given wrapper
+            # subclass, so only build them once instead of redefining them on every access
+            if '_properties_built' not in self.__class__.__dict__:
+                # Dynamically create properties that fetch from metadata
+                for prop in available_fields:
+                    setattr(self.__class__, prop, property(lambda self, p=prop: self._load_metadata().get(p)))
+                # Dynamically create function aliases
+                for func in available_functions:
+                    setattr(self.__class__, func, lambda self, f=func: getattr(self._field, f)())
+                self.__class__._properties_built = True
 
         def __repr__(self):
             return repr(self._value)
@@ -180,7 +167,6 @@ class HSDBField(ABC, Generic[T]):
                 # Cache the metadata to avoid reloading it
                 self._cached_metadata = {
                     'cls': self._field.cls,
-                    # 'instance': self._field,
                     'key': self._field.key
                 }
                 
@@ -191,6 +177,3 @@ class HSDBField(ABC, Generic[T]):
                 del self.cache_values
                 self._metadata_loaded = True
             return self._cached_metadata
-        
-        def __getattribute__(self, name):
-            return super().__getattribute__(name)
