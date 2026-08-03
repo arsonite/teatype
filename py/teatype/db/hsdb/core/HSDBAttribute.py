@@ -15,7 +15,7 @@ import sys
 from typing import  Type, TypeVar
 
 # Third-party imports
-from teatype.db.hsdb.HSDBField import HSDBField
+from teatype.db.hsdb.core.HSDBField import HSDBField
 from teatype.toolkit import dt
 
 # Supported attribute types
