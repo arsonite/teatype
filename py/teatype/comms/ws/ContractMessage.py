@@ -10,12 +10,19 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# From local imports
-from .ContractMessage import ContractMessage
-from .MessageBuffer import MessageBuffer
-from .Websocket import Websocket
+# Standard-library imports
+from typing import Optional
 
-try:
-    from .SocketServer import SocketServer
-except ImportError:
-    pass
+# Third-party imports
+from pydantic import BaseModel, ConfigDict
+
+class WebsocketMessage(BaseModel):
+    """
+    Minimal contract every websocket payload must satisfy: a 'key' used to route
+    callback handlers, and an optional 'request_id' used to correlate buffered
+    input/output. Any other fields are passed through untouched.
+    """
+    model_config=ConfigDict(extra='allow')
+
+    key:str
+    request_id:Optional[str]=None
