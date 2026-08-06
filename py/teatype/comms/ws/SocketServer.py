@@ -209,7 +209,7 @@ if __name__ == '__main__':
             pass
 
     server = SocketServer(port=12345, auto_start=False)
-    # server.register_endpoint('/ws/echo', echo)
+    server.register_endpoint('/ws/echo', echo)
     server.start()
 
     server._process.join()

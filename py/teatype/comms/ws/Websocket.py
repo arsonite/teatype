@@ -57,7 +57,6 @@ class Websocket:
     has_secure_connection:bool=False
     input_buffer:MessageBuffer
     output_buffer:MessageBuffer
-    ssl_verify:bool
     url:str
     
     def __init__(self,
@@ -84,11 +83,6 @@ class Websocket:
         self._bg_thread = None
         self._task = None
         self._ws = None
-        
-        if not ssl_verify:
-            self.has_secure_connection = False
-        elif ssl_verify and url.startswith('wss://'):
-            self.has_secure_connection = True
         
         if auto_connect:
             asyncio.create_task(self.start())
