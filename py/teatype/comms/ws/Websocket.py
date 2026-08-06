@@ -20,6 +20,8 @@ import threading
 # Third-party imports
 import websockets
 from pydantic import ValidationError
+from websockets.asyncio.client import ClientConnection
+from websockets.protocol import State
 
 # Local imports
 from teatype.comms.ws.ContractMessage import ContractMessage
@@ -49,7 +51,7 @@ class Websocket:
     _bg_thread:threading.Thread
     _task:asyncio.Task
     _use_buffer:bool
-    _ws:websockets.WebSocketClientProtocol
+    _ws:ClientConnection
     
     callback_handlers:dict
     has_secure_connection:bool=False
@@ -97,7 +99,7 @@ class Websocket:
     
     @property
     def connected(self) -> bool:
-        return self._ws is not None and not self._ws.closed
+        return self._ws is not None and self._ws.state is State.OPEN
     
     #############
     # Internals #
@@ -192,7 +194,7 @@ class Websocket:
     async def start(self) -> bool:
         try:
             ssl_context = None
-            if not self.ssl_verify:
+            if self.url.startswith('wss://') and not self.ssl_verify:
                 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
@@ -219,7 +221,7 @@ if __name__ == '__main__':
         async def my_hook(data):
             print(f'Received: {data}')
 
-        ws = Websocket('ws://localhost:12345', auto_connect=False)
+        ws = Websocket('ws://localhost:12345/ws/echo', auto_connect=False)
         ws.register_callback(key='*', hook=my_hook)
         await ws.start()
 

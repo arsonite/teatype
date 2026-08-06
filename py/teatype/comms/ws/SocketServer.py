@@ -15,12 +15,14 @@ import atexit
 import multiprocessing
 import os
 import signal
+import tempfile
+from pathlib import Path
 
 # Third-party imports
+import psutil
 import uvicorn
 from fastapi import FastAPI
-
-# Local imports
+from teatype.io import prompt
 from teatype.logging import *
 
 def _serve(app:FastAPI, host:str, port:int, ssl_certfile:str, ssl_keyfile:str, log_level:str):
@@ -40,11 +42,17 @@ class SocketServer:
 
     The server starts automatically on construction (auto_start=True) and is
     torn down, via the child process' pid, when this object is garbage-collected
-    or the owning program exits.
+    or the owning program exits. The pid is also persisted to a pid file (keyed
+    by port) so a stale server from a previous, uncleanly-exited run can be
+    detected and reclaimed on the next start().
+
+    If the target port is already occupied on start(), the occupying process is
+    either killed automatically (force_kill=True) or the user is prompted for
+    confirmation.
 
     Usage
     -----
-        server = SocketServer(port=8765, auto_start=False)
+        server = SocketServer(port=12345, auto_start=False)
 
         async def echo(websocket):
             await websocket.accept()
@@ -55,9 +63,11 @@ class SocketServer:
         server.register_endpoint('/ws/echo', echo)
         server.start()
     """
+    _pid_file:Path
     _process:multiprocessing.Process
     
     app:FastAPI
+    force_kill:bool
     host:str
     log_level:str
     port:int
@@ -69,16 +79,19 @@ class SocketServer:
                  port:int=12345,
                  *,
                  auto_start:bool=True,
+                 force_kill:bool=False,
                  log_level:str='info',
                  ssl_certfile:str=None,
                  ssl_keyfile:str=None):
         self.app = FastAPI()
+        self.force_kill = force_kill
         self.host = host
         self.log_level = log_level
         self.port = port
         self.ssl_certfile = ssl_certfile
         self.ssl_keyfile = ssl_keyfile
         
+        self._pid_file = Path(tempfile.gettempdir()) / f'teatype_socketserver_{port}.pid'
         self._process = None
         
         # Guarantees shutdown even if __del__ never runs (e.g. interpreter exit)
@@ -115,26 +128,72 @@ class SocketServer:
     def start(self):
         if self.running:
             return
+        self._reclaim_port()
         self._process = multiprocessing.get_context('fork').Process(
             target=_serve,
             args=(self.app, self.host, self.port, self.ssl_certfile, self.ssl_keyfile, self.log_level),
             daemon=True)
         self._process.start()
+        self._pid_file.write_text(str(self._process.pid))
         scheme = 'wss' if self.ssl_certfile else 'ws'
         log(f'[comms.ws.SocketServer] Listening on {scheme}://{self.host}:{self.port} (pid={self._process.pid})')
     
     def stop(self):
         if not self.running:
             return
-        os.kill(self._process.pid, signal.SIGTERM)
+        try:
+            os.kill(self._process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
         self._process.join(timeout=5)
         if self._process.is_alive():
             self._process.terminate()
             self._process.join(timeout=5)
         self._process = None
+        self._pid_file.unlink(missing_ok=True)
     
     def __del__(self):
         self.stop()
+
+    #################
+    # Port Conflict #
+    #################
+
+    def _reclaim_port(self):
+        """
+        Kills whatever process is already listening on self.port, either
+        automatically (force_kill) or after prompting for confirmation.
+        """
+        owner_pid = self._port_owner_pid()
+        if owner_pid is None:
+            return
+        
+        if not self.force_kill:
+            answer = prompt(f'[comms.ws.SocketServer] Port {self.port} is already in use by PID {owner_pid}. Kill it?')
+            if not answer:
+                err(f'[comms.ws.SocketServer] Port {self.port} is occupied by PID {owner_pid}',
+                    raise_exception=RuntimeError)
+        
+        log(f'[comms.ws.SocketServer] Killing process occupying port {self.port} (pid={owner_pid})')
+        try:
+            os.kill(owner_pid, signal.SIGTERM)
+            psutil.Process(owner_pid).wait(timeout=5)
+        except psutil.NoSuchProcess:
+            pass
+        except psutil.TimeoutExpired:
+            os.kill(owner_pid, signal.SIGKILL)
+
+    def _port_owner_pid(self) -> int:
+        """
+        Returns the pid of whatever process is listening on self.port, or None.
+        """
+        for connection in psutil.net_connections(kind='inet'):
+            if connection.status == psutil.CONN_LISTEN and \
+               connection.laddr.port == self.port and \
+               connection.pid and \
+               connection.pid != os.getpid():
+                return connection.pid
+        return None
 
 if __name__ == '__main__':
     from fastapi import WebSocket, WebSocketDisconnect
@@ -144,12 +203,13 @@ if __name__ == '__main__':
         try:
             while True:
                 data = await websocket.receive_text()
+                print(f'[comms.ws.SocketServer] Received: {data}')
                 await websocket.send_text(data)
         except WebSocketDisconnect:
             pass
 
-    server = SocketServer(port=8765, auto_start=False)
-    server.register_endpoint('/ws/echo', echo)
+    server = SocketServer(port=12345, auto_start=False)
+    # server.register_endpoint('/ws/echo', echo)
     server.start()
 
     server._process.join()
