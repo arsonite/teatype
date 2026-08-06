@@ -104,6 +104,10 @@ class Websocket:
     #############
 
     async def _loop(self):
+        if not self._ws:
+            err(f'[comms.ws.Websocket] Cannot start loop: websocket is not connected',
+                raise_exception=ConnectionError)
+            
         try:
             async for raw in self._ws:
                 try:
@@ -174,6 +178,10 @@ class Websocket:
         self.callback_handlers[key] = hook
 
     async def send(self, data:dict):
+        if not self.connected:
+            err(f'[comms.ws.Websocket] Cannot send data: websocket is not connected',
+                raise_exception=ConnectionError)
+            
         if not self._is_valid(data):
             err(f'[comms.ws.Websocket] Outgoing data does not match ContractMessage schema: {data}',
                 raise_exception=ValueError)
@@ -190,7 +198,8 @@ class Websocket:
                 ssl_context.verify_mode = ssl.CERT_NONE
             self._ws = await websockets.connect(self.url, ssl=ssl_context)
         except Exception as exc:
-            print(f'[WS] Connection failed: {exc}')
+            err(f'[comms.ws.Websocket] Connection failed',
+                raise_exception=True)
             return False
         self._task = asyncio.create_task(self._loop())
         return True
@@ -208,14 +217,16 @@ if __name__ == '__main__':
 
     async def main():
         async def my_hook(data):
-            print(f"Received: {data}")
+            print(f'Received: {data}')
 
-        ws = Websocket('wss://localhost:8765', auto_connect=False)
+        ws = Websocket('ws://localhost:12345', auto_connect=False)
         ws.register_callback(key='*', hook=my_hook)
         await ws.start()
 
         # Send a test message
-        await ws.send({"key": "test", "request_id": "123", "message": "Hello, WebSocket!"})
+        await ws.send({'data': 'Hello, WebSocket!',
+                       'key': 'test',
+                       'request_id': '123'})
 
         # Keep the connection open for a while to receive messages
         await asyncio.sleep(10)
