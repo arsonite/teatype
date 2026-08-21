@@ -170,6 +170,7 @@ class File:
         """
         return f'File(path="{self.path}", is_file={self.is_file}, name="{self.name}")'
 
+# TODO: Rework this so it works dynamically with the write function
 def append(path:str, data:any, force_format:str=None) -> bool:
     """
     Append data to a file at the specified path.

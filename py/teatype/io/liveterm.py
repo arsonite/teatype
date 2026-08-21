@@ -82,7 +82,7 @@ class LiveTerm:
             sys.stdout = self._captured_output
         
         # Clear for clean slate, write directly to real stdout
-        self._real_stdout.write('\033[2J\033[H')  # Clear screen and move to top
+        self._real_stdout.write('\033[2J\033[H') # Clear screen and move to top
         self._real_stdout.flush()
         
         if self._hide_cursor:
