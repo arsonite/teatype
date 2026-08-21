@@ -10,14 +10,11 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# From package imports
-from teatype.db.hsdb.django_support.views import HSDBDjangoResource
-
-# From local imports
-from api.models import Student
-
-class Student(HSDBDjangoResource):
-    allowed_methods=['GET','PUT','PATCH','DELETE']
-    auto_view=True
-    data_key='student_data'
-    hsdb_model=Student
+# Local imports
+from .HSDBQuery import HSDBQuery
+from .HSDBField import HSDBField
+from .HSDBAttribute import HSDBAttribute
+from .HSDBRelation import HSDBRelation
+from .HSDBMigration import HSDBMigration
+from .HSDBMeta import HSDBMeta
+from .HSDBModel import HSDBModel

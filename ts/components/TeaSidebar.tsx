@@ -19,85 +19,47 @@ import React, { useState, createContext, useContext } from 'react';
 // Style
 import './style/TeaSidebar.scss';
 
-// ============================================================================
-// Types
-// ============================================================================
-
-export interface iTeaSidebarItem {
-    /** Unique identifier */
-    id: string;
-    /** Display title */
-    title: string;
-    /** Optional subtitle or preview text */
-    subtitle?: string;
-    /** Optional metadata (e.g., date, count) */
-    meta?: string;
-    /** Optional icon or emoji */
-    icon?: React.ReactNode;
-    /** Whether item is currently active/selected */
+export type tTeaSidebarItem = {
     active?: boolean;
-}
-
-export interface iTeaSidebarSection {
-    /** Section identifier */
-    id: string;
-    /** Section title */
-    title: string;
-    /** Section items */
-    items: iTeaSidebarItem[];
-    /** Item count badge */
-    count?: number;
-    /** Whether section is collapsible */
-    collapsible?: boolean;
-    /** Default collapsed state */
-    defaultCollapsed?: boolean;
-}
-
-export interface iTeaSidebarAction {
-    /** Action identifier */
-    id: string;
-    /** Button label */
-    label: string;
-    /** Optional icon */
     icon?: React.ReactNode;
-    /** Click handler */
-    onClick: () => void;
-    /** Button variant */
+    id: string;
+    meta?: string;
+    subtitle?: string;
+    title: string;
+};
+
+export type tTeaSidebarSection = {
+    collapsible?: boolean;
+    count?: number;
+    defaultCollapsed?: boolean;
+    id: string;
+    items: tTeaSidebarItem[];
+    title: string;
+};
+
+export type tTeaSidebarAction = {
+    icon?: React.ReactNode;
+    id: string;
+    label: string;
     variant?: 'primary' | 'secondary' | 'danger';
-}
+    onClick: () => void;
+};
 
 export interface iTeaSidebarProps {
-    /** Sidebar title when expanded */
-    title?: string;
-    /** Whether sidebar is expanded */
-    expanded: boolean;
-    /** Toggle expansion callback */
-    onToggle: () => void;
-    /** Header actions (shown next to title) */
-    headerActions?: iTeaSidebarAction[];
-    /** Sidebar sections with items */
-    sections?: iTeaSidebarSection[];
-    /** Callback when an item is clicked */
-    onItemClick?: (sectionId: string, itemId: string) => void;
-    /** Callback when an item delete button is clicked */
-    onItemDelete?: (sectionId: string, itemId: string) => void;
-    /** Whether to show delete buttons on items */
-    showItemDelete?: boolean;
-    /** Footer content (settings panel, actions, etc.) */
-    footer?: React.ReactNode;
-    /** Custom content to render instead of default sections */
     children?: React.ReactNode;
-    /** Width when expanded (default: 300px) */
-    expandedWidth?: number;
-    /** Width when collapsed (default: 50px) */
     collapsedWidth?: number;
-    /** Empty state message when no items */
+    expanded: boolean;
+    expandedWidth?: number;
     emptyMessage?: string;
+    footer?: React.ReactNode;
+    headerActions?: tTeaSidebarAction[];
+    sections?: tTeaSidebarSection[];
+    showItemDelete?: boolean;
+    title?: string;
+    onItemClick?: (sectionId: string, itemId: string) => void;
+    onItemDelete?: (sectionId: string, itemId: string) => void;
+    onToggle: () => void;
 }
-
-// ============================================================================
-// Context for sidebar state
-// ============================================================================
 
 interface iTeaSidebarContextValue {
     expanded: boolean;
@@ -114,22 +76,18 @@ export const useTeaSidebar = () => {
     return context;
 };
 
-// ============================================================================
-// Sub-components
-// ============================================================================
-
-interface iTeaSidebarSectionComponentProps {
-    section: iTeaSidebarSection;
+interface tTeaSidebarSectionComponentProps {
+    section: tTeaSidebarSection;
+    showItemDelete?: boolean;
     onItemClick?: (itemId: string) => void;
     onItemDelete?: (itemId: string) => void;
-    showItemDelete?: boolean;
 }
 
-const TeaSidebarSectionComponent: React.FC<iTeaSidebarSectionComponentProps> = ({
+const TeaSidebarSectionComponent: React.FC<tTeaSidebarSectionComponentProps> = ({
     section,
+    showItemDelete,
     onItemClick,
     onItemDelete,
-    showItemDelete,
 }) => {
     const [collapsed, setCollapsed] = useState(section.defaultCollapsed ?? false);
 
@@ -199,10 +157,6 @@ const TeaSidebarSectionComponent: React.FC<iTeaSidebarSectionComponentProps> = (
     );
 };
 
-// ============================================================================
-// Settings Panel Sub-components
-// ============================================================================
-
 export interface iTeaSidebarSettingsSection {
     id: string;
     label: string;
@@ -229,10 +183,6 @@ export const TeaSidebarSettings: React.FC<iTeaSidebarSettingsProps> = ({ isOpen,
         </div>
     );
 };
-
-// ============================================================================
-// Helper Components
-// ============================================================================
 
 export const TeaSidebarSlider: React.FC<{
     min: number;
@@ -284,10 +234,6 @@ export const TeaSidebarButton: React.FC<{
 export const TeaSidebarButtonGroup: React.FC<{
     children: React.ReactNode;
 }> = ({ children }) => <div className='tea-sidebar-btn-group'>{children}</div>;
-
-// ============================================================================
-// Main Component
-// ============================================================================
 
 export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
     title,

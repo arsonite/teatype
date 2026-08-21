@@ -16,8 +16,8 @@
 // React imports
 import { ReactElement } from 'react';
 
-// Icons
-import { RoundedSquareIcon } from '@teatype/icons';
+// Types
+import type { tTeaTag } from '@teatype/types';
 
 // Style
 import './style/TeaPanel.scss';
@@ -29,9 +29,12 @@ interface iTeaPanelProps {
     id?: string;
     padding?: 'none' | 'small' | 'medium' | 'large';
     size?: 'dymnamic' | 'full';
+    tags?: tTeaTag[];
     title?: string;
     useTheme?: boolean;
-    variant?: 'card' | 'framed';
+    variant?: 'card' | 'framed' | 'stat';
+
+    onClick?: () => void;
 }
 
 const TeaPanel: React.FC<iTeaPanelProps> = (props) => {
@@ -42,6 +45,7 @@ const TeaPanel: React.FC<iTeaPanelProps> = (props) => {
         props.size ? `size-${props.size}` : 'size-dynamic',
         props.useTheme && 'use-theme',
         props.variant ? `variant-${props.variant}` : 'variant-default',
+        props.onClick && 'clickable',
     ]
         .filter(Boolean)
         .join(' ');
@@ -54,18 +58,56 @@ const TeaPanel: React.FC<iTeaPanelProps> = (props) => {
     };
 
     return (
-        <div className={classes}>
+        <div className={classes} id={props.id} onClick={props.onClick}>
             {wrapComponent(
                 <>
-                    {props.title && (
-                        <legend className='title'>
-                            {/* <RoundedSquareIcon /> */}
+                    {props.title && <legend className='title'>{props.title}</legend>}
 
-                            {props.title}
-                        </legend>
+                    <div className='children'>{props.children}</div>
+
+                    {props.tags && (
+                        <div className='tags'>
+                            {props.tags.map((tag, index) => {
+                                const darkenColor = (color: string): string => {
+                                    if (color.startsWith('var(')) {
+                                        return color.replace(')', '-dark)');
+                                    }
+                                    // Darken hex color by 50%
+                                    const hex = color.replace('#', '');
+                                    const num = parseInt(hex, 16);
+                                    const darkNum = Math.floor(num * 0.5);
+                                    return '#' + darkNum.toString(16).padStart(6, '0');
+                                };
+
+                                const lightenColor = (color: string): string => {
+                                    if (color.startsWith('var(')) {
+                                        return color.replace(')', '-light)');
+                                    }
+                                    // Lighten hex color by 50%
+                                    const hex = color.replace('#', '');
+                                    const num = parseInt(hex, 16);
+                                    const lightNum = Math.floor(num + (0xffffff - num) * 0.5);
+                                    return '#' + lightNum.toString(16).padStart(6, '0');
+                                };
+
+                                const bgColor = tag.color || 'var(--accent)';
+                                const textColor = tag.textColor || darkenColor(bgColor);
+
+                                return (
+                                    <span
+                                        key={index}
+                                        className='tag'
+                                        style={{
+                                            backgroundColor: bgColor,
+                                            color: textColor,
+                                        }}
+                                    >
+                                        {tag.name}
+                                    </span>
+                                );
+                            })}
+                        </div>
                     )}
-
-                    {props.children}
                 </>,
             )}
         </div>

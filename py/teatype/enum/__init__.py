@@ -10,4 +10,10 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-from .XTerm import *
+try:
+    from .XTerm import *
+except ImportError:
+    try:
+        from .EscapeColor import EscapeColor as XTerm
+    except ImportError:
+        XTerm = None

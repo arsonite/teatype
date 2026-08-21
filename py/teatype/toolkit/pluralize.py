@@ -10,14 +10,17 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# From package imports
-from teatype.db.hsdb.django_support.views import HSDBDjangoCollection
-
-# From local imports
-from api.models import Student
-
-class Students(HSDBDjangoCollection):
-    allowed_methods=['GET', 'POST']
-    auto_view=True
-    data_key='students_data'
-    hsdb_model=Student
+# A dumb algorithm that estimates the plural form of words, based on the last letter
+def pluralize(word:str) -> str:
+    """
+    Estimate the plural form of a given word based on its last letter.
+    word: The singular form of the word to be pluralized.
+    Returns the estimated plural form of the word.
+    """
+    last_letter = word[-1].lower()
+    if last_letter in ['s', 'x', 'z']:
+        return word + 'es'
+    elif last_letter == 'y' and len(word) > 1 and word[-2].lower() not in 'aeiou':
+        return word[:-1] + 'ies'
+    else:
+        return word + 's'

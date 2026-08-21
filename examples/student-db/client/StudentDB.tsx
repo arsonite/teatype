@@ -17,14 +17,15 @@
 import { Routes, Route } from 'react-router-dom';
 
 // Components
-import { HSDBAdmin } from '@teatype/apps';
-import { QueryBuilder } from '@teatype/apps';
-import { iPageInfo, TeaApp, TeaNav, TeaPage } from '@teatype/components';
-
+import { ClientKitApp, HSDBAdmin, QueryBuilder } from '@teatype/apps';
+import { tPage, TeaApp, TeaNav, TeaPage } from '@teatype/components';
 import { DatabaseIcon, ModelsIcon } from '@teatype/icons';
 
+// Utility
+import { Store } from '@teatype/toolkit';
+
 const APP_NAME = 'Student DB Dashboard';
-const PAGES: iPageInfo[] = [
+const PAGES: tPage[] = [
     {
         title: 'Database Management',
         path: '/database',
@@ -34,16 +35,23 @@ const PAGES: iPageInfo[] = [
         icon: <DatabaseIcon />,
         tags: ['Admin', 'HSDB'],
     },
-    // {
-    //     title: 'Data Query Builder',
-    //     path: '/data-query-builder',
-    //     content: QueryBuilder,
-    //     longDescription: 'Build and execute custom queries against the HSDB server to fetch student and related data.',
-    //     shortDescription: 'Build Custom Data Queries',
-    //     icon: <ModelsIcon />,
-    //     tags: ['Admin', 'Config', 'HSDB', 'Test'],
-    // },
+    {
+        title: 'Data Query Builder',
+        path: '/data-query-builder',
+        content: QueryBuilder,
+        longDescription: 'Build and execute custom queries against the HSDB server to fetch student and related data.',
+        shortDescription: 'Build Custom Data Queries',
+        icon: <ModelsIcon />,
+        tags: ['Admin', 'Config', 'HSDB', 'Test'],
+    },
 ];
+
+// Set to true to enable development features like React DevTools integration and verbose logging
+const DEV_MODE = true;
+Store.memory.set('devMode', DEV_MODE);
+if (DEV_MODE) {
+    PAGES.push(ClientKitApp);
+}
 
 const StudentDB = () => {
     return (

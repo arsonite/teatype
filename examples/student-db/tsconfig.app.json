@@ -51,14 +51,20 @@
         // Warn about imports that may have side effects and aren't explicitly used
         "noUncheckedSideEffectImports": true,
 
-        // Path mapping for cleaner imports - @/* maps to the src directory
+        // Path mapping for cleaner imports - @/* maps to the client directory
         "paths": {
-            "@/*": ["./src/*"],
+            "@/*": ["./client/*"],
             "@teatype": ["../../ts/components/index.ts"],
             "@teatype/style/*": ["../../ts/style/*"],
             "@teatype/*": ["../../ts/*"]
         }
     },
     // Files and directories to include in the compilation
-    "include": ["src", "*.tsx", "*.ts", "vite-env.d.ts", "../../ts/apps/modulo-dashboard/src/components/SubNavDemo.tsx"]
+    "include": [
+        "client",
+        "*.tsx",
+        "*.ts",
+        "vite-env.d.ts",
+        "../../ts/apps/modulo-dashboard/src/components/SubNavDemo.tsx"
+    ]
 }

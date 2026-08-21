@@ -1,5 +1,3 @@
-#!/usr/bin/env python3.13
-
 # Copyright (C) 2024-2026 Burak Günaydin
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -13,10 +11,15 @@
 # all copies or substantial portions of the Software.
 
 # Third-party imports
-from teatype.cli import BaseStopCLI
-    
-class Stop(BaseStopCLI):
-    pass
+from teatype.db.hsdb.core import HSDBAttribute, HSDBModel, HSDBRelation
 
-if __name__ == '__main__':
-    Stop()
+# Local imports
+from .University import University
+
+# Assume these are your models derived from BaseModel.
+class Student(HSDBModel):
+    age        = HSDBAttribute(int, required=True, indexed=True)  # Indexed for fast age queries
+    gender     = HSDBAttribute(str, required=True, indexed=True)  # Indexed for fast gender queries
+    height     = HSDBAttribute(int, description='Height in cm', required=True)
+    name       = HSDBAttribute(str, required=True, searchable=True)
+    university = HSDBRelation.ManyToOne(University, required=True)

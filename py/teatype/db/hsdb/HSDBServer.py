@@ -203,35 +203,32 @@ class HSDBServer():
         
         for model in self.models:
             resource_name = kebabify(model.__name__, remove='-model', plural=True)
+            model_schema = model.schema() if hasattr(model, 'schema') else {'attributes': {}, 'relations': {}}
             
             # Build field schema
             fields = {}
-            if hasattr(model, 'attributes'):
-                for attr in model.attributes():
-                    attr_name = attr.key
-                    if attr_name in ['id', 'created_at', 'updated_at', 'model', 'model_name', 
-                                     'path', 'resource_name', 'resource_name_plural', 'migration_id']:
-                        continue  # Skip base/computed fields
-                    fields[attr_name] = {
-                        'type': attr.type.__name__ if hasattr(attr.type, '__name__') else str(attr.type),
-                        'required': not attr.nullable,
-                        'indexed': attr.indexed,
-                        'unique': attr.unique,
-                        'computed': attr.computed,
-                    }
-                    if attr.default is not None:
-                        fields[attr_name]['default'] = attr.default
+            for attr_name, attr in model_schema['attributes'].items():
+                if attr_name in ['id', 'created_at', 'updated_at', 'model', 'model_name', 
+                                 'path', 'resource_name', 'resource_name_plural', 'migration_id']:
+                    continue  # Skip base/computed fields
+                fields[attr_name] = {
+                    'type': attr['type'],
+                    'required': attr['required'],
+                    'indexed': attr['indexed'],
+                    'unique': attr['unique'],
+                    'computed': attr['computed'],
+                }
+                if attr['default'] is not None:
+                    fields[attr_name]['default'] = attr['default']
             
             # Build relations schema
             relations = {}
-            if hasattr(model, 'relations') and callable(model.relations):
-                for rel in model.relations():
-                    rel_name = rel.key
-                    relations[rel_name] = {
-                        'model': rel.model.__name__ if hasattr(rel.model, '__name__') else str(rel.model),
-                        'type': 'many' if rel.is_list else 'one',
-                        'backref': rel.backref,
-                    }
+            for rel_name, rel in model_schema['relations'].items():
+                relations[rel_name] = {
+                    'model': rel['target_model'],
+                    'type': 'many' if rel['type'] == 'many-to-many' else 'one',
+                    'backref': None,
+                }
             
             # Default allowed methods for auto views
             allowed_methods = {
@@ -400,13 +397,16 @@ class HSDBServer():
         from django.core.wsgi import get_wsgi_application
         return get_wsgi_application()
     
-    def create_urlpatterns(self, base_endpoint:str=None, include_admin:bool=False):
+    def create_urlpatterns(self, base_endpoint:str=None, include_admin:bool=False, auto_model_routes:bool=True):
         """
         Create URL patterns dynamically for registered apps.
         
         Args:
             base_endpoint: Base API endpoint prefix (e.g., 'v1', 'api')
             include_admin: Whether to include Django admin interface
+            auto_model_routes: Whether to auto-register Collection/Resource routes
+                                for every model in `self.models` that doesn't already
+                                have a hand-written resource defined in an app
             
         Returns:
             List of URL patterns
@@ -416,7 +416,7 @@ class HSDBServer():
         from pathlib import Path
         from django.urls import path
         from django.conf.urls.static import static
-        from teatype.db.hsdb.django_support.urlpatterns import parse_dynamic_routes
+        from teatype.db.hsdb.django_support.urlpatterns import create_auto_model_routes, parse_dynamic_routes
         
         # Store base endpoint for API registry
         self._base_endpoint = base_endpoint or ''
@@ -486,6 +486,19 @@ class HSDBServer():
                     warn(f'No resources directory found for app: {app_name}')
             except Exception as e:
                 err(f'Could not register URLs for app {app_name}', traceback=True)
+        
+        # Auto-register Collection/Resource routes for models without a hand-written
+        # resource. Placed after app routes so a manually defined resource for the
+        # same path always takes precedence over the auto-generated one.
+        if auto_model_routes and self.models:
+            existing_routes = {pattern.pattern._route for pattern in urlpatterns}
+            auto_urlpatterns = create_auto_model_routes(self.models, verbose=True)
+            
+            if base_endpoint:
+                for pattern in auto_urlpatterns:
+                    pattern.pattern._route = f'{base_endpoint}/{pattern.pattern._route}'
+            
+            urlpatterns.extend(pattern for pattern in auto_urlpatterns if pattern.pattern._route not in existing_routes)
         
         # Add static files
         if hasattr(settings, 'STATIC_URL'):

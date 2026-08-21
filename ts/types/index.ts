@@ -13,15 +13,6 @@
  * all copies or substantial portions of the Software.
  */
 
-.tea-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+// Types
 
-    svg {
-        display: inherit;
-
-        height: 100%;
-        width: 100%;
-    }
-}
+export type { tTeaTag } from './tTeaTag.types.ts';

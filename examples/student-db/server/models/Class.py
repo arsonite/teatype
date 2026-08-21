@@ -11,7 +11,7 @@
 # all copies or substantial portions of the Software.
 
 # Third-party imports
-from teatype.db.hsdb import HSDBAttribute, HSDBModel, HSDBRelation
+from teatype.db.hsdb.core import HSDBAttribute, HSDBModel, HSDBRelation
 
 # Local imports
 from .Professor import Professor

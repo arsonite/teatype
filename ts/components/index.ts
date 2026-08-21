@@ -16,6 +16,7 @@
 // Components
 export { TeaApp } from './TeaApp/TeaApp';
 export { TeaButton } from './TeaInput/TeaButton';
+export { XButton } from './TeaInput/XButton';
 export { TeaConfirmProvider, useConfirm } from './TeaConfirm';
 export { TeaIcon } from './TeaIcon';
 export { TeaInfotip } from './TeaInfotip';
@@ -48,19 +49,19 @@ export {
 export { TeaTooltip } from './TeaTooltip';
 
 // Types
-export type { iPageInfo, iTeaAppProps } from './TeaApp/TeaApp';
+export type { tPage, iTeaAppProps } from './TeaApp/TeaApp';
 export type { tTheme, tLanguage, LanguageInfo } from './TeaApp/TeaSettings';
 export type { iTeaSliderProps, tSliderSize, tSliderTheme } from './TeaInput/TeaSlider';
 export type { iTeaSubNavItem, iTeaSubNavProps } from './TeaApp/TeaSubNav';
 export type {
-    iTeaSidebarItem,
-    iTeaSidebarSection,
-    iTeaSidebarAction,
+    tTeaSidebarItem,
+    tTeaSidebarSection,
+    tTeaSidebarAction,
     iTeaSidebarProps,
     iTeaSidebarSettingsSection,
     iTeaSidebarSettingsProps,
 } from './TeaSidebar';
-export type { TeaTableColumn, TeaTableProps } from './TeaTable';
+export type { iTeaTableColumn, iTeaTableProps } from './TeaTable';
 export type {
     tTeaToastType,
     tTeaToastPosition,

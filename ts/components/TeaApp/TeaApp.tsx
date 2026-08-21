@@ -33,7 +33,7 @@ import '../../style/globstyle.scss';
 import './style/TeaApp.scss';
 import './style/TeaSettings.scss';
 
-interface iPageInfo {
+type tPage = {
     content?: React.FC;
     icon?: React.ReactNode;
     longDescription?: string;
@@ -41,7 +41,7 @@ interface iPageInfo {
     shortDescription?: string;
     tags?: string[];
     title: string;
-}
+};
 
 interface iTeaAppProps {
     /** Name of the application, displayed in header */
@@ -161,4 +161,4 @@ export default TeaApp;
 
 export { TeaApp };
 
-export type { iPageInfo, iTeaAppProps };
+export type { tPage, iTeaAppProps };

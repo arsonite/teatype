@@ -11,8 +11,8 @@
 # all copies or substantial portions of the Software.
 
 # Third-party imports
-from teatype.db.hsdb.HSDBAttribute import HSDBAttribute
-from teatype.db.hsdb.HSDBField import HSDBField
+from teatype.db.hsdb.core.HSDBAttribute import HSDBAttribute
+from teatype.db.hsdb.core.HSDBField import HSDBField
 
 def transmute_id(entry_id:HSDBField|str) -> str:
     """

@@ -18,7 +18,8 @@ from pprint import pprint
 
 # Third-party imports
 import pytest
-from teatype.db.hsdb import HSDBAttribute, HSDBRelation, HSDBModel, HybridStorage
+from teatype.db.hsdb.core import HSDBAttribute, HSDBRelation, HSDBModel
+from teatype.db.hsdb import HybridStorage
 from teatype.logging import *
 from teatype.toolkit import generate_id, stopwatch
 

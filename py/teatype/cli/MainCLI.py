@@ -19,7 +19,8 @@ import sys
 from importlib import util as iutil
 
 # Third-party imports
-from teatype.cli import BaseCLI, Command
+from teatype.cli import BaseCLI, BaseTUI, Command
+from teatype.cli.args import Action
 from teatype.enum import XTerm
 from teatype.io import file, path
 from teatype.logging import *
@@ -99,11 +100,27 @@ class MainCLI(BaseCLI):
                             script_class = getattr(module, class_name, None)
                             # Verify class is valid CLI script
                             if script_class and inspect.isclass(script_class) and issubclass(script_class, BaseCLI):
-                                # Initialize script instance without auto-execution
-                                script_instance = script_class(proxy_mode=True,
-                                                               auto_parse=False,
-                                                               auto_validate=False,
-                                                               auto_execute=False)
+                                # Initialize script instance without auto-execution or init hooks —
+                                # auto_init=False prevents pre_init() from running at discovery time,
+                                # which stops scripts from doing expensive/destructive work on every `cl` call.
+                                # manually extract meta instead of full init
+                                script_instance = script_class.__new__(script_class)
+                                script_instance.proxy_mode = True
+                                script_instance._parsing_errors = []
+                                script_instance.arguments = []
+                                script_instance.commands = []
+                                script_instance.flags = []
+                                script_instance.secret_flags = []
+                                meta = script_instance.meta()
+                                script_instance.name = meta.get('name')
+                                script_instance.shorthand = meta.get('shorthand')
+                                script_instance.help = meta.get('help')
+                                if issubclass(script_class, BaseTUI):
+                                    # BaseTUI.__init__ normally builds this, but it's bypassed here since
+                                    # the instance is created via __new__ to avoid running init hooks at
+                                    # discovery time. Replicate it so selected TUIs work at real execution.
+                                    script_instance.actions = [Action(**action) for action in meta.get('actions', [])]
+                                    script_instance.actions.append(Action(name='exit', help=f'{XTerm.GRAY}(or CRTL+C){XTerm.RESET} Leave the TUI.'))
                                 module_registry[script_instance.name] = script_instance
                         except Exception as exc:
                             # print(script_class.AVAILABLE)
@@ -167,7 +184,7 @@ class MainCLI(BaseCLI):
                 tui_info = f'    {tui_name.ljust(max_line_width)}    {tui.help}'
             help_message += f'{tui_info}\n'
         log(help_message)
-        hint(f'Use `{self.shorthand} <script> -h, --help` for more details on specific scripts.', pad_after=1)
+        hint(f'Use `{self.shorthand} <script> -h, --help` for more details on specific scripts.', pad_after=1, use_prefix=False, include_symbol=True)
         
     #########
     # Hooks #
@@ -206,6 +223,9 @@ class MainCLI(BaseCLI):
                 selected_script = self.scripts[script_name]
                 # DEPRECATED: Not having to call proxy_mode since hook-call is integrated with base function
                     # selected_script.proxy_mode = False # Disable auto-call to restore default functionality of script
+                # The discovery instance was created via __new__ and only has name/shorthand/help populated.
+                # Re-run init() now so arguments, commands and flags declared in meta() actually exist before parsing.
+                selected_script.init()
                 # Not having to call pre_parse since hook-call is integrated with base function
                 selected_script.parse() 
                 del selected_script.parsed_arguments[0] # Remove script name from arguments
@@ -228,6 +248,9 @@ class MainCLI(BaseCLI):
                 selected_tui = self.tuis[tui_name]
                 # DEPRECATED: Not having to call proxy_mode since hook-call is integrated with base function
                     # selected_tui.proxy_mode = False # Disable auto-call to restore default functionality of tui
+                # The discovery instance was created via __new__ and only has name/shorthand/help populated.
+                # Re-run init() now so arguments, commands and flags declared in meta() actually exist before parsing.
+                selected_tui.init()
                 # Not having to call pre_parse since hook-call is integrated with base function
                 selected_tui.parse() 
                 del selected_tui.parsed_arguments[0] # Remove tui name from arguments

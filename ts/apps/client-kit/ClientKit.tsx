@@ -14,10 +14,10 @@
  */
 
 // Components
-import { TeaButton, TeaPanel } from '../../../../components';
+import { TeaButton, TeaPanel, XButton } from '../../components';
 
 // Icons
-import { ModelsIcon, SettingsIcon } from '../../../../icons';
+import { ModelsIcon, SettingsIcon } from '../../icons';
 
 // Style
 import './style/ClientKit.scss';
@@ -57,6 +57,8 @@ const ClientKit = () => {
                 <TeaButton>
                     <SettingsIcon />
                 </TeaButton>
+
+                <XButton />
             </TeaPanel>
 
             {/* <TeaPanel title='Containers' variant='framed'>

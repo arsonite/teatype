@@ -13,28 +13,32 @@
  * all copies or substantial portions of the Software.
  */
 
+// React imports
 import { useState, useMemo } from 'react';
-import { TeaTable, TeaTableColumn, TeaTablePagination } from '@teatype/components';
+
+// Components
+import { TeaTable, iTeaTableColumn, TeaTablePagination } from '@teatype/components';
 import { TeaButton } from '@teatype/components';
 import { useConfirm } from '@teatype/components';
+
+// API
 import { HSDBEntity, HSDBAPIInfo } from '@teatype/api';
 
-interface DynamicResourceTableProps<E extends HSDBEntity> {
+interface iDynamicResourceTableProps<E extends HSDBEntity> {
     /** API info for this resource */
     apiInfo: HSDBAPIInfo;
     /** Data to display */
     data: E[];
-    /** Called when edit is requested */
-    onEdit?: (entity: E) => void;
-    /** Called when delete is requested */
-    onDelete?: (id: string) => void;
-    /** Check if a method is allowed */
-    isMethodAllowed?: (method: string, isCollection?: boolean) => boolean;
+    /** Field names to hide from the table, on top of computed fields (e.g. per-model blacklist) */
+    attributeBlacklist?: string[];
     /** Page size for pagination */
     pageSize?: number;
+    onDelete?: (id: string) => void;
+    onEdit?: (entity: E) => void;
+    isMethodAllowed?: (method: string, isCollection?: boolean) => boolean;
 }
 
-type SortDirection = 'asc' | 'desc' | null;
+type tSortDirection = 'asc' | 'desc' | null;
 
 /**
  * A dynamic table component that renders data based on HSDBAPIInfo schema.
@@ -43,23 +47,25 @@ type SortDirection = 'asc' | 'desc' | null;
 export function DynamicResourceTable<E extends HSDBEntity>({
     apiInfo,
     data,
+    attributeBlacklist = [],
     onEdit,
     onDelete,
     isMethodAllowed = () => true,
     pageSize = 100,
-}: DynamicResourceTableProps<E>) {
+}: iDynamicResourceTableProps<E>) {
     const [sortKey, setSortKey] = useState<string | null>(null);
-    const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+    const [sortDirection, setSortDirection] = useState<tSortDirection>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const confirm = useConfirm();
 
     // Generate columns from API info fields
-    const columns = useMemo((): TeaTableColumn<E>[] => {
-        const cols: TeaTableColumn<E>[] = [];
+    const columns = useMemo((): iTeaTableColumn<E>[] => {
+        const cols: iTeaTableColumn<E>[] = [];
 
         // Add columns for each field in the schema
         for (const [fieldName, fieldSchema] of Object.entries(apiInfo.fields)) {
             if (fieldSchema.computed) continue; // Skip computed fields
+            if (attributeBlacklist.includes(fieldName)) continue; // Skip blacklisted fields
 
             cols.push({
                 key: fieldName,
@@ -121,7 +127,7 @@ export function DynamicResourceTable<E extends HSDBEntity>({
         }
 
         return cols;
-    }, [apiInfo, onEdit, onDelete, isMethodAllowed, confirm]);
+    }, [apiInfo, attributeBlacklist, onEdit, onDelete, isMethodAllowed, confirm]);
 
     // Sort data
     const sortedData = useMemo(() => {

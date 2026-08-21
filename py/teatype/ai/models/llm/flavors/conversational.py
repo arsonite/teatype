@@ -15,6 +15,7 @@ import os
 from abc import ABC
 from collections import deque
 from typing import List, Dict, Optional
+
 # Third-party imports
 from llama_cpp import Llama
 from teatype.ai.models.llm import Inferencer, PromptBuilder
@@ -31,6 +32,7 @@ class ConversationalAI(Inferencer):
                  max_tokens:int=2048,
                  context_size:int=4096,
                  temperature:float=0.7,
+                 chat_format:Optional[str]=None, # Force a chat template (e.g. 'chatml', 'llama-2', 'mistral-instruct') instead of auto-detecting one from the model's gguf metadata
                  cpu_cores:int=os.cpu_count(),
                  gpu_layers:int=-1,
                  auto_init:bool=True,
@@ -38,11 +40,11 @@ class ConversationalAI(Inferencer):
                  surpress_output:bool=True,
                  top_p:float=0.9,
                  verbose:bool=False):
-        super().__init__(model=model,
-                         model_directory=model_directory,
+        super().__init__(model_path=path.join(model_directory, model),
                          max_tokens=max_tokens,
                          context_size=context_size,
                          temperature=temperature,
+                         chat_format=chat_format,
                          cpu_cores=cpu_cores,
                          gpu_layers=gpu_layers,
                          auto_init=auto_init,
@@ -54,40 +56,39 @@ class ConversationalAI(Inferencer):
         def conversional_directive() -> str:
             return """You will reply conversationally, keeping context from earlier turns in the chat. Engage in a conversational manner. Remember previous interactions and provide contextually relevant responses."""
         self.system_prompt = PromptBuilder(additional_runtime_calls=[conversional_directive],
-                                           include_assistant_context=False,
                                            unlock_full_potential=True)
 
-    def _build_conversation_prompt(self, user_prompt:str) -> str:
+    def _build_conversation_messages(self, user_prompt:str) -> List[Dict[str, str]]:
         """
-        Build the full prompt including history + current user input.
+        Build the full messages list including history + current user input.
         """
-        messages = [f'System: {self.system_prompt}']
+        messages = [{'role': 'system', 'content': self.system_prompt}]
 
         for turn in self.chat_history:
-            messages.append(f'User: {turn["user"]}')
-            messages.append(f'Assistant: {turn["assistant"]}')
+            messages.append({'role': 'user', 'content': turn['user']})
+            messages.append({'role': 'assistant', 'content': turn['assistant']})
 
-        messages.append(f'User: {user_prompt}')
-        messages.append('Assistant:')
-
-        return '\n'.join(messages)
+        messages.append({'role': 'user', 'content': user_prompt})
+        return messages
 
     def chat(self,
              user_prompt:str,
              artificial_delay:float=0.0,
-             show_thinking:bool=True,
+             enable_thinking:bool=True, # actually enable/disable the model's reasoning step at generation time (no-op for templates that don't support it)
+             show_thinking:bool=True, # print <think>...</think> reasoning content in gray; set False to hide it entirely
              stream_response:bool=True) -> str:
         """
         One conversational turn. Tracks history automatically.
         """
-        full_prompt = self._build_conversation_prompt(user_prompt)
+        messages = self._build_conversation_messages(user_prompt)
         response = super().__call__(
-            user_prompt=full_prompt,
+            messages=messages,
             artificial_delay=artificial_delay,
+            enable_thinking=enable_thinking,
             show_thinking=show_thinking,
-            stream_response=stream_response,
-            use_prompt_builder=False
+            stream_response=stream_response
         )
-        # Save to history
-        self.chat_history.append({"user": user_prompt, "assistant": response})
+        # Save to history without reasoning content, so the model doesn't
+        # keep re-reading its own previous <think> blocks as context.
+        self.chat_history.append({"user": user_prompt, "assistant": self.strip_thinking(response)})
         return response

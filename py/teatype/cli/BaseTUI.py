@@ -106,14 +106,17 @@ class BaseTUI(BaseCLI):
             return meta_info
         self.meta = _meta_closure
         
+        # Must be set before calling super().__init__(), since auto_validate triggers
+        # post_validate() synchronously during that call, which requires self.actions.
+        self.actions = [Action(**action) for action in self.meta().get('actions', [])]
+        self.actions.append(Action(name='exit', help=f'{XTerm.GRAY}(or CRTL+C){XTerm.RESET} Leave the TUI.'))
+        
         super().__init__(proxy_mode,
                          auto_init,
                          auto_parse,
                          auto_validate,
                          auto_execute,
                          env_path)
-        self.actions = [Action(**action) for action in self.meta().get('actions', [])]
-        self.actions.append(Action(name='exit', help=f'{XTerm.GRAY}(or CRTL+C){XTerm.RESET} Leave the TUI.'))
                 
         self.on_init()
         

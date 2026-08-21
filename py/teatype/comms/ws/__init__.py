@@ -1,5 +1,3 @@
-#!/usr/bin/env python3.13
-
 # Copyright (C) 2024-2026 Burak Günaydin
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -12,16 +10,12 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# Third-party imports
-from teatype.cli import BaseCLI
-from teatype.io import path, shell
+# From local imports
+from .ContractMessage import ContractMessage
+from .MessageBuffer import MessageBuffer
+from .Websocket import Websocket
 
-class Start(BaseCLI):
-    def execute(self):
-        shell(f'cd {self.parent_path} && pnpm start', detached=True)
-        
-        self.process_name = 'student_db_server'
-        self.start_command = f'python3.13 {self.process_name}.py'
-
-if __name__ == '__main__':
-    Start()
+try:
+    from .SocketServer import SocketServer
+except ImportError:
+    pass

@@ -16,15 +16,15 @@
 from teatype import colorwrap
 from teatype.ai.models.llm import __GPU_SUPPORT__
 from teatype.cli import BaseTUI
-from teatype.io import fetch, path, prompt
+from teatype.io import file, fetch, path, prompt
 from teatype.logging import *
 
 if __GPU_SUPPORT__:
     from teatype.ai.models.llm import ConversationalAI
-
+    
+DEBUG_MODE = False
 DEFAULT_MODEL_PATH = ''
 MANUAL_REFRESH = False # If True, the shell will be cleared automatically after each command
-DEBUG_MODE = False
 
 # FIXME: Missmatched parent paths
 class Chat(BaseTUI):
@@ -36,6 +36,26 @@ class Chat(BaseTUI):
             'name': 'chat',
             'shorthand': 'ch',
             'help': 'Chat with a local LLM model',
+            'flags': [
+                {
+                    'shorthand': 'idf',
+                    'name': 'ignore-default',
+                    'help': 'Ignore the default model and select a new one',
+                    'required': False
+                },
+                {
+                    'shorthand': 'nt',
+                    'name': 'no-thinking',
+                    'help': 'Hide model reasoning (<think>...</think>) content instead of showing it in gray',
+                    'required': False
+                },
+                {
+                    'shorthand': 'nr',
+                    'name': 'no-reasoning',
+                    'help': 'Disable model reasoning/thinking entirely at generation time (no-op for models that don\'t support it)',
+                    'required': False
+                }
+            ]
         }
         
     def on_display(self):
@@ -61,6 +81,7 @@ class Chat(BaseTUI):
         stream = self.get_flag('stream')
         if not stream:
             stream = True
+            
         # def _spinner(stop_event):
         #     for symbol in itertools.cycle('|/-\\'):
         #         if stop_event.is_set():
@@ -89,15 +110,54 @@ class Chat(BaseTUI):
         
         # println()
         # println()
+        
+        if not self.get_flag('ignore-default'):
+            default_model_file_path = path.join(conversational_model_directory, 'default-model.txt')
+            if not file.exists(default_model_file_path):
+                file.write(default_model_file_path, '')
             
-        llm = ConversationalAI(model='Nous-Hermes-2-Mistral-7B-DPO.Q6_K',
+            default_model = file.read(default_model_file_path).strip()
+            if default_model == '' or default_model is None or self.get_flag('load-model'):
+                hint('No default model set. Select one of these available local models:',
+                    use_prefix=False)
+                available_local_models = [f.name.split('.gguf')[0] for f in file.list(conversational_model_directory, only_include='.gguf')]
+                prompt_options = {str(i+1): model_name for i, model_name in enumerate(available_local_models)}
+                for available_model_index, available_model_name in prompt_options.items():
+                    model_file_path = path.join(conversational_model_directory, f'{available_model_name}.gguf')
+                    file_size = file.size(model_file_path, human_readable=True)
+                    log(f'  [{available_model_index}] {available_model_name} ({file_size})')
+                selection = prompt('Please enter the number corresponding to your choice:',
+                                choices=prompt_options,
+                                return_input=True)
+                default_model = available_local_models[int(selection)-1]
+                file.write(default_model_file_path, default_model)
+            
+            default_model = file.read(path.join(conversational_model_directory, 'default-model.txt'))
+        else:
+            available_local_models = [f.name.split('.gguf')[0] for f in file.list(conversational_model_directory, only_include='.gguf')]
+            prompt_options = {str(i+1): model_name for i, model_name in enumerate(available_local_models)}
+            for available_model_index, available_model_name in prompt_options.items():
+                model_file_path = path.join(conversational_model_directory, f'{available_model_name}.gguf')
+                file_size = file.size(model_file_path, human_readable=True)
+                log(f'  [{available_model_index}] {available_model_name} ({file_size})')
+            selection = prompt('Please enter the number corresponding to your choice:',
+                            choices=prompt_options,
+                            return_input=True)
+            default_model = available_local_models[int(selection)-1]
+            
+        show_thinking = not self.get_flag('no-thinking')
+        enable_thinking = not self.get_flag('no-reasoning')
+        llm = ConversationalAI(model=default_model,
                                model_directory=conversational_model_directory,
                                temperature=0.9,
                                top_p=0.9,
                                verbose=True)
         println()
         log(colorwrap('[LLM]:', 'cyan'))
-        response = llm.chat('Instruction: Greet the user.', stream_response=stream)
+        response = llm.chat('Instruction: Greet the user.',
+                            enable_thinking=enable_thinking,
+                            show_thinking=show_thinking,
+                            stream_response=stream)
         try:
             while True:
                 user_input = prompt('[You]:', return_input=True)
@@ -106,7 +166,7 @@ class Chat(BaseTUI):
                     break
                 println()
                 log(colorwrap('[LLM]:', 'cyan'))
-                response = llm.chat(user_input, stream_response=stream)
+                response = llm.chat(user_input, enable_thinking=enable_thinking, show_thinking=show_thinking, stream_response=stream)
                 if not stream:
                     print(response)
         except KeyboardInterrupt:

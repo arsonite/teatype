@@ -14,7 +14,7 @@
 from typing import List
 
 # Third-party imports
-from teatype.db.hsdb import HSDBField
+from teatype.db.hsdb.core import HSDBField
 from teatype.db.hsdb.indices import Index
 from teatype.db.hsdb.toolbox import transmute_id
 

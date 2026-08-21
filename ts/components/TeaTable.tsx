@@ -29,31 +29,31 @@ export interface iTeaTableColumn<T> {
 }
 
 export interface iTeaTableProps<T> {
-    columns: iTeaTableColumn<T>[];
-    data: T[];
-    keyExtractor: (row: T, index: number) => string | number;
-    sortKey?: string | null;
-    sortDirection?: 'asc' | 'desc' | null;
-    /** Called with key and direction. Direction is null to clear sort. */
-    onSort?: (key: string, direction: 'asc' | 'desc' | null) => void;
-    emptyMessage?: string;
-    loading?: boolean;
     className?: string;
     /** Enable clicking rows to view full data in modal */
     clickableRows?: boolean;
+    columns: iTeaTableColumn<T>[];
+    data: T[];
+    /** Called with key and direction. Direction is null to clear sort. */
+    emptyMessage?: string;
+    loading?: boolean;
+    sortKey?: string | null;
+    sortDirection?: 'asc' | 'desc' | null;
+    keyExtractor: (row: T, index: number) => string | number;
+    onSort?: (key: string, direction: 'asc' | 'desc' | null) => void;
 }
 
 export function TeaTable<T>({
-    columns,
-    data,
-    keyExtractor,
-    sortKey,
-    sortDirection,
-    onSort,
-    emptyMessage = 'No data available',
-    loading = false,
     className = '',
     clickableRows = false,
+    columns,
+    data,
+    emptyMessage = 'No data available',
+    loading = false,
+    sortKey,
+    sortDirection,
+    keyExtractor,
+    onSort,
 }: iTeaTableProps<T>) {
     const [selectedRow, setSelectedRow] = useState<T | null>(null);
 

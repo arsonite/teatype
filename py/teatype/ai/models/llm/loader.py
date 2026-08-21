@@ -14,6 +14,7 @@
 import os
 import sys
 from contextlib import contextmanager
+from typing import Optional
 # Third-party imports
 from llama_cpp import Llama
 from teatype.logging import *
@@ -22,6 +23,7 @@ def load_model(model_path:str,
                context_size:int=4096,
                cpu_cores:int=os.cpu_count(),
                gpu_layers:int=-1,
+               chat_format:Optional[str]=None,
                surpress_output:bool=True,
                verbose:bool=False) -> Llama|None:
     """
@@ -32,6 +34,10 @@ def load_model(model_path:str,
         cpu_cores (int): Number of CPU cores to use for processing.
         context_size (int): The context size for the model.
         gpu_layers (int): Number of GPU layers to use, set to 0 for CPU-only or –-1 for GPU depending on VRAM.
+        chat_format (str, optional): Force a specific llama-cpp chat format (e.g. 'chatml',
+            'llama-2', 'mistral-instruct') instead of auto-detecting one from the model's
+            embedded gguf chat template. Useful for older/legacy conversions that don't ship
+            a template. See `llama_cpp.llama_chat_format` for the full list of supported names.
     
     Returns:
         Any: The loaded model object.
@@ -66,6 +72,7 @@ def load_model(model_path:str,
                 n_ctx=context_size,
                 n_threads=cpu_cores,
                 n_gpu_layers=gpu_layers,
+                chat_format=chat_format,
                 use_mlock=True,
                 use_mmap=True,
                 verbose=False
@@ -76,6 +83,7 @@ def load_model(model_path:str,
             n_ctx=context_size,
             n_threads=cpu_cores,
             n_gpu_layers=gpu_layers,
+            chat_format=chat_format,
             use_mlock=True,
             use_mmap=True,
             verbose=True

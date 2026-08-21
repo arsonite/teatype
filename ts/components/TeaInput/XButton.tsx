@@ -13,15 +13,21 @@
  * all copies or substantial portions of the Software.
  */
 
-.tea-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+// React imports
+import React from 'react';
 
-    svg {
-        display: inherit;
+// Components
+import TeaButton, { iTeaButtonProps } from './TeaButton';
+import { XIcon } from '@teatype/icons';
 
-        height: 100%;
-        width: 100%;
-    }
-}
+const XButton: React.FC<iTeaButtonProps> = (props) => {
+    return (
+        <TeaButton disableRipple disableIconRotation variant='borderless' size='small' {...props}>
+            <XIcon />
+        </TeaButton>
+    );
+};
+
+export default XButton;
+
+export { XButton };

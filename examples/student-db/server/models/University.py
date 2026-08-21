@@ -11,15 +11,8 @@
 # all copies or substantial portions of the Software.
 
 # Third-party imports
-from teatype.db.hsdb import HSDBAttribute, HSDBModel, HSDBRelation
+from teatype.db.hsdb.core import HSDBAttribute, HSDBModel
 
-# Local imports
-from .University import University
-
-# Assume these are your models derived from BaseModel.
-class Student(HSDBModel):
-    age        = HSDBAttribute(int, required=True, indexed=True)  # Indexed for fast age queries
-    gender     = HSDBAttribute(str, required=True, indexed=True)  # Indexed for fast gender queries
-    height     = HSDBAttribute(int, description='Height in cm', required=True)
-    name       = HSDBAttribute(str, required=True, searchable=True)
-    university = HSDBRelation.ManyToOne(University, required=True)
+class University(HSDBModel):
+    address = HSDBAttribute(str, required=True)
+    name    = HSDBAttribute(str, required=True, indexed=True, unique=True)

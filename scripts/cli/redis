@@ -111,6 +111,7 @@ class Redis(BaseCLI):
         return found, process_pid
     
     def start(self, parent_directory:str) -> None:
+        enable_sudo()
         shell('echo "never" | sudo tee /sys/kernel/mm/transparent_hugepage/enabled', mute=True)
         hint('Disabled Transparent Huge Pages to reduce Redis latency', include_symbol=True, use_prefix=False)
         println()
@@ -199,7 +200,6 @@ class Redis(BaseCLI):
             println()
         
     def execute(self):
-        enable_sudo()
         
         parent_directory = path.caller_parent(reverse_depth=2)
         is_running, process_pid = self.is_running()
@@ -226,6 +226,7 @@ class Redis(BaseCLI):
                     log('Redis server is not running. No action taken.')
                     println()
                 else:
+                    enable_sudo()
                     softkill(['redis-server'])
 
 if __name__ == '__main__':

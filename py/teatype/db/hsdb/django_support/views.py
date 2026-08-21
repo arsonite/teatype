@@ -11,7 +11,6 @@
 # all copies or substantial portions of the Software.
 
 # Standard-library imports
-import traceback
 from abc import ABCMeta
 from typing import List, Type
 
@@ -43,11 +42,13 @@ class HSDBDjangoView(APIView):
     @property
     def allowed_methods(self) -> List[str]:
         if self.is_collection:
-            return [method for method in dir(self) if method in _COLLECTION_METHODS]
-        return [method for method in dir(self) if method in _RESOURCE_METHODS]
+            return [method for method in dir(self) if method.upper() in _COLLECTION_METHODS]
+        return [method for method in dir(self) if method.upper() in _RESOURCE_METHODS]
     
     def _parse_bool_param(self, value:any) -> bool:
-        """Parse a query parameter value to a boolean."""
+        """
+        Parse a query parameter value to a boolean.
+        """
         if value is None:
             return False
         if isinstance(value, bool):
@@ -220,21 +221,18 @@ class HSDBDjangoView(APIView):
         """
         request_method = request.method
         if self.is_collection and request_method not in _COLLECTION_METHODS:
-            return NotAllowed(f'You can\'t use {request_method} requests on collections.')
+            raise MethodNotAllowed(request_method)
 
-        if request_method not in self.allowed_methods:
-            return NotAllowed(f'Method not allowed. Allowed methods: {self.allowed_methods}')
+        if request_method.lower() not in self.allowed_methods:
+            raise MethodNotAllowed(request_method)
         
     def handle_exception(self, exc):
         if isinstance(exc, MethodNotAllowed):
-            return NotAllowed(f'Method not allowed. Allowed methods: {self.allowed_methods}')
+            return NotAllowed(f'Method not allowed. Allowed methods: {self.allowed_methods}', self.allowed_methods)
 
     def get(self, request, *args, **kwargs):
         return self._auto_method(request, kwargs)
     
-    def post(self, request, *args, **kwargs):
-        return self._auto_method(request, kwargs)
-
     def post(self, request, *args, **kwargs):
         return self._auto_method(request, kwargs)
 

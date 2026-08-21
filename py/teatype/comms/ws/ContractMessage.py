@@ -1,5 +1,3 @@
-#!/usr/bin/env python3.13
-
 # Copyright (C) 2024-2026 Burak Günaydin
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -12,16 +10,20 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
+# Standard-library imports
+from typing import Any
+
 # Third-party imports
-from teatype.cli import BaseIsRunningCLI
+from pydantic import BaseModel, ConfigDict
 
-class IsRunning(BaseIsRunningCLI):
-    #########
-    # Hooks #
-    #########
-    
-    def pre_execute(self):
-        self.process_names = ['student_db_server', 'pnpm', 'vite']
+class ContractMessage(BaseModel):
+    """
+    Minimal contract every websocket payload must satisfy: a 'key' used to route
+    callback handlers, and an optional 'request_id' used to correlate buffered
+    input/output. Any other fields are passed through untouched.
+    """
+    model_config=ConfigDict(extra='allow')
 
-if __name__ == '__main__':
-    IsRunning()
+    data:Any
+    key:str
+    request_id:str
