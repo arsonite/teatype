@@ -199,7 +199,8 @@ def prompt(text:str,
                 if use_index:
                     completer_choices.extend(str(i+1) for i in range(len(choices)))
                 completer = WordCompleter(completer_choices, ignore_case=True)
-                prompt_answer = pt_prompt('> ', completer=completer)
+                # complete_while_typing=False keeps the completer from intercepting pasted text
+                prompt_answer = pt_prompt('> ', completer=completer, complete_while_typing=False)
             else:
                 prompt_answer = pt_prompt('> ')
 

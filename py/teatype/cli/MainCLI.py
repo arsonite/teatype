@@ -81,8 +81,8 @@ class MainCLI(BaseCLI):
             try:
                 # Iterate through files in the scripts directory
                 for f in file.list(module_directory):
-                    # Skip special Python files
-                    if f not in ['__init__.py', '__pycache__']:
+                    # Skip special Python files/dirs (f is a File object, not a str, so compare .name)
+                    if f.name not in ['__init__.py', '__pycache__'] and f.is_file:
                         # Convert filename to valid Python module name
                         module_name = f.name.replace('-', '_').replace('.py', '')
                         temp_file = path.join(temporary_directory, module_name + '.py')
