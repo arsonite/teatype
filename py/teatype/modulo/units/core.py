@@ -13,12 +13,12 @@
 # Standard-library imports
 import threading
 import time
-from queue import LifoQueue
 from typing import Optional, Union
 
 # Third-party imports
 from teatype.comms.ipc.redis import *
 from teatype.enum import XTerm
+from teatype.io.buffer import BaseQueue
 from teatype.logging import *
 from teatype.toolkit import generate_id, kebabify
 
@@ -64,8 +64,8 @@ class CoreUnit(threading.Thread):
     """
     _ALLOW_DIRECT_INSTANTIATION:bool=False
     
-    _command_buffer:LifoQueue
-    _history_stack:LifoQueue
+    _command_buffer:BaseQueue
+    _history_stack:BaseQueue
     _status:str|None
     _shutdown_in_progress:bool
     _verbose_logging:bool
@@ -98,8 +98,8 @@ class CoreUnit(threading.Thread):
         self.loop_idle_time = 1.0
         self.loop_iter = 0
         
-        self._command_buffer = LifoQueue(10)
-        self._history_stack = LifoQueue()
+        self._command_buffer = BaseQueue(discipline='lifo', max_size=10)
+        self._history_stack = BaseQueue(discipline='lifo')
         self._status = None
         self._shutdown_in_progress = False
         

@@ -10,12 +10,10 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# From local imports
-from .ContractMessage import ContractMessage
-from .Websocket import Websocket
-from teatype.io.buffer import MessageBuffer
-
-try:
-    from .SocketServer import SocketServer
-except ImportError:
-    pass
+# Local imports
+from .BaseBuffer import BaseBuffer
+from .BaseQueue import BaseQueue
+from .MessageBuffer import MessageBuffer
+from .RequestBuffer import RequestBuffer
+from .RequestQueue import RequestQueue
+from .StructBuffer import StructBuffer

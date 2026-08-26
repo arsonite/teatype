@@ -25,8 +25,8 @@ from websockets.protocol import State
 
 # Local imports
 from teatype.comms.ws.ContractMessage import ContractMessage
-from teatype.comms.ws.MessageBuffer import MessageBuffer
 from teatype.logging import *
+from teatype.io.buffer import MessageBuffer
 
 class Websocket:
     """

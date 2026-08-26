@@ -12,30 +12,26 @@
 
 # Standard-library imports
 from abc import ABC
-from typing import Dict
+
+# Local imports
+from teatype.io.buffer import MessageBuffer
 
 class RedisBaseInterface(ABC):
     DEFAULT_HOST='127.0.0.1'
     DEFAULT_PORT=6379
     
-    max_buffer_size:int
-    message_buffer:Dict[str,any]
+    message_buffer:MessageBuffer
     verbose_logging:bool
     
     def __init__(self, max_buffer_size:int, verbose_logging:bool):
-        self.max_buffer_size = max_buffer_size
-        self.message_buffer = dict()
+        self.message_buffer = MessageBuffer(max_size=max_buffer_size)
         self.verbose_logging = verbose_logging
         
     def push_message_to_buffer(self, message_id:str, message:any) -> None:
         """
         Pushes a message to the internal buffer, maintaining the max buffer size.
         """
-        self.message_buffer[message_id] = message
-        if len(self.message_buffer) > self.max_buffer_size:
-            # Remove the oldest message
-            oldest_key = next(iter(self.message_buffer))
-            del self.message_buffer[oldest_key]
+        self.message_buffer.add(message, key=message_id)
             
     def pop_message_from_buffer(self, message_id:str) -> any:
         """

@@ -13,6 +13,7 @@
 # Standard-library imports
 import pprint
 from typing import Any, Dict, List, Union
+
 # Third-party imports
 import orjson
 from simdjson import Parser, Object, Array

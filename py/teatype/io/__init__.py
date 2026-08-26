@@ -11,6 +11,7 @@
 # all copies or substantial portions of the Software.
 
 # Local imports
+from .buffer import BaseBuffer, BaseQueue, MessageBuffer, RequestBuffer, RequestQueue, StructBuffer
 from .fetch import fetch
 from .liveterm import LiveTerm
 from .shell import clear, enable_sudo, prompt, shell

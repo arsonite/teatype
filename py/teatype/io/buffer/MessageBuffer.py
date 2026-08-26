@@ -10,12 +10,16 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# From local imports
-from .ContractMessage import ContractMessage
-from .Websocket import Websocket
-from teatype.io.buffer import MessageBuffer
+# Local imports
+from teatype.io.buffer.BaseBuffer import BaseBuffer
 
-try:
-    from .SocketServer import SocketServer
-except ImportError:
-    pass
+class MessageBuffer(BaseBuffer):
+    """
+    Buffer keyed by a message's 'request_id' when present, otherwise by insertion order.
+    Iterates over stored messages (not keys), matching websocket message-stream semantics.
+    """
+    def _make_key(self, value:dict) -> any:
+        return value.get('request_id', len(self))
+
+    def __iter__(self):
+        return iter(self.values())
