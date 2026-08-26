@@ -16,4 +16,4 @@ from .BaseQueue import BaseQueue
 from .MessageBuffer import MessageBuffer
 from .RequestBuffer import RequestBuffer
 from .RequestQueue import RequestQueue
-from .StructBuffer import StructBuffer
+# from .StructBuffer import StructBuffer
