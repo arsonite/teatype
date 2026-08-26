@@ -20,7 +20,7 @@ from teatype.io.buffer.BaseQueue import BaseQueue
 
 class RequestQueue(BaseQueue):
     """
-    FIFO queue for cloud upload/download/archive/fetch requests; wraps each request with
+    FIFO queue for cloud-based upload/download/archive/fetch requests; wraps each request with
     tracking metadata (request_id, queued_at, action) on enqueue.
     """
     allowed_action:str
