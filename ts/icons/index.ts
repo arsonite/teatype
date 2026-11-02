@@ -19,6 +19,7 @@ export { FlagEN } from './FlagEN';
 export { FlagTR } from './FlagTR';
 
 export { ArrowIcon } from './ArrowIcon';
+export { BackIcon } from './BackIcon';
 export { BookmarkIcon } from './BookmarkIcon';
 export { DatabaseIcon } from './DatabaseIcon';
 export { ModelsIcon } from './ModelsIcon';

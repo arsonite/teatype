@@ -20,11 +20,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { FlagEN, FlagDE, FlagTR, XIcon } from '@teatype/icons';
 
 // Components
-import { TeaSlider } from '../TeaInput/TeaSlider';
+import { TeaSlider } from '../input/TeaSlider';
 
 // Utility
 import { Store } from '@teatype/toolkit/Store';
-import XButton from '../TeaInput/XButton';
+import XButton from '../input/buttons/XButton';
 
 export type tLanguage = 'en' | 'de' | 'tr';
 export type tTheme = 'dark' | 'flow' | 'light';

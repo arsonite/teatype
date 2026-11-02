@@ -14,18 +14,18 @@
  */
 
 // Components
-export { TeaApp } from './TeaApp/TeaApp';
-export { TeaButton } from './TeaInput/TeaButton';
-export { XButton } from './TeaInput/XButton';
+export { TeaApp } from './app/TeaApp';
+export { TeaButton } from './input/TeaButton';
+export { XButton } from './input/buttons/XButton';
 export { TeaConfirmProvider, useConfirm } from './TeaConfirm';
 export { TeaIcon } from './TeaIcon';
 export { TeaInfotip } from './TeaInfotip';
-export { TeaInput, TeaSelect, TeaTextarea } from './TeaInput/TeaInput';
+export { TeaInput, TeaSelect, TeaTextarea } from './input/TeaInput';
 export { TeaModal } from './TeaModal';
-export { TeaNav } from './TeaApp/TeaNav';
-export { TeaPage } from './TeaApp/TeaPage';
+export { TeaNav } from './app/TeaNav';
+export { TeaPage } from './app/TeaPage';
 export { TeaPanel } from './TeaPanel';
-export { TeaSettingsPanel, TeaSettingsProvider, useTeaSettings, SUPPORTED_LANGUAGES } from './TeaApp/TeaSettings';
+export { TeaSettingsPanel, TeaSettingsProvider, useTeaSettings, SUPPORTED_LANGUAGES } from './app/TeaSettings';
 export { TeaSettingsPage } from './TeaSettingsPage';
 export {
     TeaSidebar,
@@ -36,11 +36,11 @@ export {
     TeaSidebarButtonGroup,
     useTeaSidebar,
 } from './TeaSidebar';
-export { TeaSlider } from './TeaInput/TeaSlider';
-export { TeaSubNav } from './TeaApp/TeaSubNav';
+export { TeaSlider } from './input/TeaSlider';
+export { TeaSubNav } from './app/TeaSubNav';
 export { TeaTable, TeaTablePagination } from './TeaTable';
-export { TeaTag } from './TeaTags/TeaTag';
-export { TeaTags } from './TeaTags/TeaTags';
+export { TeaTag } from './tags/TeaTag';
+export { TeaTags } from './tags/TeaTags';
 export {
     TeaToastContainer,
     TeaToastProvider,
@@ -50,8 +50,8 @@ export {
 export { TeaTooltip } from './TeaTooltip';
 
 // Types
-export type { tPage, iTeaAppProps } from './TeaApp/TeaApp';
-export type { tTheme, tLanguage, LanguageInfo } from './TeaApp/TeaSettings';
+export type { tPage, iTeaAppProps } from './app/TeaApp';
+export type { tTheme, tLanguage, LanguageInfo } from './app/TeaSettings';
 export type {
     iTeaSettingsCategory,
     iTeaSettingsGroup,
@@ -59,8 +59,8 @@ export type {
     iTeaSettingsPageProps,
     tTeaSettingControl,
 } from './TeaSettingsPage';
-export type { iTeaSliderProps, tSliderSize, tSliderTheme } from './TeaInput/TeaSlider';
-export type { iTeaSubNavItem, iTeaSubNavProps } from './TeaApp/TeaSubNav';
+export type { iTeaSliderProps, tSliderSize, tSliderTheme } from './input/TeaSlider';
+export type { iTeaSubNavItem, iTeaSubNavProps } from './app/TeaSubNav';
 export type {
     tTeaSidebarItem,
     tTeaSidebarSection,

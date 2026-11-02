@@ -14,32 +14,36 @@
  */
 
 // React imports
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // Components
-import { TeaButton } from '../TeaInput/TeaButton';
+import { BackIcon } from '@teatype/icons';
+import TeaButton, { iTeaButtonProps } from '../TeaButton';
 
-// Style
-import './style/NotFound.scss';
-
-/**
- * 404 page component shown when navigating to an unknown route.
- */
-const NotFound: React.FC = () => {
+const BackButton: React.FC<iTeaButtonProps> = (props) => {
     const navigate = useNavigate();
 
     return (
-        <div id='not-found'>
-            <h1>404</h1>
-
-            <span>
-                <p id='path'>{window.location.pathname}</p>
-                <p> does not exist.</p>
-            </span>
-
-            <TeaButton onClick={() => navigate('/', { replace: true })}>Go to home</TeaButton>
-        </div>
+        <TeaButton
+            disableRipple
+            disableIconRotation
+            size='small'
+            variant='borderless'
+            {...props}
+            onClick={
+                props.onClick !== undefined
+                    ? props.onClick
+                    : () => {
+                          navigate(-1);
+                      }
+            }
+        >
+            <BackIcon />
+        </TeaButton>
     );
 };
 
-export default NotFound;
+export default BackButton;
+
+export { BackButton };

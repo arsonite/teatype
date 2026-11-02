@@ -19,7 +19,7 @@ import { useNavigate } from 'react-router-dom';
 
 // Components
 import { TeaInfotip } from '../TeaInfotip';
-import { TeaTags } from '../TeaTags/TeaTags';
+import { TeaTags } from '../tags/TeaTags';
 
 // Icons
 import { ArrowIcon } from '../../icons';

@@ -17,12 +17,12 @@
 import React from 'react';
 
 // Components
-import TeaButton, { iTeaButtonProps } from './TeaButton';
+import TeaButton, { iTeaButtonProps } from '../TeaButton';
 import { XIcon } from '@teatype/icons';
 
 const XButton: React.FC<iTeaButtonProps> = (props) => {
     return (
-        <TeaButton disableRipple disableIconRotation variant='borderless' size='small' {...props}>
+        <TeaButton disableRipple disableIconRotation size='small' variant='borderless' {...props}>
             <XIcon />
         </TeaButton>
     );

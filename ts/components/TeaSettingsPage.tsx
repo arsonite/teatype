@@ -17,9 +17,9 @@
 import React, { useMemo, useState } from 'react';
 
 // Components
-import { TeaButton } from './TeaInput/TeaButton';
-import { TeaSelect } from './TeaInput/TeaInput';
-import { TeaSlider } from './TeaInput/TeaSlider';
+import { TeaButton } from './input/TeaButton';
+import { TeaSelect } from './input/TeaInput';
+import { TeaSlider } from './input/TeaSlider';
 
 // Style
 import './style/TeaSettingsPage.scss';

@@ -17,8 +17,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Components
-import NotFound from '../Errors/NotFound';
-import TeaButton from '../TeaInput/TeaButton';
+import NotFound from '../errors/NotFound';
+import TeaButton from '../input/TeaButton';
 import { TeaSettingsProvider, TeaSettingsPanel, useTeaSettings } from './TeaSettings';
 import { TeaNav } from './TeaNav';
 import { TeaPage } from './TeaPage';

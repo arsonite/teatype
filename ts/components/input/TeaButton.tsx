@@ -28,11 +28,13 @@ type tButtonVariant = 'default' | 'borderless';
 
 interface iTeaButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     children?: React.ReactNode;
+    className?: string;
     /** Disable ripple effect (default: false) */
     disableIconRotation?: boolean;
     disableRipple?: boolean;
     icon?: React.ReactNode;
     iconPosition?: 'left' | 'right';
+    id?: string;
     loading?: boolean;
     size?: tButtonSize;
     theme?: tButtonTheme;

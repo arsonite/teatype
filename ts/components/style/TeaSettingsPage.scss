@@ -95,7 +95,7 @@
         flex-direction: column;
         gap: 4px;
         flex-shrink: 0;
-        width: 220px;
+        width: 248px;
         padding: 16px 12px;
         overflow-y: auto;
 
@@ -140,6 +140,7 @@
     }
 
     &__badge {
+        flex-shrink: 0;
         margin-left: auto;
         padding: 1px 7px;
 

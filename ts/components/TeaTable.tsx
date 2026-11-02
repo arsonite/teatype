@@ -15,7 +15,7 @@
 
 import React, { useState } from 'react';
 
-import { TeaButton } from './TeaInput/TeaButton';
+import { TeaButton } from './input/TeaButton';
 import { TeaModal } from './TeaModal';
 
 import './style/TeaTable.scss';

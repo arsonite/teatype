@@ -14,7 +14,7 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { useTeaSettings, Language } from '../components/TeaApp/TeaSettings';
+import { useTeaSettings, Language } from '../components/app/TeaSettings';
 
 /**
  * Translation dictionary type.

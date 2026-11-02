@@ -17,7 +17,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 
 // Components
-import { TeaButton } from './TeaInput/TeaButton';
+import { TeaButton } from './input/TeaButton';
 import { TeaModal } from './TeaModal';
 
 // Style
