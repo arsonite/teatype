@@ -81,31 +81,23 @@ class BaseTUI(BaseCLI):
                  env_path:str='.../.env'):
         # Prepare meta with additional flags
         meta_info = self.meta()
-        def _meta_closure():
-            additional_flags = [
-                {
-                    'name': 'command',
-                    'shorthand': 'c',
-                    'help': 'Run a single action non-interactively and exit (e.g. -c list, -c "edit 1").',
-                    'required': False,
-                    'options': str
-                },
-                {
-                    'name': 'debug',
-                    'shorthand': 'd',
-                    'help': 'Enable debug mode for the TUI.',
-                    'required': False,
-                },
-                {
-                    'name': 'manual-refresh',
-                    'shorthand': 'mr',
-                    'help': 'Enable manual refresh mode for the TUI.',
-                    'required': False,
-                }
-            ]
-            meta_info['flags'] = meta_info['flags'] + additional_flags if 'flags' in meta_info else additional_flags
-            return meta_info
-        self.meta = _meta_closure
+        additional_flags = [
+            {
+                'name': 'debug',
+                'shorthand': 'd',
+                'help': 'Enable debug mode for the TUI.',
+                'required': False,
+            },
+            {
+                'name': 'manual-refresh',
+                'shorthand': 'mr',
+                'help': 'Enable manual refresh mode for the TUI.',
+                'required': False,
+            }
+        ]
+        # Extend once; meta() is called repeatedly and would otherwise append the flags every time
+        meta_info['flags'] = meta_info.get('flags', []) + additional_flags
+        self.meta = lambda: meta_info
         
         # Must be set before calling super().__init__(), since auto_validate triggers
         # post_validate() synchronously during that call, which requires self.actions.
@@ -121,10 +113,16 @@ class BaseTUI(BaseCLI):
                 
         self.on_init()
         
+    def validate(self, *args, **kwargs):
+        # Positional args are the action and its option (e.g. `tui edit 1`); main-cli strips the entry name before this
+        if self.parsed_arguments:
+            self.command = ' '.join(self.parsed_arguments)
+            self.parsed_arguments = []
+        super().validate(*args, **kwargs)
+        
     def post_validate(self):
         self.debug = self.get_flag('debug')
         self.manual_refresh = self.get_flag('manual-refresh')
-        self.command = self.get_flag('command')
         if self.manual_refresh:
             manual_refresh_action = Action(name='clear',
                                            help='Refreshes the shell in manual mode.')
@@ -161,9 +159,8 @@ class BaseTUI(BaseCLI):
             
     def run_command(self):
         """
-        Runs a single action given via the -c flag like a regular CLI command and exits,
-        without the interactive screen. The action's option is passed after a space,
-        e.g. -c "edit 1".
+        Runs a single positional action like a regular CLI command and exits,
+        without the interactive screen. The action's option follows it, e.g. `edit 1`.
         """
         user_input, _, option = self.command.strip().partition(' ')
         option = option.strip() or None
@@ -177,7 +174,7 @@ class BaseTUI(BaseCLI):
                 pad_after=1,
                 verbose=False)
         if matching_action.option and not option:
-            err(f'Action "{user_input}" requires <{matching_action.option_name}> (e.g., -c "{user_input} <{matching_action.option_name}>").',
+            err(f'Action "{user_input}" requires <{matching_action.option_name}> (e.g., {user_input} <{matching_action.option_name}>).',
                 exit=True,
                 pad_before=1,
                 pad_after=1,
