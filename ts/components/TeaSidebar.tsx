@@ -52,10 +52,12 @@ export interface iTeaSidebarProps {
     expandedWidth?: number;
     emptyMessage?: string;
     footer?: React.ReactNode;
+    toggleKey?: string;
     headerActions?: tTeaSidebarAction[];
     sections?: tTeaSidebarSection[];
     showItemDelete?: boolean;
-    title?: string;
+    // A string is shown as heading, a node takes its place in the header
+    title?: React.ReactNode;
     onItemClick?: (sectionId: string, itemId: string) => void;
     onItemDelete?: (sectionId: string, itemId: string) => void;
     onToggle: () => void;
@@ -237,6 +239,7 @@ export const TeaSidebarButtonGroup: React.FC<{
 
 export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
     title,
+    toggleKey,
     expanded,
     onToggle,
     headerActions,
@@ -269,47 +272,40 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                 <div className='tea-sidebar__header'>
                     <button className='tea-sidebar__toggle' onClick={onToggle} title={expanded ? 'Collapse' : 'Expand'}>
                         <span className='tea-sidebar__toggle-icon'>{expanded ? '◀' : '▶'}</span>
+                        {toggleKey && <span className='tea-sidebar__key'>{toggleKey}</span>}
                     </button>
-                    {expanded && (
-                        <>
-                            {title && <h2 className='tea-sidebar__title'>{title}</h2>}
-                            {headerActions?.map((action) => (
-                                <button
-                                    key={action.id}
-                                    className={`tea-sidebar__action tea-sidebar__action--${action.variant || 'primary'}`}
-                                    onClick={action.onClick}
-                                    title={action.label}
-                                >
-                                    {action.icon || <span>+</span>}
-                                </button>
-                            ))}
-                        </>
+                    {typeof title === 'string' ? <h2 className='tea-sidebar__title'>{title}</h2> : title}
+                    {headerActions?.map((action) => (
+                        <button
+                            key={action.id}
+                            className={`tea-sidebar__action tea-sidebar__action--${action.variant || 'primary'}`}
+                            onClick={action.onClick}
+                            title={action.label}
+                        >
+                            {action.icon || <span>+</span>}
+                        </button>
+                    ))}
+                </div>
+
+                <div className='tea-sidebar__content'>
+                    {children ? (
+                        children
+                    ) : sections ? (
+                        sections.map((section) => (
+                            <TeaSidebarSectionComponent
+                                key={section.id}
+                                section={section}
+                                onItemClick={(itemId) => onItemClick?.(section.id, itemId)}
+                                onItemDelete={(itemId) => onItemDelete?.(section.id, itemId)}
+                                showItemDelete={showItemDelete}
+                            />
+                        ))
+                    ) : (
+                        <div className='tea-sidebar__empty'>{emptyMessage}</div>
                     )}
                 </div>
 
-                {expanded && (
-                    <>
-                        <div className='tea-sidebar__content'>
-                            {children ? (
-                                children
-                            ) : sections ? (
-                                sections.map((section) => (
-                                    <TeaSidebarSectionComponent
-                                        key={section.id}
-                                        section={section}
-                                        onItemClick={(itemId) => onItemClick?.(section.id, itemId)}
-                                        onItemDelete={(itemId) => onItemDelete?.(section.id, itemId)}
-                                        showItemDelete={showItemDelete}
-                                    />
-                                ))
-                            ) : (
-                                <div className='tea-sidebar__empty'>{emptyMessage}</div>
-                            )}
-                        </div>
-
-                        {footer && <div className='tea-sidebar__footer'>{footer}</div>}
-                    </>
-                )}
+                {footer && <div className='tea-sidebar__footer'>{footer}</div>}
             </aside>
         </TeaSidebarContext.Provider>
     );

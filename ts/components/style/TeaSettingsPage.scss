@@ -136,6 +136,8 @@
     &__nav-icon {
         display: flex;
         flex-shrink: 0;
+        justify-content: center;
+        width: 1.25rem;
         font-size: 1rem;
     }
 
