@@ -26,7 +26,7 @@ import { DashboardProvider, useDashboard } from '../../context/DashboardContext'
 import { useTranslation } from '../../../../../hooks';
 
 // Icons
-import { SettingsIcon, DatabaseIcon } from '../../../../../icons';
+import { ModernSettingsIcon, DatabaseIcon } from '../../../../../icons';
 
 // Translations
 import { translations } from '../../i18n';
@@ -74,7 +74,7 @@ function ControlsTabContent() {
 // Tab configuration with paths and components
 const TABS: iTeaSubNavItem[] = [
     { id: 'status', label: 'Status', path: 'status', component: StatusTabContent, icon: <DatabaseIcon /> },
-    { id: 'controls', label: 'Controls', path: 'controls', component: ControlsTabContent, icon: <SettingsIcon /> },
+    { id: 'controls', label: 'Controls', path: 'controls', component: ControlsTabContent, icon: <ModernSettingsIcon /> },
 ];
 
 const ModuloDashboard = () => {
@@ -93,7 +93,7 @@ const ModuloDashboardApp = {
     content: ModuloDashboard,
     longDescription: 'Monitor and control your Modulo application with live status, logs, and command execution.',
     shortDescription: 'Operations Pulse Dashboard',
-    icon: <SettingsIcon />,
+    icon: <ModernSettingsIcon />,
     tags: ['Admin', 'Modulo'],
 };
 

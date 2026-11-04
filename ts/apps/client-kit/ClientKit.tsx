@@ -17,7 +17,7 @@
 import { TeaButton, TeaPanel, XButton } from '../../components';
 
 // Icons
-import { ModelsIcon, SettingsIcon } from '../../icons';
+import { ModelsIcon, ModernSettingsIcon } from '../../icons';
 
 // Style
 import './style/ClientKit.scss';
@@ -55,7 +55,7 @@ const ClientKit = () => {
                 <TeaButton theme='filled'>Filled</TeaButton>
 
                 <TeaButton>
-                    <SettingsIcon />
+                    <ModernSettingsIcon />
                 </TeaButton>
 
                 <XButton />

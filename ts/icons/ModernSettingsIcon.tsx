@@ -1,0 +1,36 @@
+/**
+ * @license
+ * Copyright (C) 2024-2026 Burak Günaydin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+
+const ModernSettingsIcon = () => {
+    return (
+        <svg
+            fill='none'
+            stroke='currentColor'
+            height='512'
+            viewBox='0 0 32 32'
+            width='512'
+            xmlns='http://www.w3.org/2000/svg'
+        >
+            <g data-name='Layer 2'>
+                <path d='M24.49 4.25a3 3 0 0 0-2.56-1.48H10.07a3 3 0 0 0-2.56 1.48L1.58 14.52a3 3 0 0 0 0 3l5.93 10.23a3 3 0 0 0 2.56 1.48h11.86a3 3 0 0 0 2.56-1.48l5.93-10.27a3 3 0 0 0 0-3zm4.2 12.23-5.93 10.27a1 1 0 0 1-.83.48H10.07a1 1 0 0 1-.83-.48L3.31 16.48a1 1 0 0 1 0-1L9.24 5.25a1 1 0 0 1 .83-.48h11.86a1 1 0 0 1 .83.48l5.93 10.27a1 1 0 0 1 0 .96' />
+                <path d='M16 10a6 6 0 1 0 6 6 6 6 0 0 0-6-6m0 10a4 4 0 1 1 4-4 4 4 0 0 1-4 4' />
+            </g>
+        </svg>
+    );
+};
+
+export default ModernSettingsIcon;
+
+export { ModernSettingsIcon };

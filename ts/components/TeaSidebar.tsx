@@ -16,6 +16,9 @@
 // React imports
 import React, { useState, createContext, useContext } from 'react';
 
+// Icons
+import { ArrowIcon, ChevronIcon, PlusIcon, XIcon } from '../icons';
+
 // Style
 import './style/TeaSidebar.scss';
 
@@ -105,7 +108,7 @@ const TeaSidebarSectionComponent: React.FC<tTeaSidebarSectionComponentProps> = (
                     <span
                         className={`tea-sidebar-section__chevron ${collapsed ? '' : 'tea-sidebar-section__chevron--open'}`}
                     >
-                        ▶
+                        <ChevronIcon />
                     </span>
                 )}
             </div>
@@ -137,7 +140,7 @@ const TeaSidebarSectionComponent: React.FC<tTeaSidebarSectionComponentProps> = (
                                                 }}
                                                 title='Delete'
                                             >
-                                                ×
+                                                <XIcon width='1em' height='1em' />
                                             </button>
                                         )}
                                     </div>
@@ -271,7 +274,11 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
             >
                 <div className='tea-sidebar__header'>
                     <button className='tea-sidebar__toggle' onClick={onToggle} title={expanded ? 'Collapse' : 'Expand'}>
-                        <span className='tea-sidebar__toggle-icon'>{expanded ? '◀' : '▶'}</span>
+                        <span
+                            className={`tea-sidebar__toggle-icon ${expanded ? '' : 'tea-sidebar__toggle-icon--flipped'}`}
+                        >
+                            <ArrowIcon />
+                        </span>
                         {toggleKey && <span className='tea-sidebar__key'>{toggleKey}</span>}
                     </button>
                     {typeof title === 'string' ? <h2 className='tea-sidebar__title'>{title}</h2> : title}
@@ -282,7 +289,7 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                             onClick={action.onClick}
                             title={action.label}
                         >
-                            {action.icon || <span>+</span>}
+                            {action.icon || <PlusIcon />}
                         </button>
                     ))}
                 </div>

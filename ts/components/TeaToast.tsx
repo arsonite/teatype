@@ -17,6 +17,9 @@
 import React, { useEffect, useState, useRef, useCallback, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 
+// Icons
+import { CheckIcon, InfoIcon, WarningIcon, XIcon } from '../icons';
+
 // Style
 import './style/TeaToast.scss';
 
@@ -135,14 +138,14 @@ const TeaToastItem: React.FC<iTeaToastProps> = ({ toast, onClose }) => {
         if (icon) return icon;
         switch (type) {
             case 'success':
-                return '✓';
+                return <CheckIcon />;
             case 'error':
-                return '✕';
+                return <XIcon width='1em' height='1em' />;
             case 'warning':
-                return '⚠';
+                return <WarningIcon />;
             case 'info':
             default:
-                return 'ℹ';
+                return <InfoIcon />;
         }
     };
 

@@ -12,10 +12,6 @@
  * all copies or substantial portions of the Software.
  */
 
-// ============================================================================
-// TeaSettingsPage Styles
-// ============================================================================
-
 .tea-settings-page {
     display: flex;
     flex-direction: column;
@@ -46,7 +42,12 @@
         border-radius: 8px;
         color: var(--text-muted);
         cursor: pointer;
-        font-size: 18px;
+
+        svg {
+            width: 12px;
+            height: 16px;
+            fill: currentColor;
+        }
 
         transition:
             background 0.15s,

@@ -24,7 +24,7 @@ import { TeaNav } from './TeaNav';
 import { TeaPage } from './TeaPage';
 
 // Icons
-import { SettingsIcon } from '../../icons';
+import { ModernSettingsIcon } from '../../icons';
 
 // Global styles (makes TeaApp self-contained)
 import '../../style/globstyle.scss';
@@ -75,7 +75,7 @@ const TeaAppContent: React.FC<iTeaAppContentProps> = (props) => {
     return (
         <div id='tea-app' data-app-name={props.name} className={isSettingsOpen ? 'settings-open' : ''}>
             <TeaButton id='settings-toggle' onClick={() => setIsSettingsOpen(!isSettingsOpen)}>
-                <SettingsIcon />
+                <ModernSettingsIcon />
             </TeaButton>
 
             <div className='tea-app-content'>{props.children}</div>

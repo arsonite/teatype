@@ -13,23 +13,11 @@
  * all copies or substantial portions of the Software.
  */
 
-const SettingsIcon = () => {
-    return (
-        <svg
-            fill='none'
-            stroke='currentColor'
-            height='512'
-            viewBox='0 0 32 32'
-            width='512'
-            xmlns='http://www.w3.org/2000/svg'
-        >
-            <g data-name='Layer 2'>
-                <path d='M24.49 4.25a3 3 0 0 0-2.56-1.48H10.07a3 3 0 0 0-2.56 1.48L1.58 14.52a3 3 0 0 0 0 3l5.93 10.23a3 3 0 0 0 2.56 1.48h11.86a3 3 0 0 0 2.56-1.48l5.93-10.27a3 3 0 0 0 0-3zm4.2 12.23-5.93 10.27a1 1 0 0 1-.83.48H10.07a1 1 0 0 1-.83-.48L3.31 16.48a1 1 0 0 1 0-1L9.24 5.25a1 1 0 0 1 .83-.48h11.86a1 1 0 0 1 .83.48l5.93 10.27a1 1 0 0 1 0 .96' />
-                <path d='M16 10a6 6 0 1 0 6 6 6 6 0 0 0-6-6m0 10a4 4 0 1 1 4-4 4 4 0 0 1-4 4' />
-            </g>
-        </svg>
-    );
-};
+const SettingsIcon = () => (
+    <svg viewBox='0 0 24 24' width='1em' height='1em' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round' aria-hidden='true'>
+        <circle cx='12' cy='12' r='3' /><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' />
+    </svg>
+);
 
 export default SettingsIcon;
 
