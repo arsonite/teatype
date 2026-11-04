@@ -127,8 +127,8 @@ const TeaToastItem: React.FC<iTeaToastProps> = ({ toast, onClose }) => {
     };
 
     const handleMouseLeave = () => {
+        // The loop keeps the start time moving while paused, so the timer goes on from what is left
         isPausedRef.current = false;
-        startTimeRef.current = null;
     };
 
     const getIcon = () => {
