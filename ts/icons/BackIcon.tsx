@@ -13,14 +13,32 @@
  * all copies or substantial portions of the Software.
  */
 
-const BackIcon = () => {
-    return (
-        <svg xmlns='http://www.w3.org/2000/svg' viewBox='1.98 1.31 2.4 3.72'>
-            <g transform='matrix(-1 0 0 -1 6.35 6.35)'>
-                <path d='M2.258 1.315a.265.265 0 0 0-.174.469l1.619 1.387-1.62 1.386a.265.265 0 1 0 .345.4l1.853-1.585a.265.265 0 0 0 0-.403L2.428 1.382a.27.27 0 0 0-.17-.067' />
-            </g>
-        </svg>
-    );
+// React imports
+import * as React from 'react';
+
+interface iBackIconProps {
+    thin?: boolean;
+}
+
+const BackIcon: React.FC<iBackIconProps> = ({ thin = false }) => {
+    if (thin) {
+        return (
+            <svg fill='none' xmlns='http://www.w3.org/2000/svg' viewBox='27.63 7.99 44.76 84.05'>
+                <path
+                    d='M67.25 8.853a3 3 0 0 1 4.243 4.242L34.589 50l36.905 36.906a3 3 0 1 1-4.243 4.242L28.507 52.403a3 3 0 0 1-.866-2.396 3 3 0 0 1 .865-2.41z'
+                    fill='#000'
+                ></path>
+            </svg>
+        );
+    } else {
+        return (
+            <svg xmlns='http://www.w3.org/2000/svg' viewBox='1.98 1.31 2.4 3.72'>
+                <g transform='matrix(-1 0 0 -1 6.35 6.35)'>
+                    <path d='M2.258 1.315a.265.265 0 0 0-.174.469l1.619 1.387-1.62 1.386a.265.265 0 1 0 .345.4l1.853-1.585a.265.265 0 0 0 0-.403L2.428 1.382a.27.27 0 0 0-.17-.067' />
+                </g>
+            </svg>
+        );
+    }
 };
 
 export default BackIcon;
