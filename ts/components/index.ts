@@ -17,6 +17,7 @@
 export { TeaApp } from './app/TeaApp';
 export { TeaButton } from './input/TeaButton';
 export { XButton } from './input/buttons/XButton';
+export { TeaCheckbox } from './input/TeaCheckbox';
 export { TeaConfirmProvider, useConfirm } from './TeaConfirm';
 export { TeaIcon } from './TeaIcon';
 export { TeaInfotip } from './TeaInfotip';

@@ -1,0 +1,77 @@
+/**
+ * Copyright (C) 2024-2026 Burak Günaydin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+
+.tea-checkbox {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+
+    &__input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        opacity: 0;
+    }
+
+    &__box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+
+        background: transparent;
+        border: 2px solid var(--text-muted);
+        border-radius: 50%;
+        color: #fff;
+        font-size: 12px;
+
+        transition:
+            background 0.15s,
+            border-color 0.15s,
+            transform 0.15s;
+
+        svg {
+            stroke-width: 3;
+        }
+    }
+
+    &:hover &__box {
+        border-color: var(--accent);
+    }
+
+    &__input:focus-visible + &__box {
+        box-shadow: 0 0 0 3px var(--accent-soft, rgba(124, 58, 237, 0.25));
+    }
+
+    &--checked &__box {
+        background: var(--accent);
+        border-color: var(--accent);
+    }
+
+    &__label {
+        color: var(--text-primary);
+    }
+
+    &--disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+}
