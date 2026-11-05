@@ -14,7 +14,7 @@
 from .classproperty import classproperty
 from .colorwrap import colorwrap
 from .dt import dt
-# TODO: Deactivated until auto updating all components is possible
+from .fastclone import fastclone
 from .fastjson import compress as compress_json
 from .fastjson import decompress as decompress_json
 from .fastjson import dump as dump_json
@@ -23,7 +23,7 @@ from .generate_id import generate_id
 from .kebabify import kebabify, unkebabify
 from .implemented_trap import implemented_trap
 from .pluralize import pluralize
-from .singleton import SingletonMeta
+from .singleton import Singleton
 from .staticproperty import staticproperty
 from .stopwatch import GLOBAL_STOPWATCH_CONFIG, stopwatch
 from .Timely import Timely

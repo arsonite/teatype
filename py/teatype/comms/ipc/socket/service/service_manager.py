@@ -271,7 +271,7 @@ class SocketServiceManager:
             try:
                 # Call the handler with envelope and contextual metadata
                 handler(envelope, client_address=client_address, endpoint=endpoint)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 # Log handler errors without interrupting other handlers
                 err(f'Socket handler failure on {endpoint}: {exc}', traceback=True)
                 
@@ -481,7 +481,7 @@ class SocketServiceManager:
                 worker.close(graceful=True)
                 # Wait up to 2 seconds for worker thread to exit
                 worker.join(timeout=2)
-            except Exception: # noqa: BLE001
+            except Exception:
                 # Log errors but continue shutting down other workers
                 err(f'Unable to close socket client {name}', traceback=True)
         
@@ -495,7 +495,7 @@ class SocketServiceManager:
                 server.stop()
                 # Wait up to 2 seconds for server thread to exit
                 server.join(timeout=2)
-            except Exception: # noqa: BLE001
+            except Exception:
                 # Log errors but continue shutting down other servers
                 err(f'Unable to stop socket server {name}', traceback=True)
         

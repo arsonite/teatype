@@ -33,12 +33,12 @@ def kebabify(raw_name:str,
     """
     Convert a CamelCase or PascalCase identifier into kebab-case.
 
-    raw_name:    The original string in CamelCase or PascalCase.
-    plural:      If True, append a plural suffix ('s' or 'es') to the result.
-    preserve_capitals: If True, treat consecutive uppercase letters as separate words, not recommended since this is a destructive information removal
-    remove:      A substring to strip out of the kebabified name after conversion.
-    replace:     A two-element sequence (old, new) specifying a single replacement.
-    seperator:   The character to insert before uppercase letters (defaults to '-').
+    raw_name:           The original string in CamelCase or PascalCase.
+    plural:             If True, append a plural suffix ('s' or 'es') to the result.
+    preserve_capitals:  If True, treat consecutive uppercase letters as separate words, not recommended since this is a destructive information removal
+    remove:             A substring to strip out of the kebabified name after conversion.
+    replace:            A two-element sequence (old, new) specifying a single replacement.
+    seperator:          The character to insert before uppercase letters (defaults to '-').
     
     Returns the resulting kebab-case string, optionally modified by remove, replace, and plural rules.
     """

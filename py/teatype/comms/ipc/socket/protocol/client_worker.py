@@ -225,7 +225,7 @@ class SocketClientWorker(threading.Thread):
                 # Phase 3: Send actual payload data
                 self._send_raw(serialized_payload)
                 log(f'Socket client [{self.name}] shipped request {payload.id}')
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 # Any error during send terminates the connection
                 err(f'Socket client [{self.name}] send failure: {exc}', traceback=True)
                 break

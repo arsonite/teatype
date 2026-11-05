@@ -14,7 +14,7 @@
 import threading
 from abc import ABCMeta
 
-class SingletonMeta(ABCMeta):
+class Singleton(ABCMeta):
     """
     A thread-safe implementation of Singleton with metaclass.
     Ensures the singleton pattern is followed in each worker.

@@ -90,7 +90,7 @@ class SocketSession(threading.Thread):
                 try:
                     # Phase 4: Deserialize payload from pickle format
                     message = pickle.loads(payload)
-                except Exception as exc: # noqa: BLE001
+                except Exception as exc:
                     # Deserialization failed - log and continue with next message
                     err(f'Failed to deserialize payload from {self._address}: {exc}', traceback=True)
                     continue

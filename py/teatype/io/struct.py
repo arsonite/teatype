@@ -55,7 +55,7 @@ def dict_to_object(d:Dict[str,Any]) -> object:
 
 def fullcopy(obj, _memo=None):
     """
-    Perform a deep copy of an object without using `json.dumps` or `copy.deepcopy`.
+    Perform a costly deep copy of an object without using `json.dumps` or `copy.deepcopy`.
     """
     # Initialize memo dictionary for cyclic references
     if _memo is None:

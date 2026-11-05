@@ -144,7 +144,7 @@ A query object is single-use (`already_executed`). `page=-1` means last page.
 
 **Singleton / initialization**
 
-- `HybridStorage` is a `SingletonMeta` singleton: the first construction wins, later `models`/`root_path`/`cold_mode` arguments are ignored.
+- `HybridStorage` is a `Singleton` singleton: the first construction wins, later `models`/`root_path`/`cold_mode` arguments are ignored.
 - Anything that calls `HybridStorage()` bare (`HSDBQuery(...)`/`Model.query`, and instantiating any model that has relations) creates the
   default **non-cold** storage if none exists yet -> tries `/var/lib/hsdb` and may exit. In a client process never instantiate relation-bearing
   models or use `Model.query`; use `HSDBClient`.
