@@ -70,4 +70,4 @@ export CXX="/usr/bin/g++-12"
 export CUDAHOSTCXX="/usr/bin/g++-12"
 
 # Run the installation from the cloned directory
-python3.13 -m pip install --no-cache-dir .
+python3 -m pip install --no-cache-dir .
