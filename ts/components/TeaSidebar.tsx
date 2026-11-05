@@ -244,17 +244,18 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
     title,
     toggleKey,
     expanded,
-    onToggle,
     headerActions,
     sections,
-    onItemClick,
-    onItemDelete,
     showItemDelete = true,
     footer,
     children,
     expandedWidth = 300,
-    collapsedWidth = 50,
+    collapsedWidth = 60,
     emptyMessage = 'No items yet',
+
+    onItemClick,
+    onItemDelete,
+    onToggle,
 }) => {
     const contextValue: iTeaSidebarContextValue = {
         expanded,

@@ -21,13 +21,15 @@ import { FlagEN, FlagDE, FlagTR, XIcon } from '@teatype/icons';
 
 // Components
 import { TeaSlider } from '../input/TeaSlider';
+import { TeaThemePicker } from '../TeaThemePicker';
 
 // Utility
 import { Store } from '@teatype/toolkit/Store';
 import XButton from '../input/buttons/XButton';
 
 export type tLanguage = 'en' | 'de' | 'tr';
-export type tTheme = 'dark' | 'flow' | 'light';
+// The id of a theme, see toolkit/themes.ts
+export type tTheme = string;
 
 // Storage key prefix for all TeaType settings
 export const TEATYPE_STORAGE_PREFIX = 'teatype';
@@ -235,12 +237,6 @@ export const TeaSettingsPanel: React.FC<TeaSettingsPanelProps> = ({ onClose }) =
         setShowClearConfirm(false);
     };
 
-    const themes: { id: tTheme; label: string; description: string }[] = [
-        { id: 'dark', label: 'Dark', description: 'Black gradient with orange accents' },
-        { id: 'flow', label: 'Flow', description: 'Deep blue gradient with purple accents' },
-        { id: 'light', label: 'Light', description: 'Clean white with subtle shadows' },
-    ];
-
     return (
         <div className='tea-settings-panel'>
             <div className='tea-settings-header'>
@@ -252,19 +248,7 @@ export const TeaSettingsPanel: React.FC<TeaSettingsPanelProps> = ({ onClose }) =
             <div className='tea-settings-content'>
                 <section className='tea-settings-section'>
                     <h3>Theme</h3>
-                    <div className='tea-settings-theme-grid'>
-                        {themes.map((t) => (
-                            <button
-                                key={t.id}
-                                className={`tea-settings-theme-option ${theme === t.id ? 'active' : ''}`}
-                                onClick={() => setTheme(t.id)}
-                            >
-                                <div className={`tea-settings-theme-preview theme-${t.id}`} />
-                                <span className='tea-settings-theme-label'>{t.label}</span>
-                                <span className='tea-settings-theme-desc'>{t.description}</span>
-                            </button>
-                        ))}
-                    </div>
+                    <TeaThemePicker value={theme} onChange={setTheme} />
                 </section>
 
                 <section className='tea-settings-section'>

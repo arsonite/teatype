@@ -79,3 +79,14 @@ $font-small: 12px;
 $font-default: 16px;
 $font-large: 20px;
 $font-huge: 24px;
+
+// Adds a theme: `@include tea-theme('ocean') { --surface: ...; }` next to the default ones of globthemes.scss, and
+// register it for the apps in toolkit/themes.ts. The cards of TeaThemePicker carry the attribute too, so they show
+// the colors of their theme.
+@mixin tea-theme($name) {
+    html[data-theme='#{$name}'],
+    .tea-theme-preview[data-theme='#{$name}'] {
+        @content;
+    }
+}
+

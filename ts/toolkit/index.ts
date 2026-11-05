@@ -16,3 +16,5 @@
 // Utility
 export { path } from './path';
 export { Store } from './Store';
+export { DEFAULT_THEMES, applyTheme, getThemes, isLightTheme, registerThemes, themeOf } from './themes';
+export type { iTeaTheme } from './themes';

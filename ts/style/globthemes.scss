@@ -12,8 +12,15 @@
  * all copies or substantial portions of the Software.
  */
 
+@use 'globvars' as *;
+
+// The default themes of all apps, selected by the data-theme attribute of the page (toolkit/themes.ts). Apps add
+// their own with the tea-theme mixin of globvars.scss. A theme defines the tokens of the TeaType components first
+// and then the extended ones that apps can use for more layers: --bg-*, --text-secondary/tertiary, --accent-hover/glow,
+// --danger, --border-strong, --glass-*.
+
 // Dark theme (black/gray gradient with orange accents)
-[data-theme='dark'] {
+@include tea-theme('dark') {
     // Core colors
     --surface: #0a0a0a;
     --surface-elevated: #141414;
@@ -38,10 +45,27 @@
     --sidebar-bg: rgba(10, 10, 10, 0.9);
     --sidebar-inset: rgba(255, 255, 255, 0.02);
     --sidebar-shadow: rgba(0, 0, 0, 0.5);
+
+    // Extended
+    --accent-glow: rgba(249, 115, 22, 0.3);
+    --accent-hover: #fb923c;
+    --bg-glass: var(--surface-card);
+    --bg-gradient: var(--background);
+    --bg-hover: #1f1f1f;
+    --bg-primary: var(--surface);
+    --bg-secondary: var(--sidebar-bg);
+    --bg-tertiary: var(--surface-elevated);
+    --border-strong: rgba(255, 255, 255, 0.15);
+    --danger: #ff453a;
+    --danger-hover: #ff6961;
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-highlight: rgba(255, 255, 255, 0.05);
+    --text-secondary: var(--text-muted);
+    --text-tertiary: #5c5c5c;
 }
 
-// Flow theme (current default - deep blue with purple accents)
-[data-theme='flow'] {
+// Flow theme (deep blue with purple accents)
+@include tea-theme('flow') {
     // Core colors
     --surface: #0f172a;
     --surface-elevated: #14213d;
@@ -68,10 +92,27 @@
     --sidebar-bg: rgba(15, 23, 42, 0.85);
     --sidebar-inset: rgba(255, 255, 255, 0.03);
     --sidebar-shadow: rgba(0, 0, 0, 0.4);
+
+    // Extended
+    --accent-glow: rgba(124, 58, 237, 0.3);
+    --accent-hover: #8b5cf6;
+    --bg-glass: var(--surface-card);
+    --bg-gradient: var(--background);
+    --bg-hover: #1e2f55;
+    --bg-primary: var(--surface);
+    --bg-secondary: var(--sidebar-bg);
+    --bg-tertiary: var(--surface-elevated);
+    --border-strong: rgba(226, 232, 240, 0.2);
+    --danger: #ff453a;
+    --danger-hover: #ff6961;
+    --glass-border: rgba(226, 232, 240, 0.12);
+    --glass-highlight: rgba(255, 255, 255, 0.05);
+    --text-secondary: var(--text-muted);
+    --text-tertiary: #64748b;
 }
 
 // Light theme (clean white with subtle shadows)
-[data-theme='light'] {
+@include tea-theme('light') {
     // Core colors
     --surface: #ffffff;
     --surface-elevated: #f8fafc;
@@ -96,4 +137,21 @@
     --sidebar-bg: rgba(248, 250, 252, 0.92);
     --sidebar-inset: rgba(255, 255, 255, 0.5);
     --sidebar-shadow: rgba(0, 0, 0, 0.15);
+
+    // Extended
+    --accent-glow: rgba(99, 102, 241, 0.25);
+    --accent-hover: #4f46e5;
+    --bg-glass: var(--surface-card);
+    --bg-gradient: var(--background);
+    --bg-hover: #e2e8f0;
+    --bg-primary: var(--surface);
+    --bg-secondary: var(--sidebar-bg);
+    --bg-tertiary: #eef2f7;
+    --border-strong: rgba(15, 23, 42, 0.15);
+    --danger: #ff3b30;
+    --danger-hover: #cc2f26;
+    --glass-border: rgba(15, 23, 42, 0.1);
+    --glass-highlight: rgba(255, 255, 255, 0.6);
+    --text-secondary: var(--text-muted);
+    --text-tertiary: #94a3b8;
 }

@@ -47,6 +47,7 @@ export {
     useTeaToast,
     useTeaToastContext,
 } from './TeaToast';
+export { TeaThemePicker } from './TeaThemePicker';
 export { TeaTooltip } from './TeaTooltip';
 
 // Types

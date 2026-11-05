@@ -1,0 +1,70 @@
+/**
+ * Copyright (C) 2024-2026 Burak Günaydin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+
+.tea-theme-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.tea-theme-option {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 0.25rem 0.875rem;
+    padding: 0.875rem;
+
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+
+    transition: all 0.15s;
+
+    &:hover {
+        background: var(--surface-elevated);
+    }
+
+    &--active,
+    &--active:hover {
+        border-color: var(--settings-accent, var(--accent));
+        box-shadow: 0 0 0 1px var(--settings-accent, var(--accent));
+    }
+
+    &__label {
+        font-size: 0.9375rem;
+        font-weight: 500;
+    }
+
+    &__description {
+        color: var(--text-muted);
+        font-size: 0.8125rem;
+    }
+}
+
+// The element carries data-theme, so its background is the one of its own theme
+.tea-theme-preview {
+    grid-row: span 2;
+    width: 3rem;
+    height: 3rem;
+
+    background: var(--background);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+}
