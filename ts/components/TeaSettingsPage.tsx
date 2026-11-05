@@ -22,7 +22,7 @@ import { TeaSelect } from './input/TeaInput';
 import { TeaSlider } from './input/TeaSlider';
 
 // Icons
-import { BackIcon } from '../icons';
+import { ArrowIcon } from '../icons';
 
 // Style
 import './style/TeaSettingsPage.scss';
@@ -216,7 +216,7 @@ export const TeaSettingsPage: React.FC<iTeaSettingsPageProps> = ({
             <header className='tea-settings-page__header'>
                 {onClose && (
                     <button className='tea-settings-page__back' onClick={onClose} title='Back'>
-                        <BackIcon />
+                        <ArrowIcon />
                     </button>
                 )}
                 <h1 className='tea-settings-page__title'>{title}</h1>

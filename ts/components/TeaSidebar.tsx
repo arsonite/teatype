@@ -17,7 +17,7 @@
 import React, { useState, createContext, useContext } from 'react';
 
 // Icons
-import { ArrowIcon, ChevronIcon, PlusIcon, XIcon } from '../icons';
+import { BackIcon, ChevronIcon, PlusIcon, XIcon } from '../icons';
 
 // Style
 import './style/TeaSidebar.scss';
@@ -277,7 +277,7 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                         <span
                             className={`tea-sidebar__toggle-icon ${expanded ? '' : 'tea-sidebar__toggle-icon--flipped'}`}
                         >
-                            <ArrowIcon />
+                            <BackIcon thin />
                         </span>
                         {toggleKey && <span className='tea-sidebar__key'>{toggleKey}</span>}
                     </button>
