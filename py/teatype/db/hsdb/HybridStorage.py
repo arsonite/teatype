@@ -20,21 +20,20 @@ from multiprocessing import Queue
 from typing import List, Tuple
 
 # Third-party imports
-from teatype.enum import XTerm
 from teatype.db.hsdb import IndexDatabase, RawFileHandler
 from teatype.db.hsdb.toolbox import parse_fixtures, parse_index_files
 from teatype.io import env, file
 from teatype.logging import *
-from teatype.toolkit import SingletonMeta, kebabify
+from teatype.toolkit import Singleton, kebabify
 
 # TODO: Implement Coroutine and Operation (Atomic)
 # TODO: Implement threaded Coroutine scheduler
 # TODO: Implement threaded Operations controller
-class HybridStorage(threading.Thread, metaclass=SingletonMeta):
+class HybridStorage(threading.Thread, metaclass=Singleton):
     """
     HybridStorage manages both an IndexDatabase and a RawFileHandler, 
     combining them to synchronize model entries with file storage in a 
-    threaded environment. The SingletonMeta ensures only one instance exists.
+    threaded environment. The Singleton ensures only one instance exists.
     """
     coroutines:List
     coroutines_queue:Queue

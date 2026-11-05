@@ -136,6 +136,6 @@ class SocketServerWorker(threading.Thread):
         try:
             # Invoke user-provided handler
             self._handler(message, address)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             # Handler raised exception - log but don't crash session
             err(f'Socket server [{self.name}] handler failure: {exc}', traceback=True)

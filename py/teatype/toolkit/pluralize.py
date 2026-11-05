@@ -10,11 +10,9 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-# A dumb algorithm that estimates the plural form of words, based on the last letter
 def pluralize(word:str) -> str:
     """
-    Estimate the plural form of a given word based on its last letter.
-    word: The singular form of the word to be pluralized.
+    A dumb algorithm that estimates the plural form of words, based on the last letter of the word.
     Returns the estimated plural form of the word.
     """
     last_letter = word[-1].lower()
