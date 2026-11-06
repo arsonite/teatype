@@ -157,6 +157,28 @@ export interface HSDBDeleteOptions {
 }
 
 /**
+ * Body of a bulk request: create = rows, update = ids with partial data, delete = ids
+ */
+export interface HSDBBulkRequest<E extends HSDBEntity = HSDBEntity> {
+    create?: Array<Partial<E> | Record<string, unknown>>;
+    update?: Array<{ id: string; data: Partial<E> | Record<string, unknown> }>;
+    delete?: string[];
+}
+
+/**
+ * Outcome of one bulk item, in the order of the request
+ */
+export type HSDBBulkItemResult<T> =
+    | { ok: true; data: T }
+    | { ok: false; status: number; error: string };
+
+export interface HSDBBulkResponse<E extends HSDBEntity = HSDBEntity> {
+    create: Array<HSDBBulkItemResult<E>>;
+    update: Array<HSDBBulkItemResult<E>>;
+    delete: Array<HSDBBulkItemResult<{ deleted: true; id: string }>>;
+}
+
+/**
  * Model schema returned by HSDB
  */
 export interface HSDBModelSchema {

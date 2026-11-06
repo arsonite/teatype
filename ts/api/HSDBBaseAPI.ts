@@ -28,6 +28,8 @@ import {
     HSDBCreateOptions,
     HSDBUpdateOptions,
     HSDBDeleteOptions,
+    HSDBBulkRequest,
+    HSDBBulkResponse,
     HSDBEntity,
     HSDBModelSchema,
 } from './types';
@@ -462,6 +464,26 @@ export class HSDBBaseAPI {
         return this.request<void>({
             method: 'DELETE',
             url,
+        }, options);
+    }
+
+    /**
+     * Apply many creates, updates and deletes in one request (applied in that order).
+     * A failing item only reports its own error, the rest is still applied.
+     * 
+     * @example
+     * ```typescript
+     * const { data } = await StudentAPI.bulk({ create: [{ name: 'A' }], update: [{ id: '1', data: { age: 3 } }], delete: ['2'] });
+     * ```
+     */
+    static async bulk<E extends HSDBEntity = HSDBEntity>(
+        body: HSDBBulkRequest<E>,
+        options?: HSDBDeleteOptions
+    ): Promise<HSDBResponse<HSDBBulkResponse<E>>> {
+        return this.request<HSDBBulkResponse<E>>({
+            method: 'POST',
+            url: `${this.getResourceUrl()}/bulk`,
+            data: body,
         }, options);
     }
 

@@ -34,6 +34,8 @@ from teatype.modulo.units.application import ApplicationUnit
 # Ids chosen by clients end up in file names, so only allow a safe alphabet
 _ENTRY_ID = re.compile(r'[A-Za-z0-9_-]{1,128}')
 _COMPUTED = ('id', 'created_at', 'updated_at')
+_BULK_ACTIONS = ('create', 'update', 'delete') # Applied in this order, results come back in the order of the request
+_BULK_LIMIT = 1000
 
 class HSDB(ApplicationUnit):
     """
@@ -121,6 +123,55 @@ class HSDB(ApplicationUnit):
             if found is None or (target and found.model is not target):
                 raise HTTPException(400, f'{name} must be the id of an existing {relation["target_model"]}')
 
+    def _create_entry(self, model:str, data:dict) -> dict:
+        model_class = self._model(model)
+        data = dict(data)
+        entry_id = data.pop('id', None) # Optional: lets the client use its own id as the entry id
+        if entry_id is not None:
+            if not isinstance(entry_id, str) or not _ENTRY_ID.fullmatch(entry_id):
+                raise HTTPException(400, 'id may only contain letters, digits, "_" and "-" (max 128)')
+            try:
+                self.hybrid_storage.fetch_entry(entry_id)
+                raise HTTPException(409, f'An entry with id "{entry_id}" already exists')
+            except KeyError:
+                pass
+        self._check_relations(model_class, data)
+        # Cold mode never yields a file, which create_entry would report as a failed write (410)
+        entry, return_code = self.hybrid_storage.create_entry(model_class, data, write=not self.hybrid_storage.rf_handler.cold_mode, entry_id=entry_id)
+        if return_code != 200:
+            raise HTTPException(return_code, 'Entry could not be created, see server log')
+        return entry
+
+    def _update_entry(self, model:str, id:str, data:dict) -> object:
+        self._entry(model, id)
+        data = {key: value for key, value in data.items() if key not in _COMPUTED} # Computed fields are not client-writable
+        self._check_relations(self._model(model), data)
+        entry, return_code = self.hybrid_storage.update_entry(id, data)
+        if return_code != 200:
+            raise HTTPException(return_code, 'Entry could not be updated, see server log')
+        return entry
+
+    def _delete_entry(self, model:str, id:str) -> dict:
+        self._entry(model, id)
+        self.hybrid_storage.delete_entry(id)
+        return {'deleted': True, 'id': id}
+
+    def _bulk_item(self, model:str, action:str, item:object) -> dict:
+        """
+        One operation of a bulk request. A failing item only reports its own error, the others are still applied.
+        """
+        try:
+            if action == 'create':
+                return {'ok': True, 'data': self._create_entry(model, item)}
+            if action == 'update':
+                entry = self._update_entry(model, item['id'], item['data'])
+                return {'ok': True, 'data': entry.model.serialize(entry)}
+            return {'ok': True, 'data': self._delete_entry(model, item)}
+        except HTTPException as exc:
+            return {'ok': False, 'status': exc.status_code, 'error': exc.detail}
+        except (KeyError, TypeError, AttributeError, ValueError):
+            return {'ok': False, 'status': 400, 'error': f'Malformed {action} item'}
+
     def _register_hsdb_routes(self) -> None:
         def info() -> dict:
             return {'service': 'hsdb',
@@ -151,46 +202,32 @@ class HSDB(ApplicationUnit):
             return rows
 
         def create(model:str, data:dict) -> dict:
-            model_class = self._model(model)
-            entry_id = data.pop('id', None) # Optional: lets the client use its own id as the entry id
-            if entry_id is not None:
-                if not isinstance(entry_id, str) or not _ENTRY_ID.fullmatch(entry_id):
-                    raise HTTPException(400, 'id may only contain letters, digits, "_" and "-" (max 128)')
-                try:
-                    self.hybrid_storage.fetch_entry(entry_id)
-                    raise HTTPException(409, f'An entry with id "{entry_id}" already exists')
-                except KeyError:
-                    pass
-            self._check_relations(model_class, data)
-            # Cold mode never yields a file, which create_entry would report as a failed write (410)
-            entry, return_code = self.hybrid_storage.create_entry(model_class, data, write=not self.hybrid_storage.rf_handler.cold_mode, entry_id=entry_id)
-            if return_code != 200:
-                raise HTTPException(return_code, 'Entry could not be created, see server log')
-            return entry
+            return self._create_entry(model, data)
 
         def get_one(model:str, id:str, request:Request) -> dict:
             return self._serialize(self._entry(model, id), request)
 
         def update(model:str, id:str, data:dict, request:Request) -> dict:
-            self._entry(model, id)
-            for name in _COMPUTED:
-                data.pop(name, None) # Computed fields are not client-writable
-            self._check_relations(self._model(model), data)
-            entry, return_code = self.hybrid_storage.update_entry(id, data)
-            if return_code != 200:
-                raise HTTPException(return_code, 'Entry could not be updated, see server log')
-            return self._serialize(entry, request)
+            return self._serialize(self._update_entry(model, id, data), request)
 
         def delete(model:str, id:str) -> dict:
-            self._entry(model, id)
-            self.hybrid_storage.delete_entry(id)
-            return {'deleted': True, 'id': id}
+            return self._delete_entry(model, id)
+
+        def bulk(model:str, body:dict) -> dict:
+            self._model(model)
+            unknown = set(body) - set(_BULK_ACTIONS)
+            if unknown:
+                raise HTTPException(400, f'Unknown bulk actions {sorted(unknown)}, expected {list(_BULK_ACTIONS)}')
+            if sum(len(body.get(action) or []) for action in _BULK_ACTIONS) > _BULK_LIMIT:
+                raise HTTPException(413, f'At most {_BULK_LIMIT} operations per bulk request')
+            return {action: [self._bulk_item(model, action, item) for item in body.get(action) or []] for action in _BULK_ACTIONS}
 
         # Plain functions on purpose: FastAPI runs them in its threadpool, so big queries don't block the event loop
         self.add_route('/hsdb', info)
         self.add_route('/hsdb/schema', schema) # Before /hsdb/{model}, which would otherwise swallow it
         self.add_route('/hsdb/{model}', query)
         self.add_route('/hsdb/{model}', create, methods=['POST'])
+        self.add_route('/hsdb/{model}/bulk', bulk, methods=['POST']) # POST only, so it never collides with an entry whose id is "bulk"
         self.add_route('/hsdb/{model}/{id}', get_one)
         self.add_route('/hsdb/{model}/{id}', update, methods=['PATCH'])
         self.add_route('/hsdb/{model}/{id}', delete, methods=['DELETE'])

@@ -57,6 +57,10 @@ export interface iTeaSidebarProps {
     footer?: React.ReactNode;
     toggleKey?: string;
     headerActions?: tTeaSidebarAction[];
+    // A phone: expanded is then a sheet over everything, closed with an X
+    mobile?: boolean;
+    // Shown at the bottom of the collapsed sidebar, below a rule. Collapsed, the sidebar is a rail over the left edge of the page.
+    rail?: React.ReactNode;
     sections?: tTeaSidebarSection[];
     showItemDelete?: boolean;
     // A string is shown as heading, a node takes its place in the header
@@ -250,7 +254,9 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
     footer,
     children,
     expandedWidth = 300,
-    collapsedWidth = 60,
+    collapsedWidth = 44,
+    mobile = false,
+    rail,
     emptyMessage = 'No items yet',
 
     onItemClick,
@@ -262,10 +268,29 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
         onToggle,
     };
 
+    const toggle = (
+        <button
+            className='tea-sidebar__toggle'
+            onClick={onToggle}
+            title={expanded ? (mobile ? 'Close' : 'Collapse') : 'Expand'}
+        >
+            {expanded && mobile ? (
+                <XIcon width='1.1em' height='1.1em' />
+            ) : (
+                <span className={`tea-sidebar__toggle-icon ${expanded ? '' : 'tea-sidebar__toggle-icon--flipped'}`}>
+                    <BackIcon thin />
+                </span>
+            )}
+            {toggleKey && <span className='tea-sidebar__key'>{toggleKey}</span>}
+        </button>
+    );
+
     return (
         <TeaSidebarContext.Provider value={contextValue}>
             <aside
-                className={`tea-sidebar ${expanded ? 'tea-sidebar--expanded' : 'tea-sidebar--collapsed'}`}
+                className={`tea-sidebar ${expanded ? 'tea-sidebar--expanded' : 'tea-sidebar--collapsed'} ${
+                    mobile ? 'tea-sidebar--mobile' : ''
+                }`}
                 style={
                     {
                         '--tea-sidebar-expanded-width': `${expandedWidth}px`,
@@ -274,14 +299,7 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                 }
             >
                 <div className='tea-sidebar__header'>
-                    <button className='tea-sidebar__toggle' onClick={onToggle} title={expanded ? 'Collapse' : 'Expand'}>
-                        <span
-                            className={`tea-sidebar__toggle-icon ${expanded ? '' : 'tea-sidebar__toggle-icon--flipped'}`}
-                        >
-                            <BackIcon thin />
-                        </span>
-                        {toggleKey && <span className='tea-sidebar__key'>{toggleKey}</span>}
-                    </button>
+                    {toggle}
                     {typeof title === 'string' ? <h2 className='tea-sidebar__title'>{title}</h2> : title}
                     {headerActions?.map((action) => (
                         <button
@@ -315,6 +333,21 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
 
                 {footer && <div className='tea-sidebar__footer'>{footer}</div>}
             </aside>
+
+            {!expanded && (
+                <div
+                    className='tea-rail'
+                    style={{ '--tea-sidebar-collapsed-width': `${collapsedWidth}px` } as React.CSSProperties}
+                >
+                    {toggle}
+                    {rail && (
+                        <div className='tea-rail__bottom'>
+                            <hr className='tea-rail__rule' />
+                            {rail}
+                        </div>
+                    )}
+                </div>
+            )}
         </TeaSidebarContext.Provider>
     );
 };

@@ -25,7 +25,8 @@ def database_path(name:str=None, root_path:str=None) -> str:
     Folder of one database: <root>/hsdb/<name>. Root falls back to env HSDB_ROOT_PATH, then /var/lib.
     """
     root_path = root_path or os.environ.get('HSDB_ROOT_PATH') or _DEFAULT_ROOT_PATH
-    return os.path.join(root_path, 'hsdb', name) if name else os.path.join(root_path, 'hsdb')
+    return path.join(root_path, 'hsdb', name) if name else path.join(root_path, 'hsdb')
+
 _FS = {
     'audits': {},
     'backups': {

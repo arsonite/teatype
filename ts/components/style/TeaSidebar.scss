@@ -27,8 +27,10 @@
         width: var(--tea-sidebar-expanded-width, 300px);
     }
 
+    // Collapsed, the toggle and the rail below take its place, the page runs underneath the rail
     &--collapsed {
-        width: var(--tea-sidebar-collapsed-width, 50px);
+        width: 0;
+        border-right-width: 0;
     }
 
     // Header, list and footer keep the expanded width, the sidebar only clips them while it resizes, so nothing reflows
@@ -39,14 +41,56 @@
         flex-shrink: 0;
     }
 
-    &--collapsed &__header > :not(.tea-sidebar__toggle),
-    &--collapsed &__content,
-    &--collapsed &__footer {
+    &--collapsed:not(&--mobile) &__header,
+    &--collapsed:not(&--mobile) &__content,
+    &--collapsed:not(&--mobile) &__footer {
         opacity: 0;
         visibility: hidden;
         transition:
             opacity 120ms,
             visibility 0s 300ms;
+    }
+
+    // On a phone the sidebar is a sheet over everything that slides in from the left
+    &--mobile {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        height: auto;
+
+        background: var(--bg-primary);
+        border-right: none;
+        transition:
+            transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+            visibility 0s;
+
+        &.tea-sidebar--expanded,
+        &.tea-sidebar--collapsed {
+            width: 100%;
+        }
+
+        &.tea-sidebar--collapsed {
+            transform: translateX(-100%);
+            visibility: hidden;
+            transition:
+                transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
+                visibility 0s 300ms;
+        }
+    }
+
+    &--mobile &__header,
+    &--mobile &__content,
+    &--mobile &__footer {
+        width: 100%;
+    }
+
+    // Under the notch and the home indicator
+    &--mobile &__header {
+        padding-top: calc(16px + env(safe-area-inset-top));
+    }
+
+    &--mobile &__footer {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
     }
 
     &__header {
@@ -87,10 +131,14 @@
             display: flex;
             transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
+            svg,
+            svg path {
+                fill: currentColor;
+            }
+
             svg {
                 width: 16px;
                 height: 16px;
-                fill: currentColor;
             }
 
             &--flipped {
@@ -213,6 +261,74 @@
         overflow: hidden;
 
         border-top: 1px solid var(--border);
+    }
+}
+
+// The collapsed sidebar: the toggle at the top and the footer actions at the bottom, over the left edge of the page.
+// The middle lets clicks through to the page, where the buttons of the blocks sit.
+.tea-rail {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: var(--tea-sidebar-collapsed-width, 44px);
+    padding: calc(16px + env(safe-area-inset-top)) 0 calc(12px + env(safe-area-inset-bottom));
+
+    pointer-events: none;
+
+    > *,
+    &__bottom > * {
+        pointer-events: auto;
+    }
+
+    &__bottom {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        margin-top: auto;
+    }
+
+    &__rule {
+        width: 24px;
+        margin: 0 0 4px;
+
+        border: none;
+        border-top: 1px solid var(--border);
+    }
+
+    // A footer action of the rail, a square button with an icon or the sync dot
+    &__btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--text-muted);
+        cursor: pointer;
+
+        transition:
+            background 0.15s,
+            color 0.15s;
+
+        svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        &:hover,
+        &--active {
+            background: var(--surface-elevated);
+            color: var(--text-primary);
+        }
     }
 }
 

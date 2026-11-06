@@ -244,9 +244,11 @@ db.info()                                              # {'service','name','pid'
 | GET                  | `/hsdb/{Model}`      | query via `from_params` syntax                                                                   |
 | POST                 | `/hsdb/{Model}`      | create, optional `id` in the body is used as the entry id (`[A-Za-z0-9_-]{1,128}`, 409 if taken) |
 | GET / PATCH / DELETE | `/hsdb/{Model}/{id}` | read / partial update / delete (404 if id missing or belongs to another model)                   |
+| POST                 | `/hsdb/{Model}/bulk` | body `{create: [rows], update: [{id, data}], delete: [ids]}`, applied in that order, max 1000 operations (413) |
 
-Relation values are ids of existing entries of the target model (400 otherwise, so create parents before children). `GET /hsdb/{Model}?<relation>=<id>`
-filters by a many-to-one relation. `id`, `created_at` and `updated_at` in a PATCH body are ignored. Relations can be set and changed, `null` unsets an optional one.
+Relation values are ids of existing entries of the target model (400 otherwise, so create parents before children, also inside one bulk request).
+`GET /hsdb/{Model}?<relation>=<id>` filters by a many-to-one relation. `id`, `created_at` and `updated_at` in a PATCH body are ignored. Relations can be set and changed, `null` unsets an optional one.
+`/bulk` answers `{create: [...], update: [...], delete: [...]}` with `{ok: true, data}` or `{ok: false, status, error}` per item, a failing item does not stop the others (`HSDBClient.bulk`, `HSDBBaseAPI.bulk`).
 
 `include_relations` / `expand_relations` are accepted on the GET and PATCH routes. `GET /hsdb/{Model}?fields=a,b` returns only those fields
 (plus `id`), `GET /hsdb/schema` returns all model schemas. Browsers can call the server only if `hsdb.init(..., cors_origins=<regex>)` allows their

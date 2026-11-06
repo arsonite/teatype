@@ -27,6 +27,9 @@ export type {
     HSDBCreateOptions,
     HSDBUpdateOptions,
     HSDBDeleteOptions,
+    HSDBBulkRequest,
+    HSDBBulkItemResult,
+    HSDBBulkResponse,
     HSDBModelSchema,
     HSDBEntity,
 } from './types';

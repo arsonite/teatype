@@ -226,6 +226,14 @@ class HSDBClient:
     def all(self, model:Union[type, str], **options) -> List[dict]:
         return self.query(model).all(**options)
 
+    def bulk(self, model:Union[type, str], *, create:List[dict]=None, update:List[dict]=None, delete:List[str]=None) -> dict:
+        """
+        Many writes in one request: create = rows, update = [{'id': ..., 'data': {...}}], delete = ids.
+        Returns {'create': [...], 'update': [...], 'delete': [...]} with {'ok', 'data'} or {'ok': False, 'status', 'error'} per item.
+        """
+        body = {'create': create or [], 'update': update or [], 'delete': delete or []}
+        return self.request('POST', f'/hsdb/{_model_name(model)}/bulk', json=body)
+
     def count(self, model:Union[type, str]) -> int:
         return self.request('GET', '/hsdb')['models'][_model_name(model)]
 
