@@ -265,7 +265,21 @@
 }
 
 // The collapsed sidebar: the toggle at the top and the footer actions at the bottom, over the left edge of the page.
-// The middle lets clicks through to the page, where the buttons of the blocks sit.
+// The middle lets clicks through to the page, where the buttons of the blocks sit. Its background is a layer of its
+// own below the page content (which paints later), so those buttons stay above it.
+.tea-rail-background {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    width: var(--tea-sidebar-collapsed-width, 44px);
+
+    background: var(--surface-card);
+    border-right: 1px solid var(--border);
+    pointer-events: none;
+}
+
 .tea-rail {
     position: fixed;
     top: 0;

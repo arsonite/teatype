@@ -336,6 +336,12 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
 
             {!expanded && (
                 <div
+                    className='tea-rail-background'
+                    style={{ '--tea-sidebar-collapsed-width': `${collapsedWidth}px` } as React.CSSProperties}
+                />
+            )}
+            {!expanded && (
+                <div
                     className='tea-rail'
                     style={{ '--tea-sidebar-collapsed-width': `${collapsedWidth}px` } as React.CSSProperties}
                 >
