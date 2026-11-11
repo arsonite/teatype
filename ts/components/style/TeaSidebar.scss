@@ -290,7 +290,7 @@
     flex-direction: column;
     align-items: center;
     width: var(--tea-sidebar-collapsed-width, 44px);
-    padding: calc(16px + env(safe-area-inset-top)) 0 calc(12px + env(safe-area-inset-bottom));
+    padding: calc(16px + env(safe-area-inset-top)) 0 calc(16px + env(safe-area-inset-bottom));
 
     pointer-events: none;
 
@@ -303,13 +303,14 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 6px;
+        // Same heights as the footer of the expanded sidebar: its rule, the sync dot and the settings sit level with these
+        gap: 16px;
         margin-top: auto;
     }
 
     &__rule {
         width: 24px;
-        margin: 0 0 4px;
+        margin: 0;
 
         border: none;
         border-top: 1px solid var(--border);
