@@ -509,12 +509,17 @@
 
     &__date {
         flex-shrink: 0;
+
+        font-size: 12px;
+        font-weight: bold;
     }
 
     &__subtitle {
         flex: 1;
         overflow: hidden;
 
+        font-size: 12px;
+        font-style: italic;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
