@@ -1,0 +1,83 @@
+/**
+ * @license
+ * Copyright (C) 2024-2026 Burak Günaydin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+
+// The menus that open at the mouse: the components to insert and what to do with selected text
+.tea-popover {
+    position: fixed;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 190px;
+    padding: 8px;
+
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md, 10px);
+    box-shadow: var(--shadow);
+    animation: teaPopoverOpen 200ms ease-out;
+
+    &__item,
+    &__button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+
+        background: transparent;
+        border: none;
+        border-radius: var(--radius-sm, 6px);
+        color: var(--text-primary);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+
+        &:hover {
+            background: var(--bg-hover);
+        }
+    }
+
+    &__item svg {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        color: var(--accent);
+    }
+
+    &__row {
+        display: flex;
+        gap: 6px;
+
+        .tea-popover__button {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+}
+
+
+@keyframes teaPopoverOpen {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

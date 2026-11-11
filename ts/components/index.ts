@@ -19,6 +19,7 @@ export { TeaButton } from './input/TeaButton';
 export { XButton } from './input/buttons/XButton';
 export { TeaCheckbox } from './input/TeaCheckbox';
 export { TeaConfirmProvider, useConfirm } from './TeaConfirm';
+export { TeaDatePicker } from './TeaDatePicker';
 export { TeaIcon } from './TeaIcon';
 export { TeaInfotip } from './TeaInfotip';
 export { TeaInput, TeaSelect, TeaTextarea } from './input/TeaInput';
@@ -26,6 +27,7 @@ export { TeaModal } from './TeaModal';
 export { TeaNav } from './app/TeaNav';
 export { TeaPage } from './app/TeaPage';
 export { TeaPanel } from './TeaPanel';
+export { TeaPopover } from './TeaPopover';
 export { TeaSettingsPanel, TeaSettingsProvider, useTeaSettings, SUPPORTED_LANGUAGES } from './app/TeaSettings';
 export { TeaSettingsPage } from './TeaSettingsPage';
 export {
@@ -49,6 +51,7 @@ export {
     useTeaToastContext,
 } from './TeaToast';
 export { TeaThemePicker } from './TeaThemePicker';
+export { TeaTimePicker } from './TeaTimePicker';
 export { TeaTooltip } from './TeaTooltip';
 
 // Types
@@ -61,6 +64,9 @@ export type {
     iTeaSettingsPageProps,
     tTeaSettingControl,
 } from './TeaSettingsPage';
+export type { iTeaDatePickerProps } from './TeaDatePicker';
+export type { iTeaPopoverProps } from './TeaPopover';
+export type { iTeaTimePickerProps } from './TeaTimePicker';
 export type { iTeaSliderProps, tSliderSize, tSliderTheme } from './input/TeaSlider';
 export type { iTeaSubNavItem, iTeaSubNavProps } from './app/TeaSubNav';
 export type {
