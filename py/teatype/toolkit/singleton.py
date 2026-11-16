@@ -20,7 +20,8 @@ class Singleton(ABCMeta):
     Ensures the singleton pattern is followed in each worker.
     """
     _instances = {}
-    _lock = threading.Lock()
+    # Re-entrant, because a singleton's __init__ may construct other singletons (e.g. a module creating its storage)
+    _lock = threading.RLock()
 
     def __call__(cls, *args, **kwargs):
         with cls._lock: # Ensure only one instance is created even in multithreading.
