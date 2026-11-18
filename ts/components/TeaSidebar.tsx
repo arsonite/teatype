@@ -358,12 +358,11 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                     style={{ '--tea-sidebar-collapsed-width': `${collapsedWidth}px` } as React.CSSProperties}
                 >
                     {toggle}
-                    {showHub && !mobile && <TeaHubLink href={hubHref || undefined} variant='rail' />}
-                    {(rail || (showHub && mobile)) && (
+                    {(rail || showHub) && (
                         <div className='tea-rail__bottom'>
                             <hr className='tea-rail__rule' />
-                            {/* On a phone it sits at the bottom like the footer of the open sheet */}
-                            {showHub && mobile && <TeaHubLink href={hubHref || undefined} variant='rail' />}
+                            {/* At the bottom like the footer of the open sidebar */}
+                            {showHub && <TeaHubLink href={hubHref || undefined} variant='rail' />}
                             {rail}
                         </div>
                     )}

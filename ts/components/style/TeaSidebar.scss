@@ -291,14 +291,10 @@
         svg {
             width: 12px;
             height: 12px;
-
-            path {
-                fill: currentColor;
-            }
         }
     }
 
-    // In the rail it is a tea-rail__btn, which sits directly under the toggle, on a phone in the bottom group
+    // In the rail it is a tea-rail__btn in the bottom group, above the sync dot like the footer of the open sidebar
     &--rail {
         margin-top: 8px;
         text-decoration: none;
@@ -311,9 +307,9 @@
             width: 14px;
             height: 14px;
 
-            path {
-                fill: currentColor;
-            }
+            // path {
+            //     fill: currentColor;
+            // }
         }
     }
 }

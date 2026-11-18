@@ -19,7 +19,7 @@
 import React from 'react';
 
 // Icons
-import { BackIcon } from '../icons';
+import { ArrowIcon } from '../icons';
 
 interface iTeaHubLinkProps {
     /** Where the hub lives, a full page load because the hub is an app of its own. Default: / */
@@ -42,12 +42,12 @@ const TeaHubLink: React.FC<iTeaHubLinkProps> = ({ href = '/', label = 'Back to h
 
     return variant === 'rail' ? (
         <a className='tea-rail__btn tea-hub-link tea-hub-link--rail' href={href} title={label}>
-            <BackIcon thin />
+            <ArrowIcon />
         </a>
     ) : (
         <a className='tea-hub-link' href={href}>
             <span className='tea-hub-link__icon'>
-                <BackIcon thin />
+                <ArrowIcon />
             </span>
             {label}
         </a>
