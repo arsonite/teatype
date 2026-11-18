@@ -19,6 +19,9 @@ import React, { useState, createContext, useContext } from 'react';
 // Icons
 import { BackIcon, ChevronIcon, PlusIcon, XIcon } from '../icons';
 
+// Components
+import { TeaHubLink, isEmbedded } from './TeaHubLink';
+
 // Style
 import './style/TeaSidebar.scss';
 
@@ -55,6 +58,8 @@ export interface iTeaSidebarProps {
     expandedWidth?: number;
     emptyMessage?: string;
     footer?: React.ReactNode;
+    // Where the "back to hub" link of an app that is embedded in a hub (homepie) points to, false leaves it out. Standalone apps never show it.
+    hubHref?: string | false;
     toggleKey?: string;
     headerActions?: tTeaSidebarAction[];
     // A phone: expanded is then a sheet over everything, closed with an X
@@ -252,6 +257,7 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
     sections,
     showItemDelete = true,
     footer,
+    hubHref = '/',
     children,
     expandedWidth = 300,
     collapsedWidth = 44,
@@ -267,6 +273,7 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
         expanded,
         onToggle,
     };
+    const showHub = hubHref !== false && isEmbedded();
 
     const toggle = (
         <button
@@ -331,7 +338,12 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                     )}
                 </div>
 
-                {footer && <div className='tea-sidebar__footer'>{footer}</div>}
+                {(footer || showHub) && (
+                    <div className='tea-sidebar__footer'>
+                        {showHub && <TeaHubLink href={hubHref || undefined} />}
+                        {footer}
+                    </div>
+                )}
             </aside>
 
             {!expanded && (
@@ -346,6 +358,7 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                     style={{ '--tea-sidebar-collapsed-width': `${collapsedWidth}px` } as React.CSSProperties}
                 >
                     {toggle}
+                    {showHub && <TeaHubLink href={hubHref || undefined} variant='rail' />}
                     {rail && (
                         <div className='tea-rail__bottom'>
                             <hr className='tea-rail__rule' />

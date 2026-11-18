@@ -8,3 +8,6 @@ export type { UseAPIRegistryResult, UseDynamicResourceResult } from './useAPIReg
 // Translation hook (integrates with TeaSettings language)
 export { useTranslation } from './useTranslation';
 export type { TranslationDict, Translations } from './useTranslation';
+
+// Phone breakpoint
+export { useIsMobile } from './useIsMobile';
