@@ -15,6 +15,7 @@
 
 // Components
 export { TeaApp } from './app/TeaApp';
+export { TeaAutocomplete } from './input/TeaAutocomplete';
 export { TeaButton } from './input/TeaButton';
 export { XButton } from './input/buttons/XButton';
 export { TeaCheckbox } from './input/TeaCheckbox';
@@ -66,6 +67,7 @@ export type {
     iTeaSettingsPageProps,
     tTeaSettingControl,
 } from './TeaSettingsPage';
+export type { iTeaAutocompleteOption, iTeaAutocompleteProps } from './input/TeaAutocomplete';
 export type { iTeaDatePickerProps } from './TeaDatePicker';
 export type { iTeaPopoverProps } from './TeaPopover';
 export type { iTeaTimePickerProps } from './TeaTimePicker';

@@ -1,0 +1,69 @@
+/**
+ * Copyright (C) 2024-2026 Burak Günaydin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+
+.tea-autocomplete {
+    &__input {
+        cursor: text;
+        text-overflow: ellipsis;
+
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        padding-right: 2.25rem;
+    }
+
+    // In the body, above the modals (1000)
+    &__list {
+        position: fixed;
+        z-index: 1100;
+
+        margin: 0;
+        padding: 4px;
+
+        background: var(--surface-elevated);
+        border: 1px solid var(--border-strong, var(--border));
+        border-radius: 10px;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+        list-style: none;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    &__option,
+    &__empty {
+        padding: 0.5rem 0.75rem;
+
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 0.9375rem;
+    }
+
+    &__option {
+        cursor: pointer;
+
+        &--active {
+            background: var(--accent-soft);
+        }
+
+        &--selected {
+            color: var(--accent);
+            font-weight: 600;
+        }
+    }
+
+    &__empty {
+        color: var(--text-muted);
+    }
+}
