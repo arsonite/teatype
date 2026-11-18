@@ -166,14 +166,14 @@ class HSDBClient:
     def discover(cls, name:str, root_path:str=None, wait:float=0.0) -> 'HSDBClient':
         """
         Find the database `name`, retrying for up to `wait` seconds. Non-cold hosts publish
-        <db folder>/server.json; cold hosts (memory only) listen on default_port(name).
+        <db folder>/runtime/server.json; cold hosts (memory only) listen on default_port(name).
         """
         directory = database_path(name, root_path)
         deadline = time.monotonic() + wait
         while True:
             addresses = [('127.0.0.1', default_port(name))]
             with contextlib.suppress(FileNotFoundError, json.JSONDecodeError):
-                with open(os.path.join(directory, 'server.json')) as file:
+                with open(os.path.join(directory, 'runtime', 'server.json')) as file:
                     published = json.load(file)
                 addresses.insert(0, (published['host'], published['port']))
             for host, port in addresses:

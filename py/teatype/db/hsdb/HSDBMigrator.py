@@ -96,7 +96,11 @@ class HSDBMigrator:
         self.fs = _FSProxy(_FS, db_path)
         self.migrations_path = migrations_path
         self.models = models
-        self.state_path = os.path.join(db_path, 'migrations.json')
+        self.state_path = os.path.join(self.fs.logs.migrations.path, 'migrations.json')
+        legacy_state_path = os.path.join(db_path, 'migrations.json') # Where it was kept before
+        if os.path.exists(legacy_state_path) and not os.path.exists(self.state_path) and not cold_mode:
+            os.makedirs(os.path.dirname(self.state_path), exist_ok=True)
+            os.replace(legacy_state_path, self.state_path)
 
     #############
     # Internals #

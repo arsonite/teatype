@@ -69,7 +69,7 @@ class Env:
         (self.migrations / file_name).write_text(source)
 
     def state(self) -> list:
-        state_path = self.db / 'migrations.json'
+        state_path = self.db / 'logs' / 'migrations' / 'migrations.json'
         return json.loads(state_path.read_text()) if state_path.exists() else []
 
     def run(self, models:list=None, cold_mode:bool=False) -> None:
@@ -204,6 +204,18 @@ def test_failing_hook_leaves_data_untouched(env, body):
     assert env.snapshot() == before
     assert env.state() == [] and not (env.db / 'backups').exists()
 
+def test_state_file_of_older_versions_is_moved_into_the_logs(env):
+    env.write_rows('notes', _row('a', x=1))
+    env.migration('0001_first.py', "self.table('Note').add_field('y', 0)")
+    env.run()
+    state = (env.db / 'logs' / 'migrations' / 'migrations.json').read_bytes()
+    (env.db / 'migrations.json').write_bytes(state)
+    (env.db / 'logs' / 'migrations' / 'migrations.json').unlink()
+    env.run() # Applied according to the old file, so not run again
+    assert not (env.db / 'migrations.json').exists()
+    assert (env.db / 'logs' / 'migrations' / 'migrations.json').read_bytes() == state
+    assert len(list((env.db / 'logs' / 'migrations').glob('0*.json'))) == 1
+
 def test_commit_failure_restores_the_backup(env, monkeypatch):
     env.write_rows('notes', _row('a', x=1), _row('b', x=2), _row('c', x=3))
     env.migration('0001_commit_fails.py', "t = self.table('Note'); t.remove_field('x'); t.reject('c', 'r')")
@@ -219,7 +231,7 @@ def test_commit_failure_restores_the_backup(env, monkeypatch):
         env.run()
     monkeypatch.undo()
     assert len(calls) == 4 # The failing write and the log of the failure
-    log = json.loads(next((env.db / 'logs' / 'migrations').iterdir()).read_text())
+    log = json.loads(next((env.db / 'logs' / 'migrations').glob('0*.json')).read_text())
     assert log['status'] == 'failed' and 'disk full' in log['error']
     assert env.snapshot() == before
     assert env.state() == [] and not list((env.db / 'rejectpile').rglob('*.json'))
@@ -242,7 +254,7 @@ def test_cold_migration_applies_earlier_ones_simulates_the_rest_and_stops(env):
     assert not (env.db / 'indexdb' / 'notes' / 'n.json').exists()
     assert len(list((env.db / 'backups' / 'migration').iterdir())) == 1 # Only the real migration backed up
 
-    logs = {file.name.split('_', 2)[1]: json.loads(file.read_text()) for file in (env.db / 'logs' / 'migrations').iterdir()}
+    logs = {file.name.split('_', 2)[1]: json.loads(file.read_text()) for file in (env.db / 'logs' / 'migrations').glob('0*.json')}
     assert {name: log['status'] for name, log in logs.items()} == {'real': 'applied', 'cold': 'dry_run', 'chained': 'dry_run'}
     changed = logs['cold']['collections']['notes']['changed']['a']
     assert changed['after']['pinned'] is False and 'pinned' not in changed['before']
@@ -256,7 +268,7 @@ def test_global_cold_mode_changes_nothing(env):
     with pytest.raises(SystemExit):
         env.run(cold_mode=True)
     assert env.snapshot() == before and env.state() == [] and not (env.db / 'backups').exists()
-    assert len(list((env.db / 'logs' / 'migrations').iterdir())) == 1
+    assert len(list((env.db / 'logs' / 'migrations').glob('0*.json'))) == 1
 
 ###############
 # Schema drift #
@@ -330,23 +342,23 @@ def test_end_to_end_restore_after_migration_and_not_rerun(workspace):
     process = _host(workspace, COLD='1', HSDB_MIGRATIONS_COLD_MODE='0') # Class attribute cold_mode: simulated only, the server does not start
     assert process.returncode != 0 and 'nothing was applied' in process.stderr
     assert json.loads((db / 'indexdb' / 'notes' / 'n1.json').read_text()) == old
-    assert not (db / 'migrations.json').exists() and len(list((db / 'logs' / 'migrations').iterdir())) == 1
-    assert not (db / 'server.json').exists()
+    assert not (db / 'logs' / 'migrations' / 'migrations.json').exists() and len(list((db / 'logs' / 'migrations').glob('0*.json'))) == 1
+    assert not (db / 'runtime' / 'server.json').exists()
 
     process = _host(workspace, COLD='0', HSDB_MIGRATIONS_COLD_MODE='1') # The env var makes every migration cold
-    assert process.returncode != 0 and not (db / 'migrations.json').exists()
+    assert process.returncode != 0 and not (db / 'logs' / 'migrations' / 'migrations.json').exists()
 
     process = _host(workspace, COLD='0')
     assert process.returncode == 0, process.stderr
     assert _result(process) == [{'body': 'hello', 'pinned': False, 'id': 'n1', 'created_at': old['created_at'], 'updated_at': old['updated_at']}]
     assert 'could not be restored' not in process.stdout + process.stderr
-    state = json.loads((db / 'migrations.json').read_text())
+    state = json.loads((db / 'logs' / 'migrations' / 'migrations.json').read_text())
     assert [(entry['id'], entry['name']) for entry in state] == [(1, 'add_pinned')]
     assert len(list((db / 'backups' / 'migration').iterdir())) == 1
 
     process = _host(workspace, COLD='0') # Second start: not run again
     assert process.returncode == 0 and _result(process)[0]['body'] == 'hello'
-    assert json.loads((db / 'migrations.json').read_text()) == state
+    assert json.loads((db / 'logs' / 'migrations' / 'migrations.json').read_text()) == state
     assert len(list((db / 'backups' / 'migration').iterdir())) == 1
 
 def test_end_to_end_without_migrations_reports_skipped_entries(workspace):

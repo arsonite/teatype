@@ -74,16 +74,16 @@ Multiple indexed equality conditions are intersected. Remaining conditions are f
 `cold_mode=True` is memory only, **nothing touches disk**: no folder tree, no entry or model files, and no lock/registry files either.
 Discovery then works without files: the host holds an abstract unix socket `\0hsdb:<name>` as its singleton lock (Linux only, released
 by the OS on exit) and listens on a port derived from the name (`default_port(name)`, 10000-29999, so passing `port` is rejected).
-Clients fall back to that port when no `server.json` exists and read the schemas from `GET /hsdb/schema` instead of `models/*.json`.
+Clients fall back to that port when no `runtime/server.json` exists and read the schemas from `GET /hsdb/schema` instead of `models/*.json`.
 Different names can in theory hash to the same port; the second host then fails to start. Otherwise the folder is
 `<root>/hsdb/<name>/` with root = `root_path` -> env `HSDB_ROOT_PATH` -> `/var/lib`; if it cannot be created the process **exits** (`err(exit=True)`).
 
 ### Folder layout (`RawFileStructure._FS`, per database `<root>/hsdb/<name>/`)
 
 `audits`, `backups/{indexdb,migration,rawfiles}`, `exports`, `indexdb`, `logs/{migrations,reads,writes}`,
-`lut`, `models`, `rawfiles`, `redundancy`, `rejectpile/{indexdb,rawfiles}`, `reports`, plus `server.json` and `server.lock` (section 6).
+`lut`, `models`, `rawfiles`, `redundancy`, `rejectpile/{indexdb,rawfiles}`, `reports`, plus `runtime/server.json` and `runtime/server.lock` (section 6).
 Used today: `indexdb/<plural>/<id>.json` (entries), `models/<Model>.json` (schema descriptors, written at host start) and, for migrations (section 7),
-`migrations.json`, `backups/migration`, `logs/migrations` and `rejectpile/indexdb`. The rest is scaffolding.
+`logs/migrations/migrations.json`, `backups/migration`, `logs/migrations` and `rejectpile/indexdb`. The rest is scaffolding.
 
 ### Restart behaviour: restored from disk
 
@@ -201,11 +201,11 @@ db.Student.find(age=18)                                  # model proxy built fro
 
 A database is identified by its **name**, like a Postgres database; the port is chosen randomly and published, not configured.
 
-1. `init()` takes an `flock` on `<db folder>/server.lock`. The lock holder is the host: it starts `HybridStorage` + FastAPI/uvicorn (daemon thread),
-   writes `models/<Model>.json` for every model, waits until the server answers, then publishes `server.json` (`name, host, port, pid`).
-2. If the lock is already held, `init()` connects instead (waiting up to `startup_timeout` for `server.json`), so simultaneous starts are race-free.
-   The OS releases the lock when the host dies; the host also removes `server.json` on exit and a stale one is deleted by the next host.
-3. `connect()`/`hsdb[name]` reads `server.json`, verifies via `GET /hsdb` that the answering service is HSDB **and** has that name,
+1. `init()` takes an `flock` on `<db folder>/runtime/server.lock`. The lock holder is the host: it starts `HybridStorage` + FastAPI/uvicorn (daemon thread),
+   writes `models/<Model>.json` for every model, waits until the server answers, then publishes `runtime/server.json` (`name, host, port, pid`).
+2. If the lock is already held, `init()` connects instead (waiting up to `startup_timeout` for `runtime/server.json`), so simultaneous starts are race-free.
+   The OS releases the lock when the host dies; the host also removes `runtime/server.json` on exit and a stale one is deleted by the next host.
+3. `connect()`/`hsdb[name]` reads `runtime/server.json`, verifies via `GET /hsdb` that the answering service is HSDB **and** has that name,
    then loads `models/*.json` into `client.models`. Clients are cached per name in the process.
 4. One process hosts at most one database (`HybridStorage` is a per-process singleton, `init()` of a second name raises) but can connect to many.
    Different names use different folders, ports and servers.
@@ -302,7 +302,7 @@ db = hsdb.init('school', models=[...], migrations_cold_mode=True)         # dry 
 (`__init__.py`, `__pycache__`) are ignored, duplicate numbers (`0001_a.py` + `1_b.py`) are an error. Files are loaded with `importlib` under the
 module name `hsdb_migration_<number>_<name>`; nothing is added to `sys.path`. Do not override `__init__`.
 
-Applied migrations are recorded in `<db folder>/migrations.json`: `[{"id": 1, "name": "add_workout_notes", "applied_at": "..."}]`.
+Applied migrations are recorded in `<db folder>/logs/migrations/migrations.json` (next to the run logs; a `migrations.json` of an older version in the db folder is moved there on start): `[{"id": 1, "name": "add_workout_notes", "applied_at": "..."}]`.
 At every host start the unrecorded ones run in number order, each recorded after it succeeded **(verified)**. A pending migration with a number
 **below** an already applied one is refused (`HSDBMigrationError`), a recorded migration whose file is gone only logs a warning.
 Every migration run writes one json to `<db folder>/logs/migrations/<number>_<name>_<timestamp>.json`: `{migration, status, timestamp, collections, error?}`.

@@ -384,7 +384,7 @@ class HSDB(ApplicationUnit):
 class _HSDBRegistry:
     """
     Entry point exposed as `hsdb`. A database is identified by its name; the host process of a name
-    holds an flock on <db folder>/server.lock and publishes host/port in <db folder>/server.json.
+    holds an flock on <db folder>/runtime/server.lock and publishes host/port in <db folder>/runtime/server.json.
     Cold databases use no files: an abstract unix socket as lock and default_port(name) as port.
     One process can host one database (HybridStorage is a per-process singleton) but connect to many.
     """
@@ -442,14 +442,15 @@ class _HSDBRegistry:
             info_file = None
         else:
             directory = database_path(name, root_path)
-            os.makedirs(directory, exist_ok=True)
-            lock = open(os.path.join(directory, 'server.lock'), 'w')
+            runtime = os.path.join(directory, 'runtime')
+            os.makedirs(runtime, exist_ok=True)
+            lock = open(os.path.join(runtime, 'server.lock'), 'w')
             try:
                 fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB) # Released by the OS when this process dies
             except BlockingIOError:
                 lock.close()
                 return self.connect(name, root_path=root_path, wait=startup_timeout)
-            info_file = os.path.join(directory, 'server.json')
+            info_file = os.path.join(runtime, 'server.json')
             with contextlib.suppress(FileNotFoundError):
                 os.remove(info_file) # Left over from a crashed host
             if migrations_cold_mode is None:

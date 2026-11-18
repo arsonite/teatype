@@ -52,6 +52,7 @@ _FS = {
         'rawfiles': {}
     },
     'reports': {},
+    'runtime': {},
 }
 
 class _FSProxy:
