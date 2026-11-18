@@ -354,6 +354,12 @@ class BaseStartCLI(BaseCLI):
     # Hooks #
     #########
     
+    def get_env_file_path(self) -> str:
+        """
+        Path of the .env file that is loaded before starting. Override to keep it outside of the module directory.
+        """
+        return './.env'
+    
     def execute(self):
         """
         Executes the start command to initiate the process.
@@ -434,10 +440,11 @@ class BaseStartCLI(BaseCLI):
             # Redirect tee's output to /dev/null to prevent terminal output in detached mode
             self.start_command = f'{self.start_command} 2>&1 | tee {self.stdout_path} {secondary_log_path} > /dev/null'
         
-        if file.exists('./.env'):
-            env.load() # Load the environment variables
+        env_file_path = self.get_env_file_path()
+        if file.exists(env_file_path):
+            env.load(env_file_path) # Load the environment variables
         else:
-            warn('No ".env" file found. Limited functionality available.')
+            warn(f'No ".env" file found at "{env_file_path}". Limited functionality available.')
         
         def signal_handler(signum, _):
             """
