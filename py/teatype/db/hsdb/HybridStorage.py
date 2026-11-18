@@ -42,6 +42,7 @@ class HybridStorage(threading.Thread, metaclass=Singleton):
     migrations:dict
     operations_queue:Queue
     rf_handler:RawFileHandler
+    skipped:int = 0 # Files the last restore() could not load
 
     # TODO: Put this outside of class context so the first import HybridStorage initializes it
     def __init__(self, models:List[type]=[], root_path:str=None, cold_mode:bool=False, name:str=None) -> None:
@@ -100,8 +101,9 @@ class HybridStorage(threading.Thread, metaclass=Singleton):
         Load entries written by RawFileHandler (indexdb/<plural>/<id>.json) back into memory,
         keeping ids, timestamps and relation ids (relations of files written before relations were
         persisted are missing).
-        Returns the number of restored entries.
+        Returns the number of restored entries; files that no longer fit their model are counted in `self.skipped`.
         """
+        self.skipped = 0
         if self.rf_handler.cold_mode:
             return 0
         restored = 0
@@ -117,6 +119,7 @@ class HybridStorage(threading.Thread, metaclass=Singleton):
                     self.index_db.update_directly({computed['id']: entry})
                     restored += 1
                 except Exception:
+                    self.skipped += 1
                     err(f'Could not restore {file_path}, skipping it.', traceback=True)
         return restored
 

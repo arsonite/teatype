@@ -1,0 +1,71 @@
+/**
+ * Copyright (C) 2024-2026 Burak Günaydin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+
+$synced: #69db7c;
+$waiting: #ffa94d;
+$offline: #ff6b6b;
+
+.tea-sync-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+
+    border: 0;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+
+    &__dot {
+        flex-shrink: 0;
+        width: 8px;
+        height: 8px;
+
+        border-radius: 50%;
+        background: $synced;
+    }
+
+    &--waiting &__dot {
+        background: $waiting;
+        box-shadow: 0 0 6px rgba($waiting, 0.6);
+    }
+
+    &--offline &__dot {
+        background: $offline;
+    }
+
+    &--syncing &__dot {
+        background: $waiting;
+        animation: tea-sync-pulse 1s ease-in-out infinite;
+    }
+}
+
+button.tea-sync-status {
+    cursor: pointer;
+
+    &:hover {
+        background: var(--surface-elevated);
+        color: var(--text-primary);
+    }
+}
+
+@keyframes tea-sync-pulse {
+    50% {
+        opacity: 0.3;
+    }
+}

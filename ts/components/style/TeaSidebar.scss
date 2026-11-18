@@ -264,6 +264,60 @@
     }
 }
 
+// Link back to the hub an app is embedded in (TeaHubLink), the first line of the footer of the expanded sidebar
+.tea-hub-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-decoration: none;
+
+    transition:
+        background 0.15s,
+        color 0.15s;
+
+    &:hover {
+        background: var(--surface-elevated);
+        color: var(--text-primary);
+    }
+
+    &__icon {
+        display: flex;
+
+        svg {
+            width: 12px;
+            height: 12px;
+
+            path {
+                fill: currentColor;
+            }
+        }
+    }
+
+    // In the rail it is a tea-rail__btn, which sits directly under the toggle, on a phone in the bottom group
+    &--rail {
+        margin-top: 8px;
+        text-decoration: none;
+
+        .tea-rail__bottom & {
+            margin-top: 0;
+        }
+
+        svg {
+            width: 14px;
+            height: 14px;
+
+            path {
+                fill: currentColor;
+            }
+        }
+    }
+}
+
 // The collapsed sidebar: the toggle at the top and the footer actions at the bottom, over the left edge of the page.
 // The middle lets clicks through to the page, where the buttons of the blocks sit. Its background is a layer of its
 // own below the page content (which paints later), so those buttons stay above it.

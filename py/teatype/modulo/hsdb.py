@@ -26,9 +26,11 @@ from fastapi import HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from teatype.db.hsdb import HybridStorage
 from teatype.db.hsdb.HSDBClient import HSDBClient, default_port
+from teatype.db.hsdb.HSDBMigrator import HSDBMigrator
 from teatype.db.hsdb.RawFileStructure import database_path
 from teatype.db.hsdb.core import HSDBQuery
-from teatype.logging import success
+from teatype.io import env, path
+from teatype.logging import success, warn
 from teatype.modulo.units.application import ApplicationUnit
 
 # Ids chosen by clients end up in file names, so only allow a safe alphabet
@@ -70,6 +72,8 @@ class HSDB(ApplicationUnit):
         restored = self.hybrid_storage.restore()
         if restored:
             success(f'HSDB "{name}" restored {restored} entries from disk')
+        if self.hybrid_storage.skipped:
+            warn(f'HSDB "{name}": {self.hybrid_storage.skipped} entries could not be restored, a migration is probably missing')
         self._register_hsdb_routes()
 
     #############
@@ -106,6 +110,14 @@ class HSDB(ApplicationUnit):
     def _relations(self, model:type) -> dict:
         return model.schema()['relations']
 
+    def _coerce(self, model:type, data:dict) -> dict:
+        """
+        JSON writes 8.0 as 8, which a float attribute would reject.
+        """
+        attributes = model.schema()['attributes']
+        return {key: float(value) if attributes.get(key, {}).get('type') == 'float' and isinstance(value, int) and not isinstance(value, bool) else value
+                for key, value in data.items()}
+
     def _check_relations(self, model:type, data:dict) -> None:
         """
         Relation values are ids of existing entries of the target model, null unsets an optional relation.
@@ -125,7 +137,7 @@ class HSDB(ApplicationUnit):
 
     def _create_entry(self, model:str, data:dict) -> dict:
         model_class = self._model(model)
-        data = dict(data)
+        data = self._coerce(model_class, data)
         entry_id = data.pop('id', None) # Optional: lets the client use its own id as the entry id
         if entry_id is not None:
             if not isinstance(entry_id, str) or not _ENTRY_ID.fullmatch(entry_id):
@@ -144,7 +156,7 @@ class HSDB(ApplicationUnit):
 
     def _update_entry(self, model:str, id:str, data:dict) -> object:
         self._entry(model, id)
-        data = {key: value for key, value in data.items() if key not in _COMPUTED} # Computed fields are not client-writable
+        data = self._coerce(self._model(model), {key: value for key, value in data.items() if key not in _COMPUTED}) # Computed fields are not client-writable
         self._check_relations(self._model(model), data)
         entry, return_code = self.hybrid_storage.update_entry(id, data)
         if return_code != 200:
@@ -265,6 +277,8 @@ class _HSDBRegistry:
              cold_mode:bool=False,
              cors_origins:str=None,
              host:str='127.0.0.1',
+             migrations_cold_mode:bool=None,
+             migrations_path:str=None,
              port:int=None,
              root_path:str=None,
              startup_timeout:float=10.0) -> HSDBClient:
@@ -272,6 +286,9 @@ class _HSDBRegistry:
         Host the database `name` in this process, or connect if another process already does.
         Returns a client either way; `client.server` is set only for the host. `cors_origins` is a regex of
         browser origins allowed to call the server (none by default, i.e. no CORS headers).
+        Pending migrations from `migrations_path` (default: folder "migrations" next to the calling script, relative paths
+        are relative to it) run before the server starts, `migrations_cold_mode` (default: env HSDB_MIGRATIONS_COLD_MODE)
+        only simulates them. Cold-mode databases have nothing on disk and never migrate.
         """
         if name in self._clients:
             return self._clients[name]
@@ -302,6 +319,14 @@ class _HSDBRegistry:
             info_file = os.path.join(directory, 'server.json')
             with contextlib.suppress(FileNotFoundError):
                 os.remove(info_file) # Left over from a crashed host
+            if migrations_cold_mode is None:
+                migrations_cold_mode = env.get('HSDB_MIGRATIONS_COLD_MODE', '').lower() in ('1', 'true', 'yes', 'on')
+            try: # Only the lock holder migrates, on the raw files before HybridStorage.restore() reads them
+                HSDBMigrator(directory, os.path.join(path.caller_parent(skip_call_stacks=1), migrations_path or 'migrations'),
+                             models, cold_mode=migrations_cold_mode).run()
+            except BaseException:
+                lock.close()
+                raise
 
         server = HSDB.create(name=name, models=models, host=host, port=port, cold_mode=cold_mode, cors_origins=cors_origins, root_path=root_path)
         server.start()

@@ -82,7 +82,8 @@ Different names can in theory hash to the same port; the second host then fails 
 
 `audits`, `backups/{indexdb,migration,rawfiles}`, `dumps/migrations`, `exports`, `indexdb`, `logs/{migrations,reads,writes}`,
 `lut`, `models`, `rawfiles`, `redundancy`, `rejectpile/{indexdb,rawfiles}`, `reports`, plus `server.json` and `server.lock` (section 6).
-Used today: `indexdb/<plural>/<id>.json` (entries) and `models/<Model>.json` (schema descriptors, written at host start). The rest is scaffolding.
+Used today: `indexdb/<plural>/<id>.json` (entries), `models/<Model>.json` (schema descriptors, written at host start) and, for migrations (section 7),
+`migrations.json`, `backups/migration`, `dumps/migrations` and `rejectpile/indexdb`. The rest is scaffolding.
 
 ### Restart behaviour: restored from disk
 
@@ -90,6 +91,8 @@ The `HSDB` unit calls `HybridStorage.restore()` on start (non-cold): it reads `i
 `created_at`, `updated_at` and relation ids **(verified: restart, query, patch, delete, relations after restore)**. `RawFileHandler` writes
 relations as ids (`null` for an unset optional relation); files written before that have no relations. Models are rebuilt with
 `Model(data, _restore={'id', 'created_at', 'updated_at'})`, which is also how a client-chosen id is applied on create.
+A file that no longer fits its model (new required field, removed or retyped attribute) is **skipped with an error** and counted in
+`HybridStorage.skipped`; the host then warns "N entries could not be restored, a migration is probably missing" **(verified)**. Fix such data with a migration (section 7).
 The older `HybridStorage.install_index_files()` is still broken: it expects `{base_data, model_data, ...}` but the files are flat dicts.
 
 ---
@@ -271,7 +274,123 @@ without adding auth. Model names from URLs are looked up in the registered-model
 
 ---
 
-## 7. Examples and manual test scripts
+## 7. Migrations
+
+Changing a model no longer means deleting the database: a **migration** edits the raw `indexdb` files before the models are loaded.
+Without one, entries that no longer fit are skipped at restore (section 2). Everything here was executed in `py/tests/ci-cd/test_hsdb_migrations.py` **(verified)**.
+
+### Where and how it runs
+
+```python
+db = hsdb.init('school', models=[School, Student])                        # folder "migrations" next to this script
+db = hsdb.init('school', models=[...], migrations_path='db/migrations')   # relative to the calling script (or absolute)
+db = hsdb.init('school', models=[...], migrations_cold_mode=True)         # dry run of all pending migrations
+```
+
+- Default folder: `migrations` next to the script that calls `init` (`path.caller_parent()`). No folder = no migrations, silently.
+- `HSDB_MIGRATIONS_COLD_MODE=1` is the default of `migrations_cold_mode` (`1/true/yes/on`).
+- Only the process that wins the host lock migrates, inside `hsdb.init` after the lock, before `HSDB.create`/`HybridStorage.restore()` **(code)**.
+  `cold_mode=True` databases (memory only) never migrate.
+- Implementation: `HSDBMigrator.py` (engine), `core/HSDBMigration.py` (base class). Failures raise `HSDBMigrationError` (a `RuntimeError`) out of `init`,
+  the server is not started and the lock is released.
+
+### Migration files
+
+`<number>_<snake_name>.py`, e.g. `0001_add_workout_notes.py`, with **exactly one** `HSDBMigration` subclass. Files not matching `^\d+_.*\.py$`
+(`__init__.py`, `__pycache__`) are ignored, duplicate numbers (`0001_a.py` + `1_b.py`) are an error. Files are loaded with `importlib` under the
+module name `hsdb_migration_<number>_<name>`; nothing is added to `sys.path`. Do not override `__init__`.
+
+Applied migrations are recorded in `<db folder>/migrations.json`: `[{"id": 1, "name": "add_workout_notes", "applied_at": "..."}]`.
+At every host start the unrecorded ones run in number order, each recorded after it succeeded **(verified)**. A pending migration with a number
+**below** an already applied one is refused (`HSDBMigrationError`), a recorded migration whose file is gone only logs a warning.
+On a database without any entries nothing can be migrated: pending migrations are recorded as applied without running (a migration that only seeds data is therefore skipped there).
+
+### The hook API
+
+```python
+class AddWorkoutNotes(HSDBMigration):
+    cold_mode = False                    # class attribute, True = dry run (below)
+
+    def migrate(self):                   # abstract, called once with the raw data loaded
+        notes = self.table('Note')       # model class name (or class) -> folder via kebabify(name, remove='-model', plural=True)
+        ...
+    def validate(self): ...              # optional, called after migrate(); raise to abort
+```
+
+| Call                                    | Effect                                                                                                            |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `self.table(name)`                      | collection of a model; also takes the raw folder name of a model that no longer exists, `KeyError` for unknown ones |
+| `self.tables()`                         | folder names of all collections with entries                                                                      |
+| `self.log(message)`                     | log line prefixed with the migration                                                                              |
+| `table.add_field(name, default=None)`   | sets the field on rows that lack it; `default` may be a `callable(row)`                                           |
+| `table.rename_field(old, new)`          | `ValueError` if a row already has `new`                                                                           |
+| `table.remove_field(name)`              |                                                                                                                   |
+| `table.transform(fn)`                   | `fn(row)` edits in place or returns a new dict (the id is kept)                                                   |
+| `for row in table`, `table[id]`, `len`, `id in table`, `table.get(id)` | rows are the plain dicts of the json files: fields, `id`, `created_at`, `updated_at`, relation ids (`None` = unset) |
+| `table.create(data, id=None)`           | generated id (`generate_id`) and `created_at`/`updated_at` = now, unless given                                    |
+| `table.delete(id)`                      |                                                                                                                   |
+| `table.reject(id, reason)`              | moves the entry to `rejectpile/indexdb/<folder>/<id>.json` as `{reason, migration, rejected_at, data}`            |
+| `table.rename('Exercise')`              | moves the whole collection to another model name                                                                  |
+| `table.drop()`                          | deletes the whole collection                                                                                      |
+
+Ids, `created_at` and `updated_at` are never touched unless the hook does. An entry must stay a dict whose `id` equals its key and must be JSON-serializable.
+
+### What happens on a real run
+
+1. The hook works on an **in-memory copy** of all `indexdb` files. Nothing is written until `migrate()` and `validate()` returned. If the hook raises, startup is aborted
+   with the traceback and the message that the data is untouched **(verified)**.
+2. Commit: `indexdb` is copied to `backups/migration/<number>_<name>_<timestamp>/`, then changed/new entries are written (same formatting as `RawFileHandler`, atomically via temp file + `os.replace`),
+   removed ones deleted, rejected ones moved, emptied collection folders removed, and the migration recorded.
+3. If anything fails during the commit, `indexdb` is restored from that backup and startup is aborted **(verified)**. Backups are kept, delete old ones yourself.
+
+Then the server starts and `restore()` loads the migrated files. Before migrations run, `models/*.json` of the previous start are compared with the current `Model.schema()`
+(the unit overwrites them afterwards): a changed model is logged as `Model "Note" changed (+pinned, -legacy, ~text)`, as hint when migrations are pending, as warning when none is
+(`entries that no longer fit are skipped at restore`). Migrations are never generated.
+
+### Cold mode = dry run
+
+`cold_mode = True` on a migration class, or `migrations_cold_mode=True` / `HSDB_MIGRATIONS_COLD_MODE=1` for all of them, simulates instead of applying **(verified)**:
+
+- The hook runs on the in-memory data, **nothing is written to `indexdb`**, no backup, nothing recorded.
+- A report is printed per collection (`3 changed, 1 created, 0 deleted, 0 rejected`) with up to 3 sample `before -> after` diffs; the full result (before/after of every changed entry,
+  created, deleted, rejected) is dumped to `dumps/migrations/<number>_<name>_<timestamp>.json`.
+- Pending migrations are chained in memory, so migration 2 sees the result of 1 and a whole chain can be checked. Real migrations **before** the first cold one are applied for real,
+  the first cold one and everything after it is only simulated.
+- Afterwards the process exits with `SystemExit("... cold migration run finished, nothing was applied ..., remove cold_mode to apply")` (exit code 1, no server): serving old-format data against the new models would be wrong.
+
+### Example (copy to `<script folder>/migrations/0001_add_workout_notes.py`)
+
+```python
+from teatype.db.hsdb.core import HSDBMigration
+
+class AddWorkoutNotes(HSDBMigration):
+    cold_mode = True                                  # first check the report and the dump, then remove this line
+
+    def migrate(self):
+        workouts = self.table('Workout')
+        workouts.add_field('notes', '')               # new attribute
+        workouts.add_field('slug', lambda row: row['name'].lower().replace(' ', '-'))
+        workouts.rename_field('desc', 'description')
+        workouts.remove_field('legacy_flag')
+        workouts.transform(lambda row: row.update(reps=int(row['reps'])))    # type changed str -> int
+        for row in workouts:
+            if row['reps'] < 0:
+                workouts.reject(row['id'], 'negative reps')                  # -> rejectpile/indexdb/workouts/<id>.json
+        self.table('OldExercise').rename('Exercise')  # model was renamed
+        self.log(f'{len(workouts)} workouts left')
+```
+
+### Limitations
+
+- The data of the whole database is held in memory (twice, for the diff) while migrating, and backups copy all of `indexdb`.
+- Only `indexdb` entries are migrated (not `rawfiles`); deleting or rejecting a relation target is not cascaded, fix the referring rows in the same hook.
+- Only the host runs migrations; other processes just connect. A hook runs arbitrary Python: it is only as safe as the code you put in it.
+- Not atomic across several migrations (each is applied and recorded separately); `reject` stores the row as it is at that point of the hook.
+- A corrupt json file in `indexdb` aborts the start while migrations are pending.
+
+---
+
+## 8. Examples and manual test scripts
 
 `py/tests/integration/hsdb/manual/` (data lands in the gitignored `teatype/dist/hsdb/school/`), run in this order from that folder:
 
@@ -288,7 +407,7 @@ Re-running `01_host.py` seeds again and adds new files next to the old ones (ids
 
 ---
 
-## 8. Fixes made while building the unit
+## 9. Fixes made while building the unit
 
 These were pre-existing breakages that blocked creating/serving entries:
 
@@ -302,7 +421,7 @@ These were pre-existing breakages that blocked creating/serving entries:
 - `modulo/__init__.py`: lazy `hsdb` accessor imported a non-existent `teatype.db.hsdb.HSDB`.
 - `HSDBClient.py` was a stub that instantiated a unit at import time; replaced by the HTTP client.
 
-## 9. Open items (not changed)
+## 10. Open items (not changed)
 
 - One-to-many/many-to-many access, cascading deletes. (An optional many-to-one is cleared by PATCHing `null`.)
 - Enforce `unique=True`; `ne`/`in` operators; `ids_only`/`fields` serialization.

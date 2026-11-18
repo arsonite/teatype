@@ -1,0 +1,15 @@
+{
+    "name": "@teatype/sync",
+    "version": "1.0.0",
+    "description": "Offline-first and manual syncing of local app data with HSDB",
+    "private": true,
+    "type": "module",
+    "main": "./index.ts",
+    "exports": {
+        ".": "./index.ts",
+        "./*": "./*.ts"
+    },
+    "peerDependencies": {
+        "react": "^19.0.0"
+    }
+}

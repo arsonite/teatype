@@ -20,6 +20,7 @@ export { XButton } from './input/buttons/XButton';
 export { TeaCheckbox } from './input/TeaCheckbox';
 export { TeaConfirmProvider, useConfirm } from './TeaConfirm';
 export { TeaDatePicker } from './TeaDatePicker';
+export { TeaHubLink } from './TeaHubLink';
 export { TeaIcon } from './TeaIcon';
 export { TeaInfotip } from './TeaInfotip';
 export { TeaInput, TeaSelect, TeaTextarea } from './input/TeaInput';
@@ -50,6 +51,7 @@ export {
     useTeaToast,
     useTeaToastContext,
 } from './TeaToast';
+export { TeaSyncStatus } from './TeaSyncStatus';
 export { TeaThemePicker } from './TeaThemePicker';
 export { TeaTimePicker } from './TeaTimePicker';
 export { TeaTooltip } from './TeaTooltip';
