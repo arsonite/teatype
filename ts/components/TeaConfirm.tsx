@@ -80,10 +80,10 @@ const TeaConfirmProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 closeOnOverlayClick={false}
                 footer={
                     <div className='tea-confirm__actions'>
-                        <TeaButton variant='ghost' onClick={handleCancel}>
+                        <TeaButton onClick={handleCancel}>
                             {state.cancelText || 'Cancel'}
                         </TeaButton>
-                        <TeaButton variant={state.variant === 'danger' ? 'danger' : 'primary'} onClick={handleConfirm}>
+                        <TeaButton theme={state.variant === 'danger' ? 'danger' : 'filled'} onClick={handleConfirm}>
                             {state.confirmText || 'Confirm'}
                         </TeaButton>
                     </div>
