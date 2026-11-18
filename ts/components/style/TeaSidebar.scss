@@ -298,10 +298,14 @@
         }
     }
 
-    // In the rail it is a tea-rail__btn, which sits directly under the toggle
+    // In the rail it is a tea-rail__btn, which sits directly under the toggle, on a phone in the bottom group
     &--rail {
         margin-top: 8px;
         text-decoration: none;
+
+        .tea-rail__bottom & {
+            margin-top: 0;
+        }
 
         svg {
             width: 14px;
