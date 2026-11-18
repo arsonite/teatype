@@ -51,6 +51,7 @@ export {
     useTeaToast,
     useTeaToastContext,
 } from './TeaToast';
+export { TeaSyncStatus } from './TeaSyncStatus';
 export { TeaThemePicker } from './TeaThemePicker';
 export { TeaTimePicker } from './TeaTimePicker';
 export { TeaTooltip } from './TeaTooltip';
