@@ -20,6 +20,8 @@ import React from 'react';
 import './style/TeaSyncStatus.scss';
 
 interface iTeaSyncStatusProps {
+    /** Only the dot, for the collapsed sidebar (the state is the title). Use it in the `rail` of TeaSidebar. */
+    compact?: boolean;
     /** auto: changes are sent by themselves, manual: they wait for onSave. Default: auto */
     mode?: 'auto' | 'manual';
     status: 'idle' | 'offline' | 'syncing';
@@ -34,7 +36,7 @@ const plural = (count: number) => `${count} change${count === 1 ? '' : 's'}`;
  * The state of the sync (see @teatype/sync) in one line, for the footer of a sidebar. In manual mode the line
  * is a button that saves.
  */
-const TeaSyncStatus: React.FC<iTeaSyncStatusProps> = ({ mode = 'auto', status, unsavedCount, onSave }) => {
+const TeaSyncStatus: React.FC<iTeaSyncStatusProps> = ({ compact, mode = 'auto', status, unsavedCount, onSave }) => {
     const waiting = status === 'idle' && unsavedCount > 0;
     const label =
         status === 'syncing'
@@ -49,6 +51,15 @@ const TeaSyncStatus: React.FC<iTeaSyncStatusProps> = ({ mode = 'auto', status, u
                     : `${plural(unsavedCount)} to sync`
                 : 'Synced';
     const className = `tea-sync-status tea-sync-status--${waiting ? 'waiting' : status}`;
+
+    if (compact) {
+        const Tag = mode === 'manual' && onSave ? 'button' : 'div';
+        return (
+            <Tag className={`tea-rail__btn ${className} tea-sync-status--compact`} title={label} onClick={Tag === 'button' ? onSave : undefined}>
+                <span className='tea-sync-status__dot' />
+            </Tag>
+        );
+    }
 
     if (mode === 'manual' && onSave) {
         return (

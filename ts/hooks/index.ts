@@ -11,3 +11,7 @@ export type { TranslationDict, Translations } from './useTranslation';
 
 // Phone breakpoint
 export { useIsMobile } from './useIsMobile';
+
+// Drag and drop that works with a finger
+export { usePointerDrag } from './usePointerDrag';
+export type { iPointerDrag } from './usePointerDrag';

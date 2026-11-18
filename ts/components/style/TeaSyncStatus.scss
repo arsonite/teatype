@@ -55,6 +55,14 @@ $offline: #ff6b6b;
     }
 }
 
+// The dot alone in the rail of a collapsed sidebar, the size comes from tea-rail__btn
+.tea-sync-status.tea-sync-status--compact {
+    width: 36px;
+    padding: 0;
+
+    justify-content: center;
+}
+
 button.tea-sync-status {
     cursor: pointer;
 
