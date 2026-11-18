@@ -17,6 +17,8 @@
 // are, not as JSON text. One database per app with a single key-value object store.
 
 interface iLocalStore {
+    /** Deletes everything of the app from this device */
+    clear: () => Promise<void>;
     /** Reads one value, undefined if nothing is stored */
     read: <T>(key: string) => Promise<T | undefined>;
     /** Reads several values, never rejects: if IndexedDB fails (private mode) the app starts empty */
@@ -52,6 +54,9 @@ const createLocalStore = (name: string): iLocalStore => {
     };
 
     return {
+        clear: async () => {
+            await run('readwrite', (store) => [store.clear()]);
+        },
         read: async <T>(key: string) => (await run('readonly', (store) => [store.get(key) as IDBRequest<T>]))[0],
         readAll: async (keys) => {
             try {
