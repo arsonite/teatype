@@ -31,7 +31,7 @@ from teatype.db.hsdb.HSDBClient import HSDBClient, default_port
 from teatype.db.hsdb.HSDBMigrator import HSDBMigrator
 from teatype.db.hsdb.RawFileStructure import database_path
 from teatype.db.hsdb.core import HSDBQuery, HSDBRawFile
-from teatype.db.hsdb.core.HSDBRawFile import RAW_FILE_TYPES
+from teatype.db.hsdb.core.HSDBRawFileType import octet_stream, raw_file_type, raw_file_type_of_extension
 from teatype.io import env, path
 from teatype.logging import success, warn
 from teatype.modulo.units.application import ApplicationUnit
@@ -166,7 +166,7 @@ class HSDB(ApplicationUnit):
                         old_files.append(absolute_path)
                         extension = legacy.group(1).rsplit('.', 1)[1]
                         with open(absolute_path, 'rb') as handle:
-                            patch[name] = HSDBRawFile.encode(handle.read(), next((kind for kind, ending in RAW_FILE_TYPES.items() if ending == extension), 'application/octet-stream'))
+                            patch[name] = HSDBRawFile.encode(handle.read(), (raw_file_type_of_extension(extension) or octet_stream).mime)
                     elif isinstance(value, str) and value.startswith('data:'):
                         patch[name] = value
                 try:
@@ -206,6 +206,8 @@ class HSDB(ApplicationUnit):
             raise HTTPException(400, f'{name} is not valid base64')
         if not data:
             raise HTTPException(400, f'{name} is empty')
+        if not HSDBRawFile.matches(content_type, data):
+            raise HTTPException(415, f'{name} is not a "{content_type}" file')
         if len(data) > spec['max_bytes']:
             raise HTTPException(413, f'{name} may be {spec["max_bytes"] // 1024} KB at most')
         return data, content_type
@@ -223,7 +225,7 @@ class HSDB(ApplicationUnit):
             if self.hybrid_storage.rf_handler.cold_mode:
                 raise HTTPException(501, 'Cold-mode databases have no files')
             content, content_type = self._decode_file(name, spec, value)
-            data[name] = self.hybrid_storage.rf_handler.write_raw_file(content, RAW_FILE_TYPES[content_type], name)
+            data[name] = self.hybrid_storage.rf_handler.write_raw_file(content, raw_file_type(content_type).extension, name)
 
     def _release_files(self, paths:list) -> None:
         """
@@ -359,7 +361,7 @@ class HSDB(ApplicationUnit):
             if not absolute_path:
                 raise HTTPException(404, 'No such file')
             extension = name.rsplit('.', 1)[1]
-            media_type = next((kind for kind, ending in RAW_FILE_TYPES.items() if ending == extension), 'application/octet-stream')
+            media_type = (raw_file_type_of_extension(extension) or octet_stream).mime
             # Named by its content, so it never changes
             return FileResponse(absolute_path, media_type=media_type, headers={'Cache-Control': 'public, max-age=31536000, immutable'})
 

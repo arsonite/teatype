@@ -15,6 +15,7 @@ from .HSDBQuery import HSDBQuery
 from .HSDBField import HSDBField
 from .HSDBAttribute import HSDBAttribute
 from .HSDBRawFile import HSDBRawFile
+from .HSDBRawFileType import (HSDBRawFileType, IMAGES, image_avif, image_gif, image_jpeg, image_png, image_svg, image_webp, octet_stream, pdf)
 from .HSDBRelation import HSDBRelation
 from .HSDBMigration import HSDBMigration
 from .HSDBMeta import HSDBMeta
