@@ -34,9 +34,6 @@ _FS = {
         'migration': {},
         'rawfiles': {}
     },
-    'dumps': {
-        'migrations': {}
-    },
     'exports': {},
     'indexdb': {},
     'logs': {

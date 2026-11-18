@@ -218,7 +218,9 @@ def test_commit_failure_restores_the_backup(env, monkeypatch):
     with pytest.raises(HSDBMigrationError, match='indexdb was restored from'):
         env.run()
     monkeypatch.undo()
-    assert len(calls) == 3
+    assert len(calls) == 4 # The failing write and the log of the failure
+    log = json.loads(next((env.db / 'logs' / 'migrations').iterdir()).read_text())
+    assert log['status'] == 'failed' and 'disk full' in log['error']
     assert env.snapshot() == before
     assert env.state() == [] and not list((env.db / 'rejectpile').rglob('*.json'))
     assert len(list((env.db / 'backups' / 'migration').iterdir())) == 1 # Kept for inspection
@@ -240,12 +242,12 @@ def test_cold_migration_applies_earlier_ones_simulates_the_rest_and_stops(env):
     assert not (env.db / 'indexdb' / 'notes' / 'n.json').exists()
     assert len(list((env.db / 'backups' / 'migration').iterdir())) == 1 # Only the real migration backed up
 
-    dumps = {file.name.split('_', 2)[1]: json.loads(file.read_text()) for file in (env.db / 'dumps' / 'migrations').iterdir()}
-    assert set(dumps) == {'cold', 'chained'}
-    changed = dumps['cold']['collections']['notes']['changed']['a']
+    logs = {file.name.split('_', 2)[1]: json.loads(file.read_text()) for file in (env.db / 'logs' / 'migrations').iterdir()}
+    assert {name: log['status'] for name, log in logs.items()} == {'real': 'applied', 'cold': 'dry_run', 'chained': 'dry_run'}
+    changed = logs['cold']['collections']['notes']['changed']['a']
     assert changed['after']['pinned'] is False and 'pinned' not in changed['before']
-    assert dumps['cold']['collections']['notes']['created']['n']['body'] == 'x'
-    assert dumps['chained']['collections']['notes']['rejected']['n']['reason'] == 'why'
+    assert logs['cold']['collections']['notes']['created']['n']['body'] == 'x'
+    assert logs['chained']['collections']['notes']['rejected']['n']['reason'] == 'why'
 
 def test_global_cold_mode_changes_nothing(env):
     env.write_rows('notes', _row('a', text='one'))
@@ -254,7 +256,7 @@ def test_global_cold_mode_changes_nothing(env):
     with pytest.raises(SystemExit):
         env.run(cold_mode=True)
     assert env.snapshot() == before and env.state() == [] and not (env.db / 'backups').exists()
-    assert len(list((env.db / 'dumps' / 'migrations').iterdir())) == 1
+    assert len(list((env.db / 'logs' / 'migrations').iterdir())) == 1
 
 ###############
 # Schema drift #
@@ -328,7 +330,7 @@ def test_end_to_end_restore_after_migration_and_not_rerun(workspace):
     process = _host(workspace, COLD='1', HSDB_MIGRATIONS_COLD_MODE='0') # Class attribute cold_mode: simulated only, the server does not start
     assert process.returncode != 0 and 'nothing was applied' in process.stderr
     assert json.loads((db / 'indexdb' / 'notes' / 'n1.json').read_text()) == old
-    assert not (db / 'migrations.json').exists() and len(list((db / 'dumps' / 'migrations').iterdir())) == 1
+    assert not (db / 'migrations.json').exists() and len(list((db / 'logs' / 'migrations').iterdir())) == 1
     assert not (db / 'server.json').exists()
 
     process = _host(workspace, COLD='0', HSDB_MIGRATIONS_COLD_MODE='1') # The env var makes every migration cold

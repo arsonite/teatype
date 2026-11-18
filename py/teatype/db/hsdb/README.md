@@ -80,10 +80,10 @@ Different names can in theory hash to the same port; the second host then fails 
 
 ### Folder layout (`RawFileStructure._FS`, per database `<root>/hsdb/<name>/`)
 
-`audits`, `backups/{indexdb,migration,rawfiles}`, `dumps/migrations`, `exports`, `indexdb`, `logs/{migrations,reads,writes}`,
+`audits`, `backups/{indexdb,migration,rawfiles}`, `exports`, `indexdb`, `logs/{migrations,reads,writes}`,
 `lut`, `models`, `rawfiles`, `redundancy`, `rejectpile/{indexdb,rawfiles}`, `reports`, plus `server.json` and `server.lock` (section 6).
 Used today: `indexdb/<plural>/<id>.json` (entries), `models/<Model>.json` (schema descriptors, written at host start) and, for migrations (section 7),
-`migrations.json`, `backups/migration`, `dumps/migrations` and `rejectpile/indexdb`. The rest is scaffolding.
+`migrations.json`, `backups/migration`, `logs/migrations` and `rejectpile/indexdb`. The rest is scaffolding.
 
 ### Restart behaviour: restored from disk
 
@@ -249,6 +249,8 @@ db.info()                                              # {'service','name','pid'
 | GET / PATCH / DELETE | `/hsdb/{Model}/{id}` | read / partial update / delete (404 if id missing or belongs to another model)                   |
 | POST                 | `/hsdb/{Model}/bulk` | body `{create: [rows], update: [{id, data}], delete: [ids]}`, applied in that order, max 1000 operations (413) |
 
+**Raw files** (images and the like, stored content-addressed in `rawfiles/<sha256>.<ext>`, not in `indexdb`): `POST /hsdb/files` with the file as raw body and its `Content-Type` (png, jpeg, webp, gif, avif, pdf, octet-stream; max 10 MB, 415 otherwise) answers `{name, path: "rawfiles/<name>", size, type}`, the same bytes give the same name. `GET /hsdb/files/{name}` serves it (immutable cache), `DELETE /hsdb/files/{name}` removes it. Store `path` in a model field and load `/hsdb/files/<name>`. Cold mode answers 501. Python side: `RawFileHandler.write_raw_file(data, ext)`, `raw_file_path(name)`, `delete_raw_file(name)`.
+
 Relation values are ids of existing entries of the target model (400 otherwise, so create parents before children, also inside one bulk request).
 `GET /hsdb/{Model}?<relation>=<id>` filters by a many-to-one relation. `id`, `created_at` and `updated_at` in a PATCH body are ignored. Relations can be set and changed, `null` unsets an optional one.
 `/bulk` answers `{create: [...], update: [...], delete: [...]}` with `{ok: true, data}` or `{ok: false, status, error}` per item, a failing item does not stop the others (`HSDBClient.bulk`, `HSDBBaseAPI.bulk`).
@@ -303,6 +305,9 @@ module name `hsdb_migration_<number>_<name>`; nothing is added to `sys.path`. Do
 Applied migrations are recorded in `<db folder>/migrations.json`: `[{"id": 1, "name": "add_workout_notes", "applied_at": "..."}]`.
 At every host start the unrecorded ones run in number order, each recorded after it succeeded **(verified)**. A pending migration with a number
 **below** an already applied one is refused (`HSDBMigrationError`), a recorded migration whose file is gone only logs a warning.
+Every migration run writes one json to `<db folder>/logs/migrations/<number>_<name>_<timestamp>.json`: `{migration, status, timestamp, collections, error?}`.
+`status` is `applied`, `dry_run` (cold), `recorded_empty` or `failed` (with `error`); `collections` holds the full result per collection (before/after of every changed entry,
+created, deleted, rejected).
 On a database without any entries nothing can be migrated: pending migrations are recorded as applied without running (a migration that only seeds data is therefore skipped there).
 
 ### The hook API
@@ -352,8 +357,7 @@ Then the server starts and `restore()` loads the migrated files. Before migratio
 `cold_mode = True` on a migration class, or `migrations_cold_mode=True` / `HSDB_MIGRATIONS_COLD_MODE=1` for all of them, simulates instead of applying **(verified)**:
 
 - The hook runs on the in-memory data, **nothing is written to `indexdb`**, no backup, nothing recorded.
-- A report is printed per collection (`3 changed, 1 created, 0 deleted, 0 rejected`) with up to 3 sample `before -> after` diffs; the full result (before/after of every changed entry,
-  created, deleted, rejected) is dumped to `dumps/migrations/<number>_<name>_<timestamp>.json`.
+- A report is printed per collection (`3 changed, 1 created, 0 deleted, 0 rejected`) with up to 3 sample `before -> after` diffs; the full result is in the migration log (below).
 - Pending migrations are chained in memory, so migration 2 sees the result of 1 and a whole chain can be checked. Real migrations **before** the first cold one are applied for real,
   the first cold one and everything after it is only simulated.
 - Afterwards the process exits with `SystemExit("... cold migration run finished, nothing was applied ..., remove cold_mode to apply")` (exit code 1, no server): serving old-format data against the new models would be wrong.
@@ -364,7 +368,7 @@ Then the server starts and `restore()` loads the migrated files. Before migratio
 from teatype.db.hsdb.core import HSDBMigration
 
 class AddWorkoutNotes(HSDBMigration):
-    cold_mode = True                                  # first check the report and the dump, then remove this line
+    cold_mode = True                                  # first check the report and the log, then remove this line
 
     def migrate(self):
         workouts = self.table('Workout')

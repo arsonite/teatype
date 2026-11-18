@@ -126,7 +126,7 @@ class HSDBMigration(ABC):
     raw data through `table()`. All edits happen on an in-memory copy; the database is only touched after
     `migrate()` (and `validate()`) returned without exception, see HSDBMigrator.
 
-    Set the class attribute `cold_mode = True` for a dry run: the result is only reported and dumped, nothing is applied.
+    Set the class attribute `cold_mode = True` for a dry run: the result is only reported and logged, nothing is applied.
     """
     cold_mode:bool = False
 

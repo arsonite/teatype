@@ -23,6 +23,7 @@ from typing import List
 
 # Third-party imports
 from fastapi import HTTPException, Request
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from teatype.db.hsdb import HybridStorage
 from teatype.db.hsdb.HSDBClient import HSDBClient, default_port
@@ -38,6 +39,9 @@ _ENTRY_ID = re.compile(r'[A-Za-z0-9_-]{1,128}')
 _COMPUTED = ('id', 'created_at', 'updated_at')
 _BULK_ACTIONS = ('create', 'update', 'delete') # Applied in this order, results come back in the order of the request
 _BULK_LIMIT = 1000
+_FILE_LIMIT = 10 * 1024 * 1024 # Largest upload in bytes
+_FILE_TYPES = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif',
+               'application/pdf': 'pdf', 'application/octet-stream': 'bin'}
 
 class HSDB(ApplicationUnit):
     """
@@ -234,7 +238,41 @@ class HSDB(ApplicationUnit):
                 raise HTTPException(413, f'At most {_BULK_LIMIT} operations per bulk request')
             return {action: [self._bulk_item(model, action, item) for item in body.get(action) or []] for action in _BULK_ACTIONS}
 
+        async def upload_file(request:Request) -> dict:
+            if self.hybrid_storage.rf_handler.cold_mode:
+                raise HTTPException(501, 'Cold-mode databases have no files')
+            content_type = request.headers.get('content-type', 'application/octet-stream').split(';')[0].strip().lower()
+            if content_type not in _FILE_TYPES:
+                raise HTTPException(415, f'Files of type "{content_type}" are not accepted, expected one of {sorted(_FILE_TYPES)}')
+            data = b''
+            async for chunk in request.stream():
+                data += chunk
+                if len(data) > _FILE_LIMIT:
+                    raise HTTPException(413, f'Files may be {_FILE_LIMIT // 1024 // 1024} MB at most')
+            if not data:
+                raise HTTPException(400, 'The file is empty')
+            name = self.hybrid_storage.rf_handler.write_raw_file(data, _FILE_TYPES[content_type])
+            return {'name': name, 'path': f'rawfiles/{name}', 'size': len(data), 'type': content_type}
+
+        def get_file(name:str) -> FileResponse:
+            absolute_path = self.hybrid_storage.rf_handler.raw_file_path(name)
+            if not absolute_path:
+                raise HTTPException(404, 'No such file')
+            extension = name.rsplit('.', 1)[1]
+            media_type = next((kind for kind, ending in _FILE_TYPES.items() if ending == extension), 'application/octet-stream')
+            # Named by its content, so it never changes
+            return FileResponse(absolute_path, media_type=media_type, headers={'Cache-Control': 'public, max-age=31536000, immutable'})
+
+        def delete_file(name:str) -> dict:
+            if not self.hybrid_storage.rf_handler.delete_raw_file(name):
+                raise HTTPException(404, 'No such file')
+            return {'deleted': True, 'name': name}
+
         # Plain functions on purpose: FastAPI runs them in its threadpool, so big queries don't block the event loop
+        # The files come before /hsdb/{model}/{id}, which would otherwise take them for a model called "files"
+        self.add_route('/hsdb/files', upload_file, methods=['POST'])
+        self.add_route('/hsdb/files/{name}', get_file)
+        self.add_route('/hsdb/files/{name}', delete_file, methods=['DELETE'])
         self.add_route('/hsdb', info)
         self.add_route('/hsdb/schema', schema) # Before /hsdb/{model}, which would otherwise swallow it
         self.add_route('/hsdb/{model}', query)

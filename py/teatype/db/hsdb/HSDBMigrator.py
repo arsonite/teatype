@@ -202,10 +202,16 @@ class HSDBMigrator:
             for id, change in list(entry['changed'].items())[:_SAMPLES]:
                 log(f'    {id[:12]}: {_describe(change["before"], change["after"])}')
 
-    def _dump(self, migration:_MigrationFile, diff:dict) -> None:
-        dump_path = os.path.join(self.fs.dumps.migrations.path, f'{migration.stem}_{_stamp()}.json')
-        file.write(dump_path, {'migration': migration.stem, 'collections': diff}, force_format='json', prettify=True, create_parents=True)
-        log(f'  Full result dumped to {dump_path}')
+    def _log(self, migration:_MigrationFile, status:str, diff:dict=None, error:str=None) -> None:
+        """
+        One json per migration run in logs/migrations. status: applied, dry_run, recorded_empty or failed.
+        """
+        log_path = os.path.join(self.fs.logs.migrations.path, f'{migration.stem}_{_stamp()}.json')
+        entry = {'migration': migration.stem, 'status': status, 'timestamp': dt.now(), 'collections': diff or {}}
+        if error:
+            entry['error'] = error
+        file.write(log_path, entry, force_format='json', prettify=True, create_parents=True)
+        log(f'  Migration log written to {log_path}')
 
     def _record(self, migration:_MigrationFile) -> None:
         file.write(self.state_path,
@@ -257,19 +263,28 @@ class HSDBMigrator:
         data = self._load_data()
         dry_run = False # The first cold migration and everything after it is only simulated
         for migration in pending:
-            migration_class = self._load_class(migration)
+            try:
+                migration_class = self._load_class(migration)
+            except HSDBMigrationError as exc:
+                self._log(migration, 'failed', error=str(exc))
+                raise
             dry_run = dry_run or self.cold_mode or migration_class.cold_mode
             if not any(data.values()):
                 hint(f'Migration {migration.stem}: no entries to migrate' + ('' if dry_run else ', recorded without running it'))
                 if not dry_run:
                     self._record(migration)
+                self._log(migration, 'dry_run' if dry_run else 'recorded_empty')
                 continue
-            data, diff = self._execute(migration, migration_class, data)
-            self._report(migration, diff, dry_run)
-            if dry_run:
-                self._dump(migration, diff)
-            else:
-                self._commit(migration, diff)
+            try:
+                data, diff = self._execute(migration, migration_class, data)
+                self._report(migration, diff, dry_run)
+                if not dry_run:
+                    self._commit(migration, diff)
+            except HSDBMigrationError as exc:
+                self._log(migration, 'failed', error=str(exc))
+                raise
+            self._log(migration, 'dry_run' if dry_run else 'applied', diff)
+            if not dry_run:
                 success(f'Applied migration {migration.stem}')
         if dry_run:
             raise SystemExit('HSDB migrations: cold migration run finished, nothing was applied from the first cold migration on, remove cold_mode to apply')

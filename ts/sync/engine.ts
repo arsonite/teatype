@@ -326,11 +326,11 @@ const syncCollection = async <L extends object>(
             (field) => payload[field] !== null && !relationFields.has(field) && !(field in stored),
         );
         nextSynced[key] = { hash: dropped.length > 0 ? '' : hashOf(collection, item), id: stored.id, rev };
+        pushedKeys.push(key); // The row exists on the server now, it must stay known even if a later step fails, or the retry creates it again
         if (dropped.length > 0) {
             failed++;
             return;
         }
-        pushedKeys.push(key);
         pushed++;
     };
 
