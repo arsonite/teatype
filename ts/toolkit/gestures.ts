@@ -52,4 +52,48 @@ const lockGestures = (): (() => void) => {
     };
 };
 
-export { lockGestures };
+const SWIPE_PX = 56;
+
+/**
+ * Calls `onSwipe` when a finger (or a held mouse button) starts on the left edge and is moved to the right. Returns the
+ * function that undoes it.
+ */
+const edgeSwipe = (onSwipe: () => void): (() => void) => {
+    let start: { x: number; y: number } | null = null;
+    const begin = (x: number, y: number, target: EventTarget | null) => {
+        start = x < EDGE_PX && !(target instanceof Element && target.closest(TAPPABLE)) ? { x, y } : null;
+    };
+    const move = (x: number, y: number) => {
+        if (start && x - start.x > SWIPE_PX && x - start.x > Math.abs(y - start.y)) {
+            start = null;
+            onSwipe();
+        }
+    };
+    const end = () => {
+        start = null;
+    };
+    const onTouchStart = (event: TouchEvent) => begin(event.touches[0].clientX, event.touches[0].clientY, event.target);
+    const onTouchMove = (event: TouchEvent) => move(event.touches[0].clientX, event.touches[0].clientY);
+    const onMouseDown = (event: MouseEvent) => begin(event.clientX, event.clientY, event.target);
+    const onMouseMove = (event: MouseEvent) => move(event.clientX, event.clientY);
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    document.addEventListener('touchend', end);
+    document.addEventListener('touchcancel', end);
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', end);
+
+    return () => {
+        document.removeEventListener('touchstart', onTouchStart);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', end);
+        document.removeEventListener('touchcancel', end);
+        document.removeEventListener('mousedown', onMouseDown);
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', end);
+    };
+};
+
+export { edgeSwipe, lockGestures };

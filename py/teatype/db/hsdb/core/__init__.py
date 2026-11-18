@@ -14,6 +14,7 @@
 from .HSDBQuery import HSDBQuery
 from .HSDBField import HSDBField
 from .HSDBAttribute import HSDBAttribute
+from .HSDBRawFile import HSDBRawFile
 from .HSDBRelation import HSDBRelation
 from .HSDBMigration import HSDBMigration
 from .HSDBMeta import HSDBMeta

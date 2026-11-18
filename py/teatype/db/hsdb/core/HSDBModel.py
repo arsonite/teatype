@@ -175,7 +175,7 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                 instance_attribute = HSDBAttribute(
                     attribute.type, 
                     **{key: value for key, value in vars(attribute).items() if key not in [
-                        'name', 'type', '_cached_value', '_key', '_value', '_wrapper']} # Exclude these keys
+                        'name', 'type', '_cached_value', '_key', '_value', '_wrapper', 'raw_file']} # Exclude these keys
                 )
                 instance_attribute.key = attribute.name
                 instance_attribute.value = value
@@ -596,7 +596,8 @@ class HSDBModel(ABC, metaclass=HSDBMeta):
                         'searchable': attr.searchable,
                         'description': attr.description,
                         'default': attr.default,
-                        'max_size': attr.max_size if attr.type == str else None
+                        'max_size': attr.max_size if attr.type == str else None,
+                        'raw_file': getattr(attr, 'raw_file', None)
                     }
                 elif isinstance(attr, HSDBRelation._RelationFactory):
                     seen.add(attr_name)

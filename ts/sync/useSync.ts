@@ -188,6 +188,8 @@ const useSync = <S,>(options: iUseSyncOptions<S>) => {
                 report.failed += results[name].failed;
             }
             setMeta(nextMeta);
+            // A sync that was queued starts before the next render, it must not begin with the meta this one began with
+            latest.current.meta = nextMeta;
             setStatus('idle');
 
             const succeeded = { ...report, ok: true };
@@ -206,6 +208,7 @@ const useSync = <S,>(options: iUseSyncOptions<S>) => {
                 partial.synced[name] = synced;
             }
             setMeta(partial);
+            latest.current.meta = partial;
             setStatus('offline');
             const failed = { ...report, error: error instanceof Error ? error.message : String(error) };
             current.onSync?.(failed, { recovered: false });
@@ -271,4 +274,5 @@ const useSync = <S,>(options: iUseSyncOptions<S>) => {
 };
 
 export type { iSyncInfo, iSyncMeta, iSyncReport, iTracked, iUseSyncOptions, tSyncMode, tSyncStatus };
+
 export default useSync;

@@ -20,8 +20,9 @@ from teatype.db.hsdb import RawFileStructure
 from teatype.io import file, path
 from teatype.logging import *
 
-# <sha256 of the content>.<extension>, which is all a stored file may be called
-RAW_FILE_NAME = re.compile(r'[0-9a-f]{64}\.[a-z0-9]{1,8}')
+# rawfiles/<attribute name>/<sha256 of the content>.<extension>, which is all a stored file may be called
+RAW_FILE_FOLDER = re.compile(r'[A-Za-z0-9_]{1,64}')
+RAW_FILE_PATH = re.compile(r'rawfiles/[A-Za-z0-9_]{1,64}/[0-9a-f]{64}\.[a-z0-9]{1,8}')
 
 class RawFileHandler:
     _rf_structure:RawFileStructure
@@ -64,34 +65,37 @@ class RawFileHandler:
                    create_parents=True)
         return absolute_path
         
-    def write_raw_file(self, data:bytes, extension:str='bin') -> str:
+    def write_raw_file(self, data:bytes, extension:str, folder:str) -> str:
         """
-        Store binary content (an image, ...) under rawfiles/ and return its name, which is what a model attribute keeps
-        to point to it. The name is the hash of the content, so the same content is stored once.
+        Store binary content (an image, ...) under rawfiles/<folder>/ and return its path relative to the database folder,
+        which is what a file attribute keeps. The name is the hash of the content, so the same content is stored once.
         """
         if self.cold_mode:
             raise RuntimeError('Cold-mode databases have no files')
+        if not RAW_FILE_FOLDER.fullmatch(folder):
+            raise ValueError(f'Invalid folder "{folder}"')
         extension = re.sub(r'[^a-z0-9]', '', extension.lower())[:8] or 'bin'
-        name = f'{hashlib.sha256(data).hexdigest()}.{extension}'
-        absolute_path = path.join(self.fs.rawfiles.path, name)
+        relative = f'rawfiles/{folder}/{hashlib.sha256(data).hexdigest()}.{extension}'
+        absolute_path = path.join(self.fs.rawfiles.path, relative.split('/', 1)[1])
         if not path.exists(absolute_path):
+            os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
             temporary = f'{absolute_path}.tmp'
             with open(temporary, 'wb') as handle:
                 handle.write(data)
             os.replace(temporary, absolute_path) # Never a half written file under its real name
-        return name
+        return relative
 
-    def raw_file_path(self, name:str) -> str|None:
+    def raw_file_path(self, relative:str) -> str|None:
         """
-        Absolute path of a stored file, None if there is none of that name (also for names that are not made by write_raw_file).
+        Absolute path of a stored file, None if there is none (also for anything that write_raw_file could not have made).
         """
-        if self.cold_mode or not RAW_FILE_NAME.fullmatch(name or ''):
+        if self.cold_mode or not RAW_FILE_PATH.fullmatch(relative or ''):
             return None
-        absolute_path = path.join(self.fs.rawfiles.path, name)
+        absolute_path = path.join(self.fs.rawfiles.path, relative.split('/', 1)[1])
         return absolute_path if path.exists(absolute_path) else None
 
-    def delete_raw_file(self, name:str) -> bool:
-        absolute_path = self.raw_file_path(name)
+    def delete_raw_file(self, relative:str) -> bool:
+        absolute_path = self.raw_file_path(relative)
         if not absolute_path:
             return False
         file.delete(absolute_path)

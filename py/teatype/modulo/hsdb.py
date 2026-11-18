@@ -12,6 +12,7 @@
 
 # Standard-library imports
 import atexit
+import base64
 import contextlib
 import fcntl
 import json
@@ -29,7 +30,8 @@ from teatype.db.hsdb import HybridStorage
 from teatype.db.hsdb.HSDBClient import HSDBClient, default_port
 from teatype.db.hsdb.HSDBMigrator import HSDBMigrator
 from teatype.db.hsdb.RawFileStructure import database_path
-from teatype.db.hsdb.core import HSDBQuery
+from teatype.db.hsdb.core import HSDBQuery, HSDBRawFile
+from teatype.db.hsdb.core.HSDBRawFile import RAW_FILE_TYPES
 from teatype.io import env, path
 from teatype.logging import success, warn
 from teatype.modulo.units.application import ApplicationUnit
@@ -39,9 +41,8 @@ _ENTRY_ID = re.compile(r'[A-Za-z0-9_-]{1,128}')
 _COMPUTED = ('id', 'created_at', 'updated_at')
 _BULK_ACTIONS = ('create', 'update', 'delete') # Applied in this order, results come back in the order of the request
 _BULK_LIMIT = 1000
-_FILE_LIMIT = 10 * 1024 * 1024 # Largest upload in bytes
-_FILE_TYPES = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif',
-               'application/pdf': 'pdf', 'application/octet-stream': 'bin'}
+_LEGACY_FILE = re.compile(r'rawfiles/([0-9a-f]{64}\.[a-z0-9]{1,8})') # Files of the first version, kept in rawfiles/ itself
+_DATA_URL = re.compile(r'data:([\w.+/-]+);base64,(.*)', re.DOTALL)
 
 class HSDB(ApplicationUnit):
     """
@@ -78,6 +79,7 @@ class HSDB(ApplicationUnit):
             success(f'HSDB "{name}" restored {restored} entries from disk')
         if self.hybrid_storage.skipped:
             warn(f'HSDB "{name}": {self.hybrid_storage.skipped} entries could not be restored, a migration is probably missing')
+        self._adopt_files()
         self._register_hsdb_routes()
 
     #############
@@ -139,6 +141,115 @@ class HSDB(ApplicationUnit):
             if found is None or (target and found.model is not target):
                 raise HTTPException(400, f'{name} must be the id of an existing {relation["target_model"]}')
 
+    def _adopt_files(self) -> None:
+        """
+        Entries written before an attribute became a file attribute still hold a data URL (or the path of a first version file):
+        move that content into the file folder of the attribute, so no data has to be thrown away when a model changes.
+        """
+        if self.hybrid_storage.rf_handler.cold_mode:
+            return
+        adopted, done = 0, set()
+        for model in self._models.values():
+            fields = self._raw_fields(model)
+            try:
+                entries = HSDBQuery.from_params(model, {}).collect() if fields else []
+            except KeyError:
+                continue
+            for entry in entries:
+                row = model.serialize(entry)
+                patch, old_files = {}, []
+                for name in fields:
+                    value = row.get(name)
+                    legacy = isinstance(value, str) and _LEGACY_FILE.fullmatch(value)
+                    if legacy:
+                        absolute_path = self.hybrid_storage.rf_handler.fs.rawfiles.path + '/' + legacy.group(1)
+                        old_files.append(absolute_path)
+                        extension = legacy.group(1).rsplit('.', 1)[1]
+                        with open(absolute_path, 'rb') as handle:
+                            patch[name] = HSDBRawFile.encode(handle.read(), next((kind for kind, ending in RAW_FILE_TYPES.items() if ending == extension), 'application/octet-stream'))
+                    elif isinstance(value, str) and value.startswith('data:'):
+                        patch[name] = value
+                try:
+                    if patch:
+                        self._store_files(model, patch)
+                        self.hybrid_storage.update_entry(row['id'], patch)
+                        adopted += 1
+                        done.update(old_files)
+                except Exception as exc:
+                    warn(f'HSDB "{self.name}": could not move the files of {model.__name__} {row.get("id")}: {exc}')
+        for old_file in done:
+            os.remove(old_file) # Entries may share one, so only when all are moved
+        if adopted:
+            success(f'HSDB "{self.name}" moved the files of {adopted} entries into rawfiles/')
+
+    def _raw_fields(self, model:type) -> dict:
+        return {name: spec['raw_file'] for name, spec in model.schema()['attributes'].items() if spec.get('raw_file')}
+
+    def _decode_file(self, name:str, spec:dict, value:object) -> tuple:
+        """
+        The bytes and content type of a file attribute value: {type, data: base64} or a "data:<type>;base64,..." string.
+        """
+        if isinstance(value, dict):
+            content_type, encoded = value.get('type'), value.get('data')
+        elif isinstance(value, str) and (match := _DATA_URL.fullmatch(value)):
+            content_type, encoded = match.groups()
+        else:
+            raise HTTPException(400, f'{name} takes {{type, data}} (base64), a data URL, the path of its current file or null')
+        if not isinstance(encoded, str) or not isinstance(content_type, str):
+            raise HTTPException(400, f'{name} needs a "type" and base64 "data"')
+        content_type = content_type.lower()
+        if not HSDBRawFile.accepts(spec, content_type):
+            raise HTTPException(415, f'{name} does not accept "{content_type}", expected {spec["types"]}')
+        try:
+            data = base64.b64decode(encoded, validate=True)
+        except ValueError:
+            raise HTTPException(400, f'{name} is not valid base64')
+        if not data:
+            raise HTTPException(400, f'{name} is empty')
+        if len(data) > spec['max_bytes']:
+            raise HTTPException(413, f'{name} may be {spec["max_bytes"] // 1024} KB at most')
+        return data, content_type
+
+    def _store_files(self, model:type, data:dict, current:dict=None) -> None:
+        """
+        Replaces the uploads in `data` by the paths of the stored files. The path an entry has already is kept as it is.
+        """
+        for name, spec in self._raw_fields(model).items():
+            value = data.get(name)
+            if value in (None, '') or value == (current or {}).get(name):
+                continue # No file, or the one the entry has
+            if isinstance(value, str) and self.hybrid_storage.rf_handler.raw_file_path(value) and value.split('/')[1] == name:
+                continue # The path of a file that is there already
+            if self.hybrid_storage.rf_handler.cold_mode:
+                raise HTTPException(501, 'Cold-mode databases have no files')
+            content, content_type = self._decode_file(name, spec, value)
+            data[name] = self.hybrid_storage.rf_handler.write_raw_file(content, RAW_FILE_TYPES[content_type], name)
+
+    def _release_files(self, paths:list) -> None:
+        """
+        Deletes the files of `paths` that no entry points to anymore.
+        """
+        paths = {file for file in paths if file}
+        if not paths:
+            return
+        for model in self._models.values():
+            fields = self._raw_fields(model)
+            if not fields:
+                continue
+            try:
+                entries = HSDBQuery.from_params(model, {}).collect()
+            except KeyError:
+                continue
+            for entry in entries:
+                row = model.serialize(entry)
+                paths -= {row.get(name) for name in fields}
+        for file in paths:
+            self.hybrid_storage.rf_handler.delete_raw_file(file)
+
+    def _files_of(self, entry:object) -> list:
+        row = entry.model.serialize(entry)
+        return [row.get(name) for name in self._raw_fields(entry.model)]
+
     def _create_entry(self, model:str, data:dict) -> dict:
         model_class = self._model(model)
         data = self._coerce(model_class, data)
@@ -152,6 +263,7 @@ class HSDB(ApplicationUnit):
             except KeyError:
                 pass
         self._check_relations(model_class, data)
+        self._store_files(model_class, data)
         # Cold mode never yields a file, which create_entry would report as a failed write (410)
         entry, return_code = self.hybrid_storage.create_entry(model_class, data, write=not self.hybrid_storage.rf_handler.cold_mode, entry_id=entry_id)
         if return_code != 200:
@@ -159,17 +271,21 @@ class HSDB(ApplicationUnit):
         return entry
 
     def _update_entry(self, model:str, id:str, data:dict) -> object:
-        self._entry(model, id)
+        before = self._entry(model, id)
         data = self._coerce(self._model(model), {key: value for key, value in data.items() if key not in _COMPUTED}) # Computed fields are not client-writable
         self._check_relations(self._model(model), data)
+        files = self._files_of(before)
+        self._store_files(self._model(model), data, before.model.serialize(before))
         entry, return_code = self.hybrid_storage.update_entry(id, data)
         if return_code != 200:
             raise HTTPException(return_code, 'Entry could not be updated, see server log')
+        self._release_files(files)
         return entry
 
     def _delete_entry(self, model:str, id:str) -> dict:
-        self._entry(model, id)
+        files = self._files_of(self._entry(model, id))
         self.hybrid_storage.delete_entry(id)
+        self._release_files(files)
         return {'deleted': True, 'id': id}
 
     def _bulk_item(self, model:str, action:str, item:object) -> dict:
@@ -238,41 +354,18 @@ class HSDB(ApplicationUnit):
                 raise HTTPException(413, f'At most {_BULK_LIMIT} operations per bulk request')
             return {action: [self._bulk_item(model, action, item) for item in body.get(action) or []] for action in _BULK_ACTIONS}
 
-        async def upload_file(request:Request) -> dict:
-            if self.hybrid_storage.rf_handler.cold_mode:
-                raise HTTPException(501, 'Cold-mode databases have no files')
-            content_type = request.headers.get('content-type', 'application/octet-stream').split(';')[0].strip().lower()
-            if content_type not in _FILE_TYPES:
-                raise HTTPException(415, f'Files of type "{content_type}" are not accepted, expected one of {sorted(_FILE_TYPES)}')
-            data = b''
-            async for chunk in request.stream():
-                data += chunk
-                if len(data) > _FILE_LIMIT:
-                    raise HTTPException(413, f'Files may be {_FILE_LIMIT // 1024 // 1024} MB at most')
-            if not data:
-                raise HTTPException(400, 'The file is empty')
-            name = self.hybrid_storage.rf_handler.write_raw_file(data, _FILE_TYPES[content_type])
-            return {'name': name, 'path': f'rawfiles/{name}', 'size': len(data), 'type': content_type}
-
-        def get_file(name:str) -> FileResponse:
-            absolute_path = self.hybrid_storage.rf_handler.raw_file_path(name)
+        def get_file(folder:str, name:str) -> FileResponse:
+            absolute_path = self.hybrid_storage.rf_handler.raw_file_path(f'rawfiles/{folder}/{name}')
             if not absolute_path:
                 raise HTTPException(404, 'No such file')
             extension = name.rsplit('.', 1)[1]
-            media_type = next((kind for kind, ending in _FILE_TYPES.items() if ending == extension), 'application/octet-stream')
+            media_type = next((kind for kind, ending in RAW_FILE_TYPES.items() if ending == extension), 'application/octet-stream')
             # Named by its content, so it never changes
             return FileResponse(absolute_path, media_type=media_type, headers={'Cache-Control': 'public, max-age=31536000, immutable'})
 
-        def delete_file(name:str) -> dict:
-            if not self.hybrid_storage.rf_handler.delete_raw_file(name):
-                raise HTTPException(404, 'No such file')
-            return {'deleted': True, 'name': name}
-
         # Plain functions on purpose: FastAPI runs them in its threadpool, so big queries don't block the event loop
-        # The files come before /hsdb/{model}/{id}, which would otherwise take them for a model called "files"
-        self.add_route('/hsdb/files', upload_file, methods=['POST'])
-        self.add_route('/hsdb/files/{name}', get_file)
-        self.add_route('/hsdb/files/{name}', delete_file, methods=['DELETE'])
+        # Files are written through the attributes of a model; this only reads them (the path of an attribute value is /hsdb/<path>)
+        self.add_route('/hsdb/rawfiles/{folder}/{name}', get_file)
         self.add_route('/hsdb', info)
         self.add_route('/hsdb/schema', schema) # Before /hsdb/{model}, which would otherwise swallow it
         self.add_route('/hsdb/{model}', query)
