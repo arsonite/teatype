@@ -13,6 +13,13 @@
  * all copies or substantial portions of the Software.
  */
 
+/*
+ * Local-first sync of IndexedDB collections with an HSDB backend.
+ * useSync({ mode: 'manual' }): pulls on open and reconnect, pushes only when save() is called (lockkliye).
+ * useSync({ mode: 'auto' }): works offline, pushes every change by itself and syncs on reconnect (tickfit).
+ * Pair it with createLocalStore + usePersist for the device copy, mergeItems for applying results, TeaSyncStatus for the UI.
+ */
+
 export { findDirty, hashOf, syncCollection } from './engine';
 export type { iCollectionResult, tListing, tSeed, tSynced } from './engine';
 export { createLocalStore } from './localStore';
