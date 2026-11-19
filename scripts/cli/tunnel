@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+
+# Copyright (C) 2024-2026 Burak Günaydin
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# Standard-library imports
+import subprocess
+
+# Third-party imports
+from teatype.cli import BaseCLI
+from teatype.io import prompt
+from teatype.logging import *
+
+class Tunnel(BaseCLI):
+    def meta(self):
+        return {
+            'name': 'tunnel',
+            'shorthand': 'tn',
+            'help': 'Forward remote ports to localhost via SSH (-L), until Ctrl+C',
+        }
+
+    def execute(self):
+        target = prompt('Enter remote host as [user@]host', return_input=True).strip()
+        port_input = prompt('Enter ports to forward, separated by commas (e.g. 3000,8888)', return_input=True)
+        ports = [port.strip() for port in port_input.split(',') if port.strip()]
+        if not target:
+            err('Target is required.', exit=True)
+        if not all(port.isdigit() for port in ports) or not ports:
+            err('Ports must be a comma-separated list of numbers.', exit=True)
+
+        ssh_args = ['ssh', '-N',
+                    '-o', 'LogLevel=ERROR',
+                    '-o', 'ExitOnForwardFailure=no',
+                    '-o', 'ServerAliveInterval=30',
+                    '-o', 'ServerAliveCountMax=3']
+        for port in ports:
+            ssh_args += ['-L', f'{port}:localhost:{port}']
+        ssh_args.append(target)
+
+        hint(f'Forwarding {", ".join(ports)} from {target}. Press Ctrl+C to stop.', use_prefix=False)
+        try:
+            subprocess.run(ssh_args)
+        except KeyboardInterrupt:
+            pass
+        success('Tunnel closed.')
+
+if __name__ == '__main__':
+    Tunnel()

@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+
+# Copyright (C) 2024-2026 Burak Günaydin
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# Standard-library imports
+import os
+import subprocess
+
+# Third-party imports
+from teatype.cli import BaseCLI
+from teatype.io import prompt
+from teatype.logging import *
+
+class Mount(BaseCLI):
+    def meta(self):
+        return {
+            'name': 'mount',
+            'shorthand': 'mt',
+            'help': 'Mount a remote directory via SSHFS into ~/remote/<host>/<directory>',
+            'flags': [
+                {
+                    'name': 'flush',
+                    'shorthand': 'f',
+                    'help': 'Unmount instead of mounting',
+                    'required': False
+                }
+            ]
+        }
+
+    def execute(self):
+        target = prompt('Enter remote host as [user@]host', return_input=True).strip()
+        remote_path = prompt('Enter absolute directory path on the remote host', return_input=True).strip()
+        if not target or not remote_path:
+            err('Target and remote path are required.', exit=True)
+        host = target.split('@')[-1]
+        mountpoint = os.path.join(os.path.expanduser('~'), 'remote', host, os.path.basename(remote_path.rstrip('/')) or 'root')
+
+        if os.path.ismount(mountpoint):
+            subprocess.run(['fusermount', '-u', mountpoint])
+        if self.get_flag('flush'):
+            success(f'Unmounted {mountpoint}')
+            return
+
+        os.makedirs(mountpoint, exist_ok=True)
+        result = subprocess.run([
+            'sshfs', f'{target}:{remote_path}', mountpoint,
+            '-o', 'reconnect,ServerAliveInterval=15,ServerAliveCountMax=3,cache=no,follow_symlinks,direct_io,no_readahead'
+        ])
+        if result.returncode != 0 or not os.path.ismount(mountpoint):
+            err(f'Failed to mount {remote_path} at {mountpoint}.', exit=True)
+        success(f'Mounted {remote_path} at {mountpoint}')
+
+if __name__ == '__main__':
+    Mount()
