@@ -162,4 +162,39 @@ const pinViewport = (): (() => void) => {
     };
 };
 
-export { edgeSwipe, lockGestures, pinViewport, swipeLeft };
+/**
+ * Standalone iOS app that draws under the status bar (`black-translucent`): the layout viewport is as high as the
+ * screen minus the status bar, but the page is drawn from the very top, so the bottom strip of the screen stays
+ * empty. This sizes the page to the screen: it sets `--app-height` and the class `fill-screen` on the root element,
+ * which the styles of the app use for the height of the body. With the other status bar styles the safe area at the
+ * top is 0 and nothing is done. Returns the function that undoes it.
+ */
+const fillScreen = (): (() => void) => {
+    if (!(navigator as Navigator & { standalone?: boolean }).standalone) {
+        return () => undefined;
+    }
+    const root = document.documentElement;
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;visibility:hidden;padding-top:env(safe-area-inset-top)';
+    document.body.appendChild(probe);
+    const apply = () => {
+        const underStatusBar = probe.offsetHeight > 0;
+        const landscape = window.innerWidth > window.innerHeight;
+        const side = landscape ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+        root.classList.toggle('fill-screen', underStatusBar);
+        root.style.setProperty('--app-height', `${Math.max(side, window.innerHeight)}px`);
+    };
+    apply();
+    window.addEventListener('resize', apply);
+    window.addEventListener('orientationchange', apply);
+
+    return () => {
+        window.removeEventListener('resize', apply);
+        window.removeEventListener('orientationchange', apply);
+        root.classList.remove('fill-screen');
+        root.style.removeProperty('--app-height');
+        probe.remove();
+    };
+};
+
+export { edgeSwipe, fillScreen, lockGestures, pinViewport, swipeLeft };
