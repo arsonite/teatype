@@ -18,6 +18,7 @@ import subprocess
 
 # Third-party imports
 from teatype.cli import BaseCLI
+from teatype.io import prompt
 from teatype.logging import *
 
 class Mount(BaseCLI):
@@ -26,18 +27,6 @@ class Mount(BaseCLI):
             'name': 'mount',
             'shorthand': 'mt',
             'help': 'Mount a remote directory via SSHFS into ~/remote/<host>/<directory>',
-            'arguments': [
-                {
-                    'name': 'target',
-                    'help': 'Remote host as [user@]host (user falls back to your ssh config)',
-                    'required': True
-                },
-                {
-                    'name': 'remote-path',
-                    'help': 'Absolute directory on the remote host',
-                    'required': True
-                }
-            ],
             'flags': [
                 {
                     'name': 'flush',
@@ -49,8 +38,10 @@ class Mount(BaseCLI):
         }
 
     def execute(self):
-        target = self.get_argument('target')
-        remote_path = self.get_argument('remote-path')
+        target = prompt('Enter remote host as [user@]host', return_input=True).strip()
+        remote_path = prompt('Enter absolute directory path on the remote host', return_input=True).strip()
+        if not target or not remote_path:
+            err('Target and remote path are required.', exit=True)
         host = target.split('@')[-1]
         mountpoint = os.path.join(os.path.expanduser('~'), 'remote', host, os.path.basename(remote_path.rstrip('/')) or 'root')
 

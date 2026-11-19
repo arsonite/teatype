@@ -17,6 +17,7 @@ import subprocess
 
 # Third-party imports
 from teatype.cli import BaseCLI
+from teatype.io import prompt
 from teatype.logging import *
 
 class Tunnel(BaseCLI):
@@ -25,23 +26,14 @@ class Tunnel(BaseCLI):
             'name': 'tunnel',
             'shorthand': 'tn',
             'help': 'Forward remote ports to localhost via SSH (-L), until Ctrl+C',
-            'arguments': [
-                {
-                    'name': 'target',
-                    'help': 'Remote host as [user@]host (user falls back to your ssh config)',
-                    'required': True
-                },
-                {
-                    'name': 'ports',
-                    'help': 'Ports to forward, separated by commas (e.g. 3000,8888)',
-                    'required': True
-                }
-            ]
         }
 
     def execute(self):
-        target = self.get_argument('target')
-        ports = [port.strip() for port in self.get_argument('ports').split(',') if port.strip()]
+        target = prompt('Enter remote host as [user@]host', return_input=True).strip()
+        port_input = prompt('Enter ports to forward, separated by commas (e.g. 3000,8888)', return_input=True)
+        ports = [port.strip() for port in port_input.split(',') if port.strip()]
+        if not target:
+            err('Target is required.', exit=True)
         if not all(port.isdigit() for port in ports) or not ports:
             err('Ports must be a comma-separated list of numbers.', exit=True)
 
