@@ -96,4 +96,70 @@ const edgeSwipe = (onSwipe: () => void): (() => void) => {
     };
 };
 
-export { edgeSwipe, lockGestures };
+/**
+ * Calls `onSwipe` when a finger (or a held mouse button) is moved to the left, from anywhere on the page. Returns the
+ * function that undoes it.
+ */
+const swipeLeft = (onSwipe: () => void): (() => void) => {
+    let start: { x: number; y: number } | null = null;
+    const begin = (x: number, y: number) => {
+        start = { x, y };
+    };
+    const move = (x: number, y: number) => {
+        if (start && start.x - x > SWIPE_PX && start.x - x > Math.abs(y - start.y) * 1.5) {
+            start = null;
+            onSwipe();
+        }
+    };
+    const end = () => {
+        start = null;
+    };
+    const onTouchStart = (event: TouchEvent) => begin(event.touches[0].clientX, event.touches[0].clientY);
+    const onTouchMove = (event: TouchEvent) => move(event.touches[0].clientX, event.touches[0].clientY);
+
+    document.addEventListener('touchstart', onTouchStart, { passive: true });
+    document.addEventListener('touchmove', onTouchMove, { passive: true });
+    document.addEventListener('touchend', end);
+    document.addEventListener('touchcancel', end);
+
+    return () => {
+        document.removeEventListener('touchstart', onTouchStart);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', end);
+        document.removeEventListener('touchcancel', end);
+    };
+};
+
+/**
+ * Keeps the page from being scrolled. Safari on iOS scrolls the document when the keyboard opens and, as a home
+ * screen app, often leaves it shifted up afterwards: the top of the page hides behind the status bar and an empty
+ * strip shows at the bottom. The app scrolls inside its own containers, so any scroll of the window is undone.
+ * Returns the function that undoes it.
+ */
+const pinViewport = (): (() => void) => {
+    const reset = () => {
+        if (window.scrollX !== 0 || window.scrollY !== 0) {
+            window.scrollTo(0, 0);
+        }
+    };
+    // The keyboard animation moves the page for a while after the event
+    const resetSoon = () => {
+        reset();
+        window.setTimeout(reset, 100);
+        window.setTimeout(reset, 400);
+    };
+    const viewport = window.visualViewport;
+    window.addEventListener('scroll', reset);
+    window.addEventListener('focusout', resetSoon);
+    window.addEventListener('orientationchange', resetSoon);
+    viewport?.addEventListener('resize', resetSoon);
+
+    return () => {
+        window.removeEventListener('scroll', reset);
+        window.removeEventListener('focusout', resetSoon);
+        window.removeEventListener('orientationchange', resetSoon);
+        viewport?.removeEventListener('resize', resetSoon);
+    };
+};
+
+export { edgeSwipe, lockGestures, pinViewport, swipeLeft };

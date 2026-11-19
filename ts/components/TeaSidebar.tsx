@@ -14,10 +14,13 @@
  */
 
 // React imports
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
 
 // Icons
 import { BackIcon, ChevronIcon, PlusIcon, XIcon } from '../icons';
+
+// Utility
+import { swipeLeft } from '@teatype/toolkit/gestures';
 
 // Components
 import { TeaHubLink, isEmbedded } from './TeaHubLink';
@@ -62,7 +65,7 @@ export interface iTeaSidebarProps {
     hubHref?: string | false;
     toggleKey?: string;
     headerActions?: tTeaSidebarAction[];
-    // A phone: expanded is then a sheet over everything, closed with an X
+    // A phone: expanded is then a sheet over everything, closed with an X or a swipe to the left
     mobile?: boolean;
     // Shown at the bottom of the collapsed sidebar, below a rule. Collapsed, the sidebar is a rail over the left edge of the page.
     rail?: React.ReactNode;
@@ -274,6 +277,11 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
         onToggle,
     };
     const showHub = hubHref !== false && isEmbedded();
+
+    // A ref, so that a render during the swipe does not restart it
+    const toggleRef = useRef(onToggle);
+    toggleRef.current = onToggle;
+    useEffect(() => (mobile && expanded ? swipeLeft(() => toggleRef.current()) : undefined), [mobile, expanded]);
 
     const toggle = (
         <button
