@@ -53,4 +53,5 @@ export { TrashIcon } from './TrashIcon';
 export { UndoIcon } from './UndoIcon';
 export { UnlockIcon } from './UnlockIcon';
 export { WarningIcon } from './WarningIcon';
+export { WorkspaceIcon } from './WorkspaceIcon';
 export { XIcon } from './XIcon';
