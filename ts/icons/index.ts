@@ -49,6 +49,7 @@ export { SaveIcon } from './SaveIcon';
 export { SettingsIcon } from './SettingsIcon';
 export { TableIcon } from './TableIcon';
 export { TemplateIcon } from './TemplateIcon';
+export { TextAlignIcon } from './TextAlignIcon';
 export { TransferIcon } from './TransferIcon';
 export { TrashIcon } from './TrashIcon';
 export { UndoIcon } from './UndoIcon';
