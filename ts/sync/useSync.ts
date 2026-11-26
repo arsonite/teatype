@@ -33,6 +33,20 @@ type tSyncStatus = 'idle' | 'syncing' | 'offline';
  */
 type tSyncMode = 'auto' | 'manual';
 
+/**
+ * Auto mode: when and how changes are sent
+ * - pushDelay: how long nothing may change before they go out
+ * - maxPushDelay: they go out after this long at the latest, however busy the user is
+ * - listing: 'known' only writes the rows this device knows, 'server' asks the server first and also pulls what changed elsewhere
+ * - refreshOnVisible: a full sync whenever the app comes back to the foreground
+ */
+interface iAutoOptions {
+    pushDelay?: number;
+    maxPushDelay?: number;
+    listing?: tListing;
+    refreshOnVisible?: boolean;
+}
+
 interface iSyncMeta {
     version: number;
     synced: Record<string, tSynced>;
@@ -77,6 +91,7 @@ interface iUseSyncOptions<S> {
     read: () => { items: Record<string, object[]>; context: S };
     /** Merges the result into the app state, must keep everything that was changed after read() */
     apply: (results: tResults, context: S) => void;
+    auto?: iAutoOptions;
     onSync?: (report: iSyncReport, info: iSyncInfo) => void;
 }
 
@@ -112,6 +127,9 @@ const useSync = <S,>(options: iUseSyncOptions<S>) => {
     const queued = useRef(false);
     // The changes the last failed attempt tried to send, they are not tried again until something changes
     const failedSignature = useRef<string | null>(null);
+    // Since when changes are waiting, the delay of an automatic save is cut short by the maximum
+    const waitingSince = useRef<number | null>(null);
+    const { pushDelay = FAST_PUSH_DELAY_MS, maxPushDelay = Infinity, listing = 'known', refreshOnVisible = true } = options.auto ?? {};
 
     // Edits of children (blocks, sets) are expected to change their tracked parent as well, or be tracked themselves
     const dirty = useMemo(
@@ -229,7 +247,18 @@ const useSync = <S,>(options: iUseSyncOptions<S>) => {
             full();
         }
         const goOffline = () => mode === 'auto' && setStatus('offline');
-        const onVisible = () => document.visibilityState === 'visible' && mode === 'auto' && full();
+        const onVisible = () => {
+            if (mode !== 'auto') {
+                return;
+            }
+            if (document.visibilityState === 'visible') {
+                if (refreshOnVisible) full();
+            } else if (waitingSince.current !== null && isOnline()) {
+                // Timers of a page in the background are paused or killed, send what is waiting before it goes
+                waitingSince.current = null;
+                void sync(true, listing);
+            }
+        };
         window.addEventListener('online', full);
         window.addEventListener('offline', goOffline);
         document.addEventListener('visibilitychange', onVisible);
@@ -238,26 +267,32 @@ const useSync = <S,>(options: iUseSyncOptions<S>) => {
             window.removeEventListener('offline', goOffline);
             document.removeEventListener('visibilitychange', onVisible);
         };
-    }, [mode, sync]);
+    }, [mode, sync, listing, refreshOnVisible]);
 
     // Auto: changes go out shortly after they were made, without asking the server first
     useEffect(() => {
+        if (!signature) {
+            waitingSince.current = null;
+        }
         if (mode !== 'auto' || !signature || status !== 'idle' || signature === failedSignature.current) {
             return;
         }
+        waitingSince.current ??= Date.now();
+        const delay = Math.min(pushDelay, Math.max(0, waitingSince.current + maxPushDelay - Date.now()));
         const timer = setTimeout(async () => {
-            const report = await sync(true, 'known');
+            waitingSince.current = null;
+            const report = await sync(true, listing);
             if (report.busy) {
                 return;
             }
             failedSignature.current = report.ok && report.failed === 0 ? null : signature;
             // Rows that were changed or deleted elsewhere are settled by asking the server
-            if (report.ok && report.failed > 0) {
+            if (report.ok && report.failed > 0 && listing === 'known') {
                 void sync(true);
             }
-        }, FAST_PUSH_DELAY_MS);
+        }, delay);
         return () => clearTimeout(timer);
-    }, [mode, signature, status, sync]);
+    }, [mode, signature, status, sync, pushDelay, maxPushDelay, listing]);
 
     // Auto: no internet or no backend, look again from time to time
     useEffect(() => {
@@ -273,6 +308,6 @@ const useSync = <S,>(options: iUseSyncOptions<S>) => {
     return { dirty, meta, save, status, unsavedCount };
 };
 
-export type { iSyncInfo, iSyncMeta, iSyncReport, iTracked, iUseSyncOptions, tSyncMode, tSyncStatus };
+export type { iAutoOptions, iSyncInfo, iSyncMeta, iSyncReport, iTracked, iUseSyncOptions, tSyncMode, tSyncStatus };
 
 export default useSync;

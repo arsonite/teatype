@@ -15,8 +15,9 @@
 
 /*
  * Local-first sync of IndexedDB collections with an HSDB backend.
- * useSync({ mode: 'manual' }): pulls on open and reconnect, pushes only when save() is called (lockkliye).
- * useSync({ mode: 'auto' }): works offline, pushes every change by itself and syncs on reconnect (tickfit).
+ * useSync({ mode: 'manual' }): pulls on open and reconnect, pushes only when save() is called.
+ * useSync({ mode: 'auto' }): works offline, pushes every change by itself and syncs on reconnect (tickfit, and lockkliye
+ *   once the editing paused). `auto` tunes it: pushDelay (idle time), maxPushDelay, listing and refreshOnVisible.
  * Pair it with createLocalStore + usePersist for the device copy, mergeItems for applying results, TeaSyncStatus for the UI.
  */
 
@@ -27,5 +28,5 @@ export type { iLocalStore } from './localStore';
 export { mergeItems } from './merge';
 export type { iCollection, tAnyCollection, tRow, tServerRow } from './types';
 export { default as useSync } from './useSync';
-export type { iSyncInfo, iSyncMeta, iSyncReport, iTracked, iUseSyncOptions, tSyncMode, tSyncStatus } from './useSync';
+export type { iAutoOptions, iSyncInfo, iSyncMeta, iSyncReport, iTracked, iUseSyncOptions, tSyncMode, tSyncStatus } from './useSync';
 export { usePersist } from './usePersist';
