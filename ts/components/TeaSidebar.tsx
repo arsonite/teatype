@@ -317,6 +317,8 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                 className={`tea-sidebar ${expanded ? 'tea-sidebar--expanded' : 'tea-sidebar--collapsed'} ${
                     mobile ? 'tea-sidebar--mobile' : ''
                 }`}
+                // The closed sheet is only moved off screen, nothing in it may be focused
+                inert={mobile && !expanded}
                 style={
                     {
                         '--tea-sidebar-expanded-width': `${expandedWidth}px`,

@@ -60,9 +60,11 @@
 
         background: var(--bg-primary);
         border-right: none;
-        transition:
-            transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
-            visibility 0s;
+        // Its own layer from the start and no visibility switch: Safari on iOS sometimes leaves a sheet that
+        // comes in from hidden blank (just the background) until something repaints it
+        will-change: transform;
+        transform: translate3d(0, 0, 0);
+        transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
         &.tea-sidebar--expanded,
         &.tea-sidebar--collapsed {
@@ -70,11 +72,8 @@
         }
 
         &.tea-sidebar--collapsed {
-            transform: translateX(-100%);
-            visibility: hidden;
-            transition:
-                transform 300ms cubic-bezier(0.4, 0, 0.2, 1),
-                visibility 0s 300ms;
+            transform: translate3d(-100%, 0, 0);
+            pointer-events: none;
         }
     }
 
@@ -277,7 +276,7 @@
     flex-direction: column;
     align-items: center;
     width: var(--tea-sidebar-collapsed-width, 44px);
-    padding: calc(16px + env(safe-area-inset-top)) 0 calc(16px + env(safe-area-inset-bottom));
+    padding: calc(16px + env(safe-area-inset-top)) 0 calc(12px + env(safe-area-inset-bottom));
 
     pointer-events: none;
 
@@ -290,24 +289,31 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        // Same heights as the footer of the expanded sidebar: its rule, the sync dot and the settings sit level with these
-        gap: 16px;
+        // The footer of the expanded sidebar has the same heights (rows of 40px, 8px between them, 12px at the bottom),
+        // so its rule, the sync dot and the settings stay at the height they have when the sidebar is closed
+        gap: 8px;
         margin-top: auto;
     }
 
     &__rule {
         width: 24px;
-        margin: 0;
+        margin: 0 0 3px;
 
         border: none;
         border-top: 1px solid var(--border);
     }
 
-    // A footer action of the rail. TeaButtons of 36px; the link of the hub and the sync dot are not buttons, they
-    // look like one
+    // A footer action of the rail: as high as a row of the footer, with the icon of the same size. The link of the hub
+    // and the sync dot are not buttons, they look like one. The toggle keeps the size it has in the header.
     .tea-button.size-icon-only {
         --tea-button-size: 36px;
-        --tea-button-icon: 18px;
+        --tea-button-icon: 16px;
+        height: 40px;
+
+        &.tea-sidebar__toggle {
+            --tea-button-size: 28px;
+            height: 28px;
+        }
     }
 
     &__btn {
@@ -315,15 +321,15 @@
         align-items: center;
         justify-content: center;
         width: 36px;
-        height: 36px;
+        height: 40px;
 
         border: 1px solid transparent;
         border-radius: 8px;
         color: var(--text-muted);
 
         svg {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
         }
 
         a#{&}:hover {

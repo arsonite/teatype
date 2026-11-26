@@ -19,6 +19,8 @@
     bottom: 0;
     left: 0;
     z-index: 1000;
+    // The keyboard of a phone covers the lower part of the screen, the modal is centred in what is left
+    padding-bottom: var(--keyboard-inset, 0px);
 
     display: flex;
     align-items: center;
