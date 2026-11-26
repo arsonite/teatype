@@ -15,8 +15,6 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-export PYTHONDONTWRITEBYTECODE=1 # Prevent Python from writing .pyc files
-
 . {{WORKSPACE_PATH}}/teatype-venv/bin/activate
 
 exec {{WORKSPACE_PATH}}/cli/tt "$@" # Execute the main Python script with all passed arguments

@@ -23,9 +23,6 @@ from teatype.io import prompt
 from teatype.logging import *
 from teatype.modulo import __MODULO_IMPORT_ERROR__, __MODULO_SUPPORT__
 
-if __MODULO_SUPPORT__:
-    from teatype.modulo import LaunchPad, ModuloOperations, parse_designation
-    
 class Operations(BaseTUI):
     NOT_AVAILABLE=not __MODULO_SUPPORT__
     NOT_AVAILABLE_REASON=__MODULO_IMPORT_ERROR__
@@ -90,10 +87,12 @@ class Operations(BaseTUI):
                             return_input=True)
         unit_name = prompt(f'Enter the name of the {unit_type} unit to launch:',
                            return_input=True)
+        from teatype.modulo import LaunchPad # Imported here so discovering the TUI doesn't load Modulo
         LaunchPad.fire(unit_name, unit_type)
         return f'Launched {unit_type} unit: {unit_name}'
         
     def list(self):
+        from teatype.modulo import parse_designation
         units = self.operations.list()
         n_units = len(units)
         list_string = ''
@@ -125,6 +124,7 @@ class Operations(BaseTUI):
                 pad_after=1,
                 verbose=False)
             
+        from teatype.modulo import ModuloOperations
         self.operations = ModuloOperations()
         
     def on_prompt(self, user_input:str, option:any=None) -> str:

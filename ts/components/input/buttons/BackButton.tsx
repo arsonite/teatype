@@ -27,7 +27,6 @@ const BackButton: React.FC<iTeaButtonProps> = (props) => {
     return (
         <TeaButton
             disableRipple
-            disableIconRotation
             size='small'
             variant='borderless'
             {...props}

@@ -16,6 +16,9 @@
 // React imports
 import React from 'react';
 
+// Components
+import { TeaButton } from './input/TeaButton';
+
 // Style
 import './style/TeaSyncStatus.scss';
 
@@ -52,21 +55,37 @@ const TeaSyncStatus: React.FC<iTeaSyncStatusProps> = ({ compact, mode = 'auto', 
                 : 'Synced';
     const className = `tea-sync-status tea-sync-status--${waiting ? 'waiting' : status}`;
 
+    const modifier = `tea-sync-status--${waiting ? 'waiting' : status}`;
+
     if (compact) {
-        const Tag = mode === 'manual' && onSave ? 'button' : 'div';
+        if (mode === 'manual' && onSave) {
+            return (
+                <TeaButton variant='borderless' iconOnly disableRipple className={modifier} title={label} onClick={onSave}>
+                    <span className='tea-sync-status__dot' />
+                </TeaButton>
+            );
+        }
         return (
-            <Tag className={`tea-rail__btn ${className} tea-sync-status--compact`} title={label} onClick={Tag === 'button' ? onSave : undefined}>
+            <div className={`tea-rail__btn ${className} tea-sync-status--compact`} title={label}>
                 <span className='tea-sync-status__dot' />
-            </Tag>
+            </div>
         );
     }
 
     if (mode === 'manual' && onSave) {
         return (
-            <button className={className} title='Save to the server' onClick={onSave}>
-                <span className='tea-sync-status__dot' />
+            <TeaButton
+                variant='borderless'
+                fullWidth
+                align='start'
+                disableRipple
+                className={modifier}
+                icon={<span className='tea-sync-status__dot' />}
+                title='Save to the server'
+                onClick={onSave}
+            >
                 {label}
-            </button>
+            </TeaButton>
         );
     }
     return (

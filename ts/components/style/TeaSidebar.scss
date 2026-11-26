@@ -104,29 +104,13 @@
         border-bottom: 1px solid var(--border);
     }
 
+    // The buttons of the header are TeaButtons of 28px
+    .tea-button.size-icon-only {
+        --tea-button-size: 28px;
+        --tea-button-icon: 16px;
+    }
+
     &__toggle {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-
-        background: transparent;
-        border: none;
-        border-radius: 6px;
-        color: var(--text-muted);
-        cursor: pointer;
-
-        transition:
-            background 0.15s,
-            color 0.15s;
-
-        &:hover {
-            background: var(--surface-elevated);
-            color: var(--text-primary);
-        }
-
         &-icon {
             display: flex;
             transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -174,58 +158,11 @@
         font-weight: 600;
     }
 
-    &__action {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 18px;
-        font-weight: 300;
-
-        transition:
-            background 0.15s,
-            transform 0.15s;
-
-        &:hover {
-            transform: scale(1.05);
-        }
-
-        &--primary {
-            background: var(--accent);
-            color: #fff;
-
-            &:hover {
-                background: var(--accent-hover, var(--accent));
-            }
-        }
-
-        &--secondary {
-            background: var(--surface-elevated);
-            color: var(--text-primary);
-
-            &:hover {
-                background: var(--surface-card);
-            }
-        }
-
-        &--danger {
-            background: var(--error, #ff453a);
-            color: #fff;
-
-            &:hover {
-                background: var(--error-hover, #ff6961);
-            }
-        }
-    }
-
     &__content {
         flex: 1;
         overflow-y: auto;
+        // A scrollbar of a long list must not move what is in the list (tabs jump between two lists)
+        scrollbar-gutter: stable;
         padding: 12px;
         min-height: 0;
 
@@ -366,7 +303,13 @@
         border-top: 1px solid var(--border);
     }
 
-    // A footer action of the rail, a square button with an icon or the sync dot
+    // A footer action of the rail. TeaButtons of 36px; the link of the hub and the sync dot are not buttons, they
+    // look like one
+    .tea-button.size-icon-only {
+        --tea-button-size: 36px;
+        --tea-button-icon: 18px;
+    }
+
     &__btn {
         display: flex;
         align-items: center;
@@ -374,24 +317,18 @@
         width: 36px;
         height: 36px;
 
-        background: transparent;
-        border: none;
+        border: 1px solid transparent;
         border-radius: 8px;
         color: var(--text-muted);
-        cursor: pointer;
-
-        transition:
-            background 0.15s,
-            color 0.15s;
 
         svg {
             width: 18px;
             height: 18px;
         }
 
-        &:hover,
-        &--active {
-            background: var(--surface-elevated);
+        a#{&}:hover {
+            background: var(--surface-card);
+            border-color: var(--border);
             color: var(--text-primary);
         }
     }
@@ -522,30 +459,10 @@
         white-space: nowrap;
     }
 
-    &__delete {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-
-        background: transparent;
-        border: none;
-        border-radius: 4px;
-        color: var(--text-muted);
-        cursor: pointer;
-        font-size: 16px;
+    // Shown while the mouse is over the item
+    &__delete.tea-button {
+        --tea-button-size: 20px;
         opacity: 0;
-
-        transition:
-            opacity 0.15s,
-            color 0.15s,
-            background 0.15s;
-
-        &:hover {
-            background: var(--error, #ff453a);
-            color: #fff;
-        }
     }
 
     &__meta {
@@ -753,69 +670,8 @@
     }
 }
 
-.tea-sidebar-btn {
-    width: 100%;
-    padding: 10px 16px;
-
-    background: var(--surface-elevated);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 0.8125rem;
-    text-align: left;
-
-    transition:
-        background 0.15s,
-        color 0.15s,
-        border-color 0.15s;
-
-    &:hover {
-        background: var(--surface-card);
-        border-color: var(--border);
-        color: var(--text-primary);
-    }
-
-    &--danger {
-        background: transparent;
-        border-color: var(--error, #ff453a);
-        color: var(--error, #ff453a);
-
-        &:hover {
-            background: var(--error, #ff453a);
-            color: #fff;
-        }
-    }
-}
-
 .tea-sidebar-btn-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
-}
-
-// Footer button (for settings toggle etc.)
-.tea-sidebar-footer-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 10px 12px;
-
-    background: transparent;
-    border: none;
-    border-radius: 8px;
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 0.875rem;
-    text-align: left;
-
-    transition:
-        background 0.15s,
-        color 0.15s;
-
-    &:hover {
-        background: var(--surface-elevated);
-        color: var(--text-primary);
-    }
 }

@@ -22,7 +22,7 @@ import { XIcon } from '@teatype/icons';
 
 const XButton: React.FC<iTeaButtonProps> = (props) => {
     return (
-        <TeaButton disableRipple disableIconRotation size='small' variant='borderless' {...props}>
+        <TeaButton disableRipple size='small' variant='borderless' {...props}>
             <XIcon />
         </TeaButton>
     );

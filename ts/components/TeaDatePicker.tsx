@@ -19,6 +19,7 @@ import { useState } from 'react';
 
 // Components
 import { TeaPopover } from './TeaPopover';
+import { TeaButton } from './input/TeaButton';
 
 // Style
 import './style/TeaDatePicker.scss';
@@ -62,24 +63,24 @@ const TeaDatePicker = ({ x, y, date, onPick, onClose }: iTeaDatePickerProps) => 
         <TeaPopover x={x} y={y} onClose={onClose}>
             <div className='tea-date-picker'>
                 <div className='tea-date-picker__header'>
-                    <button className='tea-date-picker__nav' onClick={() => move(-12)} title='Previous year'>
+                    <TeaButton variant='borderless' size='xs' iconOnly disableRipple className='tea-date-picker__nav' onClick={() => move(-12)} title='Previous year'>
                         «
-                    </button>
-                    <button className='tea-date-picker__nav' onClick={() => move(-1)} title='Previous month'>
+                    </TeaButton>
+                    <TeaButton variant='borderless' size='xs' iconOnly disableRipple className='tea-date-picker__nav' onClick={() => move(-1)} title='Previous month'>
                         ‹
-                    </button>
+                    </TeaButton>
                     <span className='tea-date-picker__title'>
                         {new Date(view.year, view.month, 1).toLocaleDateString(undefined, {
                             month: 'long',
                             year: 'numeric',
                         })}
                     </span>
-                    <button className='tea-date-picker__nav' onClick={() => move(1)} title='Next month'>
+                    <TeaButton variant='borderless' size='xs' iconOnly disableRipple className='tea-date-picker__nav' onClick={() => move(1)} title='Next month'>
                         ›
-                    </button>
-                    <button className='tea-date-picker__nav' onClick={() => move(12)} title='Next year'>
+                    </TeaButton>
+                    <TeaButton variant='borderless' size='xs' iconOnly disableRipple className='tea-date-picker__nav' onClick={() => move(12)} title='Next year'>
                         »
-                    </button>
+                    </TeaButton>
                 </div>
                 <div className='tea-date-picker__grid'>
                     {WEEKDAYS.map((weekday) => (
@@ -90,23 +91,27 @@ const TeaDatePicker = ({ x, y, date, onPick, onClose }: iTeaDatePickerProps) => 
                     {weeksOf(view.year, view.month)
                         .flat()
                         .map((day) => (
-                            <button
+                            <TeaButton
                                 key={day.getTime()}
+                                variant='borderless'
+                                size='xs'
+                                iconOnly
+                                disableRipple
+                                active={isSameDay(day, date)}
                                 className={[
                                     'tea-date-picker__day',
                                     day.getMonth() !== view.month ? 'tea-date-picker__day--outside' : '',
                                     isSameDay(day, today) ? 'tea-date-picker__day--today' : '',
-                                    isSameDay(day, date) ? 'tea-date-picker__day--selected' : '',
                                 ].join(' ')}
                                 onClick={() => onPick(day)}
                             >
                                 {day.getDate()}
-                            </button>
+                            </TeaButton>
                         ))}
                 </div>
-                <button className='tea-date-picker__today' onClick={() => onPick(today)}>
+                <TeaButton variant='borderless' size='xs' fullWidth onClick={() => onPick(today)}>
                     Today
-                </button>
+                </TeaButton>
             </div>
         </TeaPopover>
     );

@@ -20,8 +20,6 @@ import tty
 from typing import List, Optional
 
 # Third-party imports
-from prompt_toolkit import prompt as pt_prompt
-from prompt_toolkit.completion import WordCompleter
 from teatype.enum import XTerm
 from teatype.logging import *
 from teatype.io import env as current_env
@@ -194,7 +192,9 @@ def prompt(text:str,
                 for i, choice in enumerate(choices):
                     whisper(f'  [{i + 1}] {choice}')
 
-            # Use prompt_toolkit with arrow-key selection
+            # Use prompt_toolkit with arrow-key selection (imported lazily, it is slow to import)
+            from prompt_toolkit import prompt as pt_prompt
+            from prompt_toolkit.completion import WordCompleter
             if choices:
                 # Include numeric choices in completer if use_index is enabled
                 completer_choices = list(choices)

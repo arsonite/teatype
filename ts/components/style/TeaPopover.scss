@@ -31,42 +31,9 @@
     box-shadow: var(--shadow);
     animation: teaPopoverOpen 200ms ease-out;
 
-    &__item,
-    &__button {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 8px 12px;
-
-        background: transparent;
-        border: none;
-        border-radius: var(--radius-sm, 6px);
-        color: var(--text-primary);
-        cursor: pointer;
-        font: inherit;
-        font-size: 0.8125rem;
-        white-space: nowrap;
-
-        &:hover {
-            background: var(--bg-hover);
-        }
-    }
-
-    &__item svg {
-        flex-shrink: 0;
-        width: 16px;
-        height: 16px;
+    // The rows are TeaButtons, the icon of a component is in the accent
+    .tea-button .icon {
         color: var(--accent);
-    }
-
-    &__row {
-        display: flex;
-        gap: 6px;
-
-        .tea-popover__button {
-            flex: 1;
-            justify-content: center;
-        }
     }
 }
 

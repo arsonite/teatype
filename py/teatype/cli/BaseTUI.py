@@ -11,8 +11,6 @@
 # all copies or substantial portions of the Software.
 
 # Third-party imports
-from prompt_toolkit import prompt as pt_prompt
-from prompt_toolkit.completion import Completer, Completion, WordCompleter
 from teatype import colorwrap
 from teatype.cli import BaseCLI
 from teatype.cli.args import Action
@@ -20,23 +18,30 @@ from teatype.enum import XTerm
 from teatype.io import clear_shell
 from teatype.logging import *
 
-class _StopOnSpaceCompleter(Completer):
-    """
-    Provides completions only until the first space is typed.
-    Once a space is detected, no more completions are offered.
-    """
-    def __init__(self, words):
-        self.words = words
+def _create_stop_on_space_completer(words):
+    # prompt_toolkit is imported lazily since it is slow to import and only needed once a prompt is shown
+    from prompt_toolkit.completion import Completer, Completion
+    
+    class _StopOnSpaceCompleter(Completer):
+        """
+        Provides completions only until the first space is typed.
+        Once a space is detected, no more completions are offered.
+        """
+        def __init__(self, words):
+            self.words = words
 
-    def get_completions(self, document, complete_event):
-        text = document.text_before_cursor
-        if ' ' not in text:  # Only complete if no space typed yet
-            for word in self.words:
-                if word.startswith(text):
-                    yield Completion(word, start_position=-len(text))
+        def get_completions(self, document, complete_event):
+            text = document.text_before_cursor
+            if ' ' not in text:  # Only complete if no space typed yet
+                for word in self.words:
+                    if word.startswith(text):
+                        yield Completion(word, start_position=-len(text))
+                        
+    return _StopOnSpaceCompleter(words)
                     
 # TODO: Auto-complete designations
 def _modified_prompt(prompt_text:str, options:list[str]=None) -> any:
+    from prompt_toolkit import prompt as pt_prompt
     try:
         # Apply color to the prompt
         display_text = f'{XTerm.LIGHT_GREEN}{prompt_text}{XTerm.RESET}'
@@ -50,7 +55,7 @@ def _modified_prompt(prompt_text:str, options:list[str]=None) -> any:
         log(display_text)
 
         # Use prompt_toolkit with custom completer
-        completer = _StopOnSpaceCompleter(options)
+        completer = _create_stop_on_space_completer(options)
         prompt_answer = pt_prompt(
             '> ',
             completer=completer,

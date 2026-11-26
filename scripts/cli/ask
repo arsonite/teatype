@@ -26,12 +26,6 @@ from teatype.io import fetch, file, path, prompt
 from teatype.logging import *
 from teatype.modulo import __MODULO_SUPPORT__
 
-if __GPU_SUPPORT__:
-    from teatype.ai.clients import LLMClient
-    
-if __MODULO_SUPPORT__:
-    from teatype.modulo import LaunchPad
-
 class Ask(BaseCLI):
     NOT_AVAILABLE=not __GPU_SUPPORT__
     NOT_AVAILABLE_REASON='no gpu-support'
@@ -137,6 +131,9 @@ class Ask(BaseCLI):
         spinner_thread = threading.Thread(target=_spinner, args=(stop_event,))
         spinner_thread.start()
         
+        # Imported here so discovering the command doesn't load the AI/Modulo stack
+        from teatype.ai.clients import LLMClient
+        from teatype.modulo import LaunchPad
         llm_client = LaunchPad.create(LLMClient,
                                       auto_fire=True,
                                       verbose_logging=verbose)

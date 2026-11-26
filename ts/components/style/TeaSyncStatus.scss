@@ -63,15 +63,6 @@ $offline: #ff6b6b;
     justify-content: center;
 }
 
-button.tea-sync-status {
-    cursor: pointer;
-
-    &:hover {
-        background: var(--surface-elevated);
-        color: var(--text-primary);
-    }
-}
-
 @keyframes tea-sync-pulse {
     50% {
         opacity: 0.3;

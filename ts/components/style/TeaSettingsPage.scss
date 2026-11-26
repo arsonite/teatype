@@ -30,29 +30,6 @@
         border-bottom: 1px solid var(--border);
     }
 
-    &__back {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-
-        background: transparent;
-        border: none;
-        border-radius: 8px;
-        color: var(--text-muted);
-        cursor: pointer;
-
-        transition:
-            background 0.15s,
-            color 0.15s;
-
-        &:hover {
-            background: var(--surface-elevated);
-            color: var(--text-primary);
-        }
-    }
-
     &__title {
         flex: 1;
         margin: 0;
@@ -97,43 +74,12 @@
         border-right: 1px solid var(--border);
     }
 
-    &__nav-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
-
-        background: transparent;
-        border: none;
-        border-radius: 8px;
-        color: var(--text-muted);
-        cursor: pointer;
-        font-family: inherit;
+    &__nav-item.tea-button {
         font-size: 0.875rem;
-        text-align: left;
 
-        transition:
-            background 0.15s,
-            color 0.15s;
-
-        &:hover {
-            background: var(--surface-elevated);
-            color: var(--text-primary);
-        }
-
-        &--active {
-            background: var(--surface-elevated);
-            color: var(--text-primary);
+        &.active {
             font-weight: 600;
         }
-    }
-
-    &__nav-icon {
-        display: flex;
-        flex-shrink: 0;
-        justify-content: center;
-        width: 1.25rem;
-        font-size: 1rem;
     }
 
     &__badge {
@@ -326,8 +272,9 @@
             border-bottom: 1px solid var(--border);
         }
 
-        &__nav-item {
+        &__nav-item.tea-button {
             flex-shrink: 0;
+            width: auto;
         }
 
         &__content {

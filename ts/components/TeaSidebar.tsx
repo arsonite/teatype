@@ -24,9 +24,12 @@ import { swipeLeft } from '@teatype/toolkit/gestures';
 
 // Components
 import { TeaHubLink, isEmbedded } from './TeaHubLink';
+import { TeaButton } from './input/TeaButton';
 
 // Style
 import './style/TeaSidebar.scss';
+
+const ACTION_THEMES = { primary: 'filled', secondary: 'default', danger: 'danger' } as const;
 
 export type tTeaSidebarItem = {
     active?: boolean;
@@ -144,7 +147,11 @@ const TeaSidebarSectionComponent: React.FC<tTeaSidebarSectionComponentProps> = (
                                     <div className='tea-sidebar-item__header'>
                                         <span className='tea-sidebar-item__title'>{item.title}</span>
                                         {showItemDelete && onItemDelete && (
-                                            <button
+                                            <TeaButton
+                                                variant='borderless'
+                                                theme='danger'
+                                                size='xs'
+                                                disableRipple
                                                 className='tea-sidebar-item__delete'
                                                 onClick={(e) => {
                                                     e.stopPropagation();
@@ -153,7 +160,7 @@ const TeaSidebarSectionComponent: React.FC<tTeaSidebarSectionComponentProps> = (
                                                 title='Delete'
                                             >
                                                 <XIcon width='1em' height='1em' />
-                                            </button>
+                                            </TeaButton>
                                         )}
                                     </div>
                                     {(item.subtitle || item.meta) && (
@@ -243,9 +250,9 @@ export const TeaSidebarButton: React.FC<{
     variant?: 'default' | 'danger';
     children: React.ReactNode;
 }> = ({ onClick, variant = 'default', children }) => (
-    <button className={`tea-sidebar-btn tea-sidebar-btn--${variant}`} onClick={onClick}>
+    <TeaButton fullWidth align='start' size='small' theme={variant === 'danger' ? 'danger' : 'default'} onClick={onClick}>
         {children}
-    </button>
+    </TeaButton>
 );
 
 export const TeaSidebarButtonGroup: React.FC<{
@@ -284,7 +291,11 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
     useEffect(() => (mobile && expanded ? swipeLeft(() => toggleRef.current()) : undefined), [mobile, expanded]);
 
     const toggle = (
-        <button
+        <TeaButton
+            variant='borderless'
+            size='small'
+            iconOnly
+            disableRipple
             className='tea-sidebar__toggle'
             onClick={onToggle}
             title={expanded ? (mobile ? 'Close' : 'Collapse') : 'Expand'}
@@ -297,7 +308,7 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                 </span>
             )}
             {toggleKey && <span className='tea-sidebar__key'>{toggleKey}</span>}
-        </button>
+        </TeaButton>
     );
 
     return (
@@ -317,14 +328,18 @@ export const TeaSidebar: React.FC<iTeaSidebarProps> = ({
                     {toggle}
                     {typeof title === 'string' ? <h2 className='tea-sidebar__title'>{title}</h2> : title}
                     {headerActions?.map((action) => (
-                        <button
+                        <TeaButton
                             key={action.id}
-                            className={`tea-sidebar__action tea-sidebar__action--${action.variant || 'primary'}`}
+                            size='small'
+                            iconOnly
+                            disableRipple
+                            theme={ACTION_THEMES[action.variant || 'primary']}
+                            className='tea-sidebar__action'
                             onClick={action.onClick}
                             title={action.label}
                         >
                             {action.icon || <PlusIcon />}
-                        </button>
+                        </TeaButton>
                     ))}
                 </div>
 

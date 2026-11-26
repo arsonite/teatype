@@ -17,6 +17,9 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
+// Components
+import { XButton } from './input/buttons/XButton';
+
 // Style
 import './style/TeaModal.scss';
 
@@ -81,18 +84,7 @@ export const TeaModal: React.FC<TeaModalProps> = ({
                 {title && (
                     <div className='tea-modal__header'>
                         <h2>{title}</h2>
-                        <button className='tea-modal__close' onClick={onClose} aria-label='Close modal'>
-                            <svg
-                                width='20'
-                                height='20'
-                                viewBox='0 0 24 24'
-                                fill='none'
-                                stroke='currentColor'
-                                strokeWidth='2'
-                            >
-                                <path d='M18 6L6 18M6 6l12 12' />
-                            </svg>
-                        </button>
+                        <XButton onClick={onClose} aria-label='Close modal' />
                     </div>
                 )}
                 <div className='tea-modal__body'>{children}</div>

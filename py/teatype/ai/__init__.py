@@ -10,14 +10,24 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-try:
-    # Local imports
-    from .engines.BaseAIEngine import BaseAIEngine
-    from .engines.LLMEngine import LLMEngine
-    from .models.llm.loader import load_model as load_llm_model
-    from .models.llm.inference import Inferencer as LLMInferencer
-    from .OpenGPT import OpenGPT
-    
-    __GPU_SUPPORT__ = True
-except:
-    __GPU_SUPPORT__ = False
+# Standard-library imports
+import importlib
+from importlib.util import find_spec
+
+# Probing for the backend is enough to know about GPU support; actually importing the
+# engines pulls in teatype.comms/teatype.modulo and makes every `import teatype.ai` slow.
+__GPU_SUPPORT__ = find_spec('llama_cpp') is not None
+
+_LAZY_ATTRS = {
+    'BaseAIEngine': ('.engines.BaseAIEngine', 'BaseAIEngine'),
+    'LLMEngine': ('.engines.LLMEngine', 'LLMEngine'),
+    'load_llm_model': ('.models.llm.loader', 'load_model'),
+    'LLMInferencer': ('.models.llm.inference', 'Inferencer'),
+    'OpenGPT': ('.OpenGPT', 'OpenGPT'),
+}
+
+def __getattr__(name):
+    if name in _LAZY_ATTRS:
+        module_name, attribute = _LAZY_ATTRS[name]
+        return getattr(importlib.import_module(module_name, __name__), attribute)
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')

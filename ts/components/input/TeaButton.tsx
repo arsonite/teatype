@@ -22,41 +22,84 @@ import { TeaIcon } from '../TeaIcon';
 // Style
 import './style/TeaButton.scss';
 
-type tButtonSize = 'small' | 'medium' | 'large';
+type tButtonAlign = 'center' | 'start';
+type tButtonSize = 'xs' | 'small' | 'medium' | 'large';
 type tButtonTheme = 'default' | 'filled' | 'success' | 'danger' | 'ghost';
 type tButtonVariant = 'default' | 'borderless';
 
+/**
+ * The one button of the apps. Everything that is clicked is this component, the look comes from its props:
+ *
+ * - `theme` is the color: default, filled (the main action), danger, success, ghost
+ * - `variant` is the surface: default (with border) or borderless (only visible on hover)
+ * - `size` is xs, small, medium or large; a button without text (only `icon`, an icon as child, or nothing at all like a
+ *   color swatch) is a square of that size
+ * - `active` marks a selected one (toggle, tab, chosen option), `round` makes it a circle, `fullWidth` + `align='start'`
+ *   makes a row of a list or menu
+ * - `--tea-button-size` overrides the side of a square button for one place
+ */
 interface iTeaButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+    active?: boolean;
+    align?: tButtonAlign;
     children?: React.ReactNode;
     className?: string;
     /** Disable ripple effect (default: false) */
-    disableIconRotation?: boolean;
     disableRipple?: boolean;
+    fullWidth?: boolean;
     icon?: React.ReactNode;
+    /** Force the square shape for a glyph that is not an icon component, like a letter (default: detected from the children) */
+    iconOnly?: boolean;
     iconPosition?: 'left' | 'right';
     id?: string;
     loading?: boolean;
+    /** Turn the icon by 45 degrees while hovered, for the plus that becomes a cross (default: false) */
+    rotateIcon?: boolean;
+    round?: boolean;
     size?: tButtonSize;
     theme?: tButtonTheme;
     variant?: tButtonVariant;
 }
 
-const TeaButton: React.FC<iTeaButtonProps> = (props) => {
-    // Default props
-    const iconPosition = props.iconPosition ?? 'left';
-    const disableIconRotation = props.disableIconRotation ?? false;
-    const loading = props.loading ?? false;
-    const disableRipple = props.disableRipple ?? false;
-    const size = props.size ?? 'medium';
-    const theme = props.theme ?? 'default';
-    const variant = props.variant ?? 'default';
+const hasContent = (children: React.ReactNode) =>
+    React.Children.toArray(children).some((child) => (typeof child === 'string' ? child.trim().length > 0 : !!child));
 
-    const buttonRef = useRef<HTMLButtonElement>(null);
+const TeaButton = React.forwardRef<HTMLButtonElement, iTeaButtonProps>(function TeaButton(props, forwardedRef) {
+    const {
+        active,
+        align = 'center',
+        children,
+        className,
+        disableRipple = false,
+        disabled,
+        fullWidth = false,
+        icon,
+        iconOnly: iconOnlyProp,
+        iconPosition = 'left',
+        loading = false,
+        onClick,
+        rotateIcon = false,
+        round = false,
+        size = 'medium',
+        theme = 'default',
+        type = 'button',
+        variant = 'default',
+        ...rest
+    } = props;
+
+    const buttonRef = useRef<HTMLButtonElement | null>(null);
+    const setRef = useCallback(
+        (node: HTMLButtonElement | null) => {
+            buttonRef.current = node;
+            if (typeof forwardedRef === 'function') forwardedRef(node);
+            else if (forwardedRef) forwardedRef.current = node;
+        },
+        [forwardedRef],
+    );
 
     /** Spawn a Material-UI style ripple circle at the click coordinates */
     const spawnRipple = useCallback(
         (e: React.MouseEvent<HTMLButtonElement>) => {
-            if (disableRipple || props.disabled || loading) return;
+            if (disableRipple || disabled || loading) return;
 
             const button = buttonRef.current;
             if (!button) return;
@@ -66,7 +109,7 @@ const TeaButton: React.FC<iTeaButtonProps> = (props) => {
             const y = e.clientY - rect.top;
 
             // Diameter must cover the furthest corner
-            const size =
+            const diameter =
                 Math.max(
                     Math.hypot(x, y),
                     Math.hypot(rect.width - x, y),
@@ -76,10 +119,10 @@ const TeaButton: React.FC<iTeaButtonProps> = (props) => {
 
             const ripple = document.createElement('span');
             ripple.className = 'tea-button__ripple';
-            ripple.style.width = `${size}px`;
-            ripple.style.height = `${size}px`;
-            ripple.style.left = `${x - size / 2}px`;
-            ripple.style.top = `${y - size / 2}px`;
+            ripple.style.width = `${diameter}px`;
+            ripple.style.height = `${diameter}px`;
+            ripple.style.left = `${x - diameter / 2}px`;
+            ripple.style.top = `${y - diameter / 2}px`;
 
             button.appendChild(ripple);
 
@@ -88,70 +131,59 @@ const TeaButton: React.FC<iTeaButtonProps> = (props) => {
                 ripple.remove();
             });
         },
-        [disableRipple, props.disabled, loading],
+        [disableRipple, disabled, loading],
     );
 
     const handleClick = useCallback(
         (e: React.MouseEvent<HTMLButtonElement>) => {
             spawnRipple(e);
-            props.onClick?.(e);
+            onClick?.(e);
         },
-        [spawnRipple, props.onClick],
+        [spawnRipple, onClick],
     );
 
-    const isIconOnlyChild = useMemo(() => {
-        const children = React.Children.toArray(props.children).filter((child) => {
-            if (!child) {
-                return false;
-            }
-
-            if (typeof child === 'string') {
-                return child.trim().length > 0;
-            }
-
-            return true;
-        });
-
-        if (children.length !== 1) {
-            return false;
-        }
-
-        const child = children[0];
-        if (!React.isValidElement(child)) {
-            return false;
-        }
-
-        return (
-            child.type === 'svg' ||
-            child.type === TeaIcon ||
-            (typeof child.type === 'function' && (child.type as Function).name?.endsWith('Icon'))
+    // No text: only an icon, a single icon as child, or nothing at all (a color swatch)
+    const detectedIconOnly = useMemo(() => {
+        const content = React.Children.toArray(children).filter((child) =>
+            typeof child === 'string' ? child.trim().length > 0 : !!child,
         );
-    }, [props.children]);
+        if (content.length === 0) return true;
+        if (content.length !== 1 || icon) return false;
+        const child = content[0];
+        return (
+            React.isValidElement(child) &&
+            (child.type === 'svg' ||
+                child.type === TeaIcon ||
+                (typeof child.type === 'function' && (child.type as Function).name?.endsWith('Icon')))
+        );
+    }, [children, icon]);
+    const iconOnly = iconOnlyProp ?? detectedIconOnly;
 
-    // Constants
-    const classes = useMemo(
-        () =>
-            [
-                'tea-button',
-                !disableRipple && 'ripple',
-                !disableIconRotation && 'icon-rotation',
-                isIconOnlyChild ? 'size-icon-only' : `size-${size}`,
-                `theme-${theme}`,
-                `variant-${variant}`,
-                loading && 'loading',
-                props.className ?? '',
-            ]
-                .filter(Boolean)
-                .join(' '),
-        [size, theme, variant, isIconOnlyChild, loading, props.className],
-    );
+    const classes = [
+        'tea-button',
+        !disableRipple && 'ripple',
+        rotateIcon && 'icon-rotation',
+        iconOnly ? `size-icon-only size-${size}` : `size-${size}`,
+        `theme-${theme}`,
+        `variant-${variant}`,
+        align === 'start' && 'align-start',
+        active && 'active',
+        fullWidth && 'full-width',
+        round && 'round',
+        loading && 'loading',
+        className,
+    ]
+        .filter(Boolean)
+        .join(' ');
 
     return (
         <button
-            ref={buttonRef}
+            ref={setRef}
             className={classes}
-            disabled={props.disabled || loading}
-            {...props}
+            type={type}
+            aria-pressed={active}
+            disabled={disabled || loading}
+            {...rest}
             onClick={handleClick}
         >
             {loading && (
@@ -163,16 +195,16 @@ const TeaButton: React.FC<iTeaButtonProps> = (props) => {
                 </span>
             )}
 
-            {props.icon && iconPosition === 'left' && !loading && <span className='icon'>{props.icon}</span>}
+            {icon && iconPosition === 'left' && !loading && <span className='icon'>{icon}</span>}
 
-            {props.children}
+            {hasContent(children) ? children : null}
 
-            {props.icon && iconPosition === 'right' && !loading && <span className='icon'>{props.icon}</span>}
+            {icon && iconPosition === 'right' && !loading && <span className='icon'>{icon}</span>}
         </button>
     );
-};
+});
 
-export type { iTeaButtonProps, tButtonSize, tButtonTheme, tButtonVariant };
+export type { iTeaButtonProps, tButtonAlign, tButtonSize, tButtonTheme, tButtonVariant };
 
 export default TeaButton;
 

@@ -215,9 +215,9 @@ export const TeaSettingsPage: React.FC<iTeaSettingsPageProps> = ({
         <div className={`tea-settings-page ${className}`}>
             <header className='tea-settings-page__header'>
                 {onClose && (
-                    <button className='tea-settings-page__back' onClick={onClose} title='Back'>
+                    <TeaButton variant='borderless' size='small' onClick={onClose} title='Back'>
                         <ArrowIcon />
-                    </button>
+                    </TeaButton>
                 )}
                 <h1 className='tea-settings-page__title'>{title}</h1>
                 {searchable && (
@@ -234,20 +234,22 @@ export const TeaSettingsPage: React.FC<iTeaSettingsPageProps> = ({
             <div className='tea-settings-page__body'>
                 <nav className='tea-settings-page__nav'>
                     {ordered.map((category) => (
-                        <button
+                        <TeaButton
                             key={category.id}
-                            className={`tea-settings-page__nav-item ${
-                                !searching && category.id === activeId ? 'tea-settings-page__nav-item--active' : ''
-                            }`}
+                            variant='borderless'
+                            fullWidth
+                            align='start'
+                            active={!searching && category.id === activeId}
+                            className='tea-settings-page__nav-item'
+                            icon={category.icon}
                             onClick={() => {
                                 setQuery('');
                                 chooseCategory(category.id);
                             }}
                         >
-                            {category.icon && <span className='tea-settings-page__nav-icon'>{category.icon}</span>}
                             <span>{category.label}</span>
                             {category.developer && <DeveloperBadge />}
-                        </button>
+                        </TeaButton>
                     ))}
                 </nav>
 

@@ -10,24 +10,35 @@
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
 
-try:
-    # Local imports
-    from .launchpad import LaunchPad
-    from .operations import Operations
-    from .operations import Operations as ModuloOperations
-    from .units.core import CoreUnit, parse_designation, print_designation
-    from .units.service import ServiceUnit
-    from .units.workhorse import WorkhorseUnit
-    
-    __MODULO_IMPORT_ERROR__ = None
-    __MODULO_SUPPORT__ = True
-except ImportError as ie:
-    __MODULO_IMPORT_ERROR__ = ie
-    __MODULO_SUPPORT__ = False
-    
+# Standard-library imports
+import importlib
+from importlib.util import find_spec
+
 from .tracer import Tracer
 
+# Probe for the optional dependencies instead of importing the whole package, which
+# pulls in fastapi/django/redis and makes every `import teatype.modulo` slow.
+_REQUIRED_PACKAGES = ('django', 'fastapi', 'redis', 'rest_framework', 'uvicorn')
+_missing_packages = [package for package in _REQUIRED_PACKAGES if find_spec(package) is None]
+
+__MODULO_IMPORT_ERROR__ = ImportError(f'missing packages: {", ".join(_missing_packages)}') if _missing_packages else None
+__MODULO_SUPPORT__ = not _missing_packages
+
+_LAZY_ATTRS = {
+    'LaunchPad': ('.launchpad', 'LaunchPad'),
+    'Operations': ('.operations', 'Operations'),
+    'ModuloOperations': ('.operations', 'Operations'),
+    'CoreUnit': ('.units.core', 'CoreUnit'),
+    'parse_designation': ('.units.core', 'parse_designation'),
+    'print_designation': ('.units.core', 'print_designation'),
+    'ServiceUnit': ('.units.service', 'ServiceUnit'),
+    'WorkhorseUnit': ('.units.workhorse', 'WorkhorseUnit'),
+}
+
 def __getattr__(name):
+    if name in _LAZY_ATTRS:
+        module_name, attribute = _LAZY_ATTRS[name]
+        return getattr(importlib.import_module(module_name, __name__), attribute)
     # Lazily import the hsdb registry so fastapi/uvicorn only load when it is used
     if name == 'hsdb':
         global hsdb

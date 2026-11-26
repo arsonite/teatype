@@ -48,48 +48,18 @@
         text-align: center;
     }
 
-    &__nav,
-    &__day,
-    &__today {
-        background: transparent;
-        border: none;
-        border-radius: var(--radius-sm, 6px);
-        color: var(--text-primary);
-        cursor: pointer;
-        font: inherit;
+    &__day.tea-button.size-icon-only {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
         font-size: 0.8125rem;
 
-        &:hover {
-            background: var(--bg-hover);
-        }
-    }
-
-    &__nav {
-        width: 24px;
-        height: 24px;
-        color: var(--text-secondary);
-    }
-
-    &__day {
-        aspect-ratio: 1;
-
-        &--outside {
+        &.tea-date-picker__day--outside {
             color: var(--text-tertiary);
         }
 
-        &--today {
+        &.tea-date-picker__day--today:not(.active) {
             box-shadow: inset 0 0 0 1px var(--accent);
         }
-
-        &--selected,
-        &--selected:hover {
-            background: var(--accent);
-            color: #fff;
-        }
-    }
-
-    &__today {
-        padding: 6px;
-        color: var(--accent);
     }
 }
